@@ -1,0 +1,53 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.rsuser
+
+# Logs
+logs/
+*.log
+
+# Local environment and secrets
+/deploy/secrets/
+.env
+*.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+deploy/env/*.env
+appsettings.Local.json
+appsettings.*.Local.json
+*.secret
+*.private.pem
+gateway-acceptance.override.yaml
+
+# Python documentation and skill tooling
+__pycache__/
+*.py[cod]
+.venv/
+
+# Test results and coverage
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# OS files
+.DS_Store
+Thumbs.db

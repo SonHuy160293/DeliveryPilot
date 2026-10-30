@@ -1,0 +1,31 @@
+{
+  "skill": "dp-requirements-engineer",
+  "cases": [
+    {
+      "kind": "positive",
+      "prompt": "Convert FEAT-DP-001 discovery into functional requirements and acceptance scenarios",
+      "expect": [
+        "FR IDs",
+        "Given/When/Then mapped to FR",
+        "proposed status until owner approval"
+      ]
+    },
+    {
+      "kind": "positive",
+      "prompt": "Review blocker user stories for tenant security and missing negative cases",
+      "expect": [
+        "business-facing acceptance criteria",
+        "gap report",
+        "no invented DB schema"
+      ]
+    },
+    {
+      "kind": "negative",
+      "prompt": "Choose RabbitMQ topology and EF Core entity mappings for Notification",
+      "expect": [
+        "skill should not activate",
+        "route to solution/database design"
+      ]
+    }
+  ]
+}

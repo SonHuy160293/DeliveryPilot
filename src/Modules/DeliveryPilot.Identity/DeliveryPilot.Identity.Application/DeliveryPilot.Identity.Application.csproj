@@ -1,0 +1,8 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../../Contracts/DeliveryPilot.Notification.Contracts/DeliveryPilot.Notification.Contracts.csproj" />
+    <ProjectReference Include="../DeliveryPilot.Identity.Domain/DeliveryPilot.Identity.Domain.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.SharedKernel/DeliveryPilot.SharedKernel.csproj" />
+    <ProjectReference Include="../../../Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj" />
+  </ItemGroup>
+</Project>

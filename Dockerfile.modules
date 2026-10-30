@@ -1,0 +1,92 @@
+# syntax=docker/dockerfile:1
+ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b
+ARG DOTNET_RUNTIME_IMAGE=mcr.microsoft.com/dotnet/aspnet:10.0@sha256:de0ee358cdd672f7017a003bed21e9ac9ed48a27c922a59b18175b6e82fa7fee
+FROM ${DOTNET_SDK_IMAGE} AS restore
+WORKDIR /src
+COPY global.json Directory.Build.props Directory.Packages.props .editorconfig ./
+COPY src/Gateway/DeliveryPilot.Gateway/DeliveryPilot.Gateway.csproj src/Gateway/DeliveryPilot.Gateway/
+COPY src/BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj src/BuildingBlocks/DeliveryPilot.AspNetCore/
+COPY src/BuildingBlocks/DeliveryPilot.EntityFrameworkCore/DeliveryPilot.EntityFrameworkCore.csproj src/BuildingBlocks/DeliveryPilot.EntityFrameworkCore/
+COPY src/BuildingBlocks/DeliveryPilot.Messaging/DeliveryPilot.Messaging.csproj src/BuildingBlocks/DeliveryPilot.Messaging/
+COPY src/BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj src/BuildingBlocks/DeliveryPilot.Observability/
+COPY src/BuildingBlocks/DeliveryPilot.SharedKernel/DeliveryPilot.SharedKernel.csproj src/BuildingBlocks/DeliveryPilot.SharedKernel/
+COPY src/BuildingBlocks/DeliveryPilot.Utilities/DeliveryPilot.Utilities.csproj src/BuildingBlocks/DeliveryPilot.Utilities/
+COPY src/Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj src/Contracts/DeliveryPilot.Identity.Contracts/
+COPY src/Contracts/DeliveryPilot.Notification.Contracts/DeliveryPilot.Notification.Contracts.csproj src/Contracts/DeliveryPilot.Notification.Contracts/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Application/DeliveryPilot.Identity.Application.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Application/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Domain/DeliveryPilot.Identity.Domain.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Domain/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/DeliveryPilot.Identity.Infrastructure.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/DeliveryPilot.Identity.MigrationRunner.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/
+COPY src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/DeliveryPilot.Identity.Worker.csproj src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Application/DeliveryPilot.Notification.Application.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Application/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Domain/DeliveryPilot.Notification.Domain.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Domain/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Infrastructure/DeliveryPilot.Notification.Infrastructure.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Infrastructure/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/
+COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/DeliveryPilot.Identity.Worker.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/DeliveryPilot.Identity.MigrationRunner.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj --disable-parallel
+FROM restore AS source
+COPY src/ src/
+
+FROM source AS identity-api-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS gateway-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Gateway/DeliveryPilot.Gateway/DeliveryPilot.Gateway.csproj -c Release -o /out -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS identity-worker-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/DeliveryPilot.Identity.Worker.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS identity-migration-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/DeliveryPilot.Identity.MigrationRunner.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS notification-api-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS notification-worker-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS notification-migration-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM ${DOTNET_RUNTIME_IMAGE} AS runtime
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends curl libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+COPY deploy/setup/worker-health.sh /opt/deliverypilot/worker-health.sh
+RUN chmod 755 /opt/deliverypilot/worker-health.sh
+ENV ASPNETCORE_HTTP_PORTS=8080
+USER $APP_UID
+
+FROM runtime AS identity-api
+COPY --from=identity-api-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Identity.API.dll"]
+
+FROM runtime AS gateway
+COPY --from=gateway-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Gateway.dll"]
+
+FROM runtime AS identity-worker
+COPY --from=identity-worker-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Identity.Worker.dll"]
+
+FROM runtime AS identity-migration
+COPY --from=identity-migration-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Identity.MigrationRunner.dll"]
+
+FROM runtime AS notification-api
+COPY --from=notification-api-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Notification.API.dll"]
+
+FROM runtime AS notification-worker
+COPY --from=notification-worker-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Notification.Worker.dll"]
+
+FROM runtime AS notification-migration
+COPY --from=notification-migration-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Notification.MigrationRunner.dll"]

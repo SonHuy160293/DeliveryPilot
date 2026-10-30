@@ -1,0 +1,9 @@
+services:
+  gateway:
+    build:
+      context: ../../..
+      dockerfile: Dockerfile.modules
+      target: gateway
+      args:
+        DOTNET_SDK_IMAGE: ${DELIVERYPILOT_DOTNET_SDK_IMAGE:?Set DELIVERYPILOT_DOTNET_SDK_IMAGE}
+        DOTNET_RUNTIME_IMAGE: ${DELIVERYPILOT_DOTNET_RUNTIME_IMAGE:?Set DELIVERYPILOT_DOTNET_RUNTIME_IMAGE}

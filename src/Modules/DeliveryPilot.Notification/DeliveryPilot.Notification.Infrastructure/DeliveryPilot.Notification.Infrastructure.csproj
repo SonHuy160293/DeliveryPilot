@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk"><ItemGroup>
+<ProjectReference Include="../DeliveryPilot.Notification.Application/DeliveryPilot.Notification.Application.csproj" />
+<ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.Messaging/DeliveryPilot.Messaging.csproj" />
+<ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj" />
+<ProjectReference Include="../../../Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+<PackageReference Include="Svix" />
+</ItemGroup></Project>

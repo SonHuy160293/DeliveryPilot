@@ -1,0 +1,3 @@
+interface:
+  display_name: "DeliveryPilot Task Planner"
+  short_description: "Plan verified API, domain, database and DevOps tasks from requirements"

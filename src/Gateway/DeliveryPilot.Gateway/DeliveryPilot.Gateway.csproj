@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>deliverypilot-gateway</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" />
+    <ProjectReference Include="../../BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj" />
+    <ProjectReference Include="../../BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj" />
+    <Content Update="proxy.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

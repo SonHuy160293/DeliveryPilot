@@ -1,0 +1,30 @@
+{
+  "skill": "dp-feature-planner",
+  "cases": [
+    {
+      "kind": "positive",
+      "prompt": "Split blocker detection requirements into independently verifiable Codex tasks",
+      "expect": [
+        "task DAG",
+        "bounded scope and tests",
+        "proposed if requirements unapproved"
+      ]
+    },
+    {
+      "kind": "positive",
+      "prompt": "Review FEAT-DP-001 task dependencies and readiness for parallel agents",
+      "expect": [
+        "detect shared contracts/migrations",
+        "gating by approval and prerequisites"
+      ]
+    },
+    {
+      "kind": "negative",
+      "prompt": "Implement TASK-DP-001 and push the code",
+      "expect": [
+        "skill should not activate",
+        "implementation is outside planning scope"
+      ]
+    }
+  ]
+}

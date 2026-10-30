@@ -1,0 +1,41 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/DeliveryPilot.Gateway.Tests/DeliveryPilot.Gateway.Tests.csproj" />
+    <Project Path="tests/DeliveryPilot.Notification.Tests/DeliveryPilot.Notification.Tests.csproj" />
+    <Project Path="tests/DeliveryPilot.Identity.Tests/DeliveryPilot.Identity.Tests.csproj" />
+    <Project Path="tests/DeliveryPilot.AspNetCore.HttpClient.Tests/DeliveryPilot.AspNetCore.HttpClient.Tests.csproj" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/DeliveryPilot.Gateway/DeliveryPilot.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Contracts/">
+    <Project Path="src/Contracts/DeliveryPilot.Notification.Contracts/DeliveryPilot.Notification.Contracts.csproj" />
+    <Project Path="src/Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/DeliveryPilot.Messaging/DeliveryPilot.Messaging.csproj" />
+    <Project Path="src/BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj" />
+    <Project Path="src/BuildingBlocks/DeliveryPilot.EntityFrameworkCore/DeliveryPilot.EntityFrameworkCore.csproj" />
+    <Project Path="src/BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj" />
+    <Project Path="src/BuildingBlocks/DeliveryPilot.SharedKernel/DeliveryPilot.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/DeliveryPilot.Utilities/DeliveryPilot.Utilities.csproj" Id="f3ba5504-3426-46f6-a657-3f56791ee11b" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/DeliveryPilot.Identity/">
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/DeliveryPilot.Identity.Worker.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Application/DeliveryPilot.Identity.Application.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Domain/DeliveryPilot.Identity.Domain.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/DeliveryPilot.Identity.Infrastructure.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/DeliveryPilot.Identity.MigrationRunner.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/DeliveryPilot.Notification/">
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Domain/DeliveryPilot.Notification.Domain.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Application/DeliveryPilot.Notification.Application.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Infrastructure/DeliveryPilot.Notification.Infrastructure.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,47 @@
+services:
+  secret-stage:
+    build: &tools-build
+      context: ../../..
+      dockerfile: Dockerfile.deploy
+      args: {POSTGRES_IMAGE: "${DELIVERYPILOT_POSTGRES_IMAGE}"}
+  db-bootstrap: {build: *tools-build}
+  db-grants: {build: *tools-build}
+  postgres:
+    ports: ["127.0.0.1:${DELIVERYPILOT_IDENTITY_POSTGRES_PORT:-25431}:5432"]
+  migration:
+    build:
+      context: ../../..
+      dockerfile: Dockerfile.modules
+      target: identity-migration
+      args:
+        DOTNET_SDK_IMAGE: ${DELIVERYPILOT_DOTNET_SDK_IMAGE:?Set DELIVERYPILOT_DOTNET_SDK_IMAGE}
+        DOTNET_RUNTIME_IMAGE: ${DELIVERYPILOT_DOTNET_RUNTIME_IMAGE:?Set DELIVERYPILOT_DOTNET_RUNTIME_IMAGE}
+    environment:
+      DOTNET_ENVIRONMENT: Development
+  api:
+    ports: ["127.0.0.1:${DELIVERYPILOT_IDENTITY_API_PORT:-19091}:8080"]
+    build:
+      context: ../../..
+      dockerfile: Dockerfile.modules
+      target: identity-api
+      args:
+        DOTNET_SDK_IMAGE: ${DELIVERYPILOT_DOTNET_SDK_IMAGE:?Set DELIVERYPILOT_DOTNET_SDK_IMAGE}
+        DOTNET_RUNTIME_IMAGE: ${DELIVERYPILOT_DOTNET_RUNTIME_IMAGE:?Set DELIVERYPILOT_DOTNET_RUNTIME_IMAGE}
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+  worker:
+    build:
+      context: ../../..
+      dockerfile: Dockerfile.modules
+      target: identity-worker
+      args:
+        DOTNET_SDK_IMAGE: ${DELIVERYPILOT_DOTNET_SDK_IMAGE:?Set DELIVERYPILOT_DOTNET_SDK_IMAGE}
+        DOTNET_RUNTIME_IMAGE: ${DELIVERYPILOT_DOTNET_RUNTIME_IMAGE:?Set DELIVERYPILOT_DOTNET_RUNTIME_IMAGE}
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      Messaging__Host: rabbitmq
+      Messaging__Port: "5672"
+      Messaging__Development: "true"
+      Messaging__UseTls: "false"
+      Messaging__QuorumSize: "1"

@@ -1,0 +1,3 @@
+interface:
+  display_name: "DeliveryPilot Feature Planner"
+  short_description: "Turn reviewed designs into bounded Codex tasks"

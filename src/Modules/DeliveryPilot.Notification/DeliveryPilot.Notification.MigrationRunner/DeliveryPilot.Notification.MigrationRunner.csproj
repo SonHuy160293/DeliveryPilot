@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><UserSecretsId>deliverypilot-notification-migrationrunner</UserSecretsId></PropertyGroup><ItemGroup>
+<ProjectReference Include="../DeliveryPilot.Notification.Infrastructure/DeliveryPilot.Notification.Infrastructure.csproj" />
+<PackageReference Include="Microsoft.Extensions.Hosting" />
+</ItemGroup></Project>
