@@ -1,0 +1,3 @@
+interface:
+  display_name: "DeliveryPilot CQRS Implementer"
+  short_description: "Implement verified TASK documents using DeliveryPilot CQRS and API conventions"

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><UserSecretsId>deliverypilot-identity-worker</UserSecretsId></PropertyGroup><ItemGroup>
+<ProjectReference Include="../DeliveryPilot.Identity.Infrastructure/DeliveryPilot.Identity.Infrastructure.csproj" />
+<ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj" />
+<PackageReference Include="Microsoft.Extensions.Hosting" />
+</ItemGroup><ItemGroup><None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup></Project>

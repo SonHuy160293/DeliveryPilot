@@ -1,0 +1,213 @@
+# Core documentation alignment audit
+
+> Recorded: 2026-11-03, Asia/Bangkok.
+> Scope: Product, cross-feature requirements, roadmap, context routing and authoring policy against workflow discovery and the architecture workspace.
+> Status: Core reconciliation applied; unresolved release, contract and implementation handoffs remain explicit. This is an audit record, not approval evidence or a new implementation task.
+
+## Evidence and boundaries
+
+- [Workflow discovery v1.1](../deliverypilot-workflow-discovery.md): recorded Q1–Q44 decisions and later W1 seven-stage workflow. A1–A4 are derived clarifications, not additional confirmed answers.
+- [Identity decisions](modules/identity/design-decisions.md): SCOPE/OWN/MEM/AUTHZ/INV/DATA selections and unresolved follow-through. Original [domain discovery](identity-domain-discovery.md) and [readiness](identity-erd-readiness.md) retain historical alternatives with reconciliation notices.
+- [Current backend](../../ARCHITECTURE.md), [IdentityDbContext](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/DbContexts/IdentityDbContext.cs), [AuthController](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/Controllers/AuthController.cs), [domain model directory](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Domain/Models/) and [EF configurations](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Configurations/): checked-out implementation evidence, not live-deployment verification. CodeGraph was consulted before source inspection.
+- Existing FEAT-DP-002/003 summaries and reference graphs: downstream impact and stale readiness/implementation statements. Stable IDs, frontmatter statuses, approvals, task dependencies and release allocations are preserved.
+
+The original core audit did not resume the incomplete model/mapping task, create migrations, revise detailed feature contracts, invent customer validation, or select a hosting topology. The initial Organization refinement revised draft contracts/supporting notes. The subsequent joint readiness review below resolves scope and changes internal quality statuses; application source remains untouched. U21 separately authorizes notation-only corrections to two login documents, including the existing done task, without changing behavior or its status.
+
+## Findings and reconciliation
+
+| Finding | Evidence | Applied reconciliation / remaining limit |
+|---|---|---|
+| Core navigation pointed only to the target architecture and omitted workflow/module evidence. | Context map and authoring owners versus new architecture workspace. | Added an architecture index and separate routes for current runtime, target alternatives, selected module design and discovery. |
+| Workspace terminology, solo use and guest access were incomplete. | Q1–Q3/Q6; Identity glossary. | Product/global glossary now distinguish Workspace/Organization/tenant, global User, membership, project participation and platform authority. Creation is separate from registration; guests do not require general membership. |
+| Product allowed hybrid while discovery deferred it. | Q8/Q25/Q44. | Initial Scrum/Kanban and one-team/one-active-Sprint limits are explicit; hybrid and multiple independent teams remain deferred. |
+| Generic organization questions lagged selected access decisions. | OWN-01, MEM-01/02, AUTHZ-01–06, INV-01/02, DATA-01/03. | Summarized selections with provenance in global requirements; linked detailed policy to the module log. Duration/resend/sponsor questions were open in the original core audit; later U10 resolves them. Transfer, nomination lifecycle, recovery and revocation boundaries remain open. |
+| Broad Identity wording could imply ownership of project/approval authority. | SCOPE-01–04; Q2/Q3. | Selected Identity contains Authentication, Organization Management and protected Platform Access. Project participation, resource grants and business decisions stay outside; no Project/Requirements merger is inferred. |
+| Separate-context historical analysis and generic schema recommendations could override the selected Identity database. | Original reports' reconciliation notices; SCOPE-01. | Architecture routing and target-proposal caveats identify which ownership recommendation is superseded. Current independent hosts remain unchanged. |
+| The main journey skipped iterative UR/Feature discovery and collapsed approval, acceptance and baseline states. | Q4/Q9–Q18/Q39; W1. | Product journey and requirements now describe immutable submitted revisions, independent review/client gates, explicit acceptance and separate scope/plan baselines. Snapshot representation and A1–A4 refinements stay proposed. |
+| Global approval questions reopened already selected modes. | Q10–Q16/Q44. | Captured all-required-reviewer policy, optional nonresponse, Feedback Only/Approval Required, solo exemption and blocking-review clearing. Quorum/chains/advanced delegation remain deferred. |
+| Runtime UR-to-Story traceability appeared incompatible with repository US→FR frontmatter. | Q17; existing authoring/templates. | Explicitly separated product data relationships from repository authoring. No fake FR, new frontmatter, reverse-reference field or validator change was introduced. |
+| Planning/execution summaries missed readiness, privacy and scenario-application boundaries. | Q20/Q23–Q34/Q40/Q42; W1. | Added selected estimation, no-double-counting, declared capacity/privacy, board action, WIP, freshness and human decision boundaries; no invented thresholds or numerical SLAs. |
+| QA/UAT/release and change control appeared both essential to the journey and deferred to V1. | Q18/Q22/Q39/Q41; W1; FEAT-DP-011/012/016/018/019 allocations. | Kept release IDs/targets/priorities unchanged, distinguished the full target journey from MVP slices, and added an explicit lightweight-pilot scope decision table. Full journey coverage is not claimed. |
+| Source/class, EF/schema and feature completion were conflated by stale implementation prose. | Context/configuration inventory; existing task records. | Updated current-backend and Identity notes plus authentication summary. Eight new class drafts are unmapped; IdentityAuditEvent and all new mappings remain absent. No new collaboration schema or access workflow is implemented. |
+| Requirements pointed to a nonexistent single-file feature layout. | Repository feature tree and authoring policy. | Corrected routing to feature summaries and individual `us/US-...md` acceptance artifacts. |
+
+## Remaining decisions and downstream handoffs
+
+These are bounded follow-up work, not reasons to revert confirmed direction to generic open questions.
+
+| Area / owner | Remaining work | Completion evidence |
+|---|---|---|
+| Release scope / product owner and delivery lead | Allocate lightweight planning inputs, material-change decisions and QA/UAT/release outcomes needed for the pilot; keep full suites and AI expansion separately scoped. | Explicit decision against the [roadmap coverage table](../roadmap.md#workflow-coverage-and-release-decisions), then affected feature acceptance criteria. |
+| Organization contracts / BA and Identity design owner | Joint U9–U21 review resolves OD-01–11 for the selected release; lifecycle/recovery exclusions are explicit. Source-aware task planning is next; existing Organization task stays blocked. | 8 UR, 14 FR and 9 US are internally ready with null approval references; internal quality is not customer approval or task execution readiness. |
+| Authentication task records / implementation owner | TASK-DP-002-002 still says `pending`/unimplemented in its planning sections despite implemented registration and a later verification section. Reconcile status and acceptance evidence deliberately. Refresh/logout HTTP contracts remain follow-up work. | Current acceptance evidence and reconciled task record; this audit does not mark it done. |
+| Project and review contracts / relevant feature owners | Refine FEAT-DP-004–009/015/017 and material-change interfaces from Q/W evidence. Resolve exact mapping/version representation, specification-only review authority and A1–A4 clarifications. | Canonical contracts and scoped diagrams; no assumption that absent feature folders imply existing behavior. |
+| Authoring/tooling owner | If repository US artifacts must directly represent runtime UR links, design a separate compatible authoring/template/validator change. | Reviewed rule and tooling tests; current one-way references stay valid until then. |
+| Identity implementation owner | Finish IdentityAuditEvent, nine mappings, DbContext registration and scoped tests; later migrations/index deployment and authorization/lifecycle workflows remain separate. | Source/metadata/DDL and relevant tests, then separate deployment evidence. Eight class files alone satisfy none of those missing layers. |
+| Platform security/operations owner | Define bootstrap, assurance/activation, last-admin recovery and audit procedures before enabling privileged operations. | Reviewed security procedures and implementation evidence; foundation modeling does not enable them. |
+
+### Impact on existing Organization artifacts
+
+This table preserves the original core audit’s impact snapshot, not a hand-maintained reverse dependency graph. The subsequent refinement is recorded below. Use `coverage` for the current graph.
+
+| Source area | Existing artifacts to refine |
+|---|---|
+| Workspace creation and protected ownership | UR-DP-003-001, FR-DP-003-001, US-DP-003-001; TASK-DP-003-001 remains blocked and needs fresh code/task planning. |
+| Multi-role invitation offers, recipient proof, reissue and duplicate policy | UR-DP-003-002, FR-DP-003-002/003, US-DP-003-002. |
+| Durable memberships, context selection and independent project visibility | UR-DP-003-003, FR-DP-003-004/007, US-DP-003-003. |
+| Removal/rejoin, last-owner continuity and history | UR-DP-003-004/005, FR-DP-003-005/006, US-DP-003-004. |
+
+The original audit only reconciled summaries. The subsequent user-authorized Organization refinement has now revised the detailed drafts and added missing coverage while preserving existing IDs/statuses. The initial pass left policy/task readiness open; the subsequent joint review below resolves in-scope policy while retaining the separate technical task gate. References in the historical table are shorthand display labels; canonical frontmatter uses full IDs only.
+
+## Original core-audit validation
+
+| Check | Result |
+|---|---|
+| `python tools/docs.py validate` before/after | 37 artifacts; the same two pre-existing placeholder diagnostics in `FR-DP-002-003` and `TASK-DP-002-004`. No new validation errors after reconciliation. |
+| `python tools/docs.py coverage --feature FEAT-DP-002` | Reference graph inspected; US-DP-002-003 has no downstream task (advisory). The two existing validator diagnostics remain. |
+| `python tools/docs.py coverage --feature FEAT-DP-003` | Reference graph inspected; US-DP-003-002/003/004 have no downstream tasks (advisory). TASK-DP-003-001 remains blocked. The two existing validator diagnostics remain. |
+| Local links, Markdown heading targets and code-fence balance | Checked across all 14 edited documentation files; no missing local targets or heading anchors. |
+| Stable IDs and lifecycle metadata | BR/NFR registry IDs, all 24 roadmap feature rows and edited feature frontmatter compared with Git HEAD and preserved. |
+| Whitespace and repository format | Edited documentation normalized to CRLF; scoped `git diff --check` passes. |
+| Diagram rendering | No Mermaid blocks changed by this audit. No local `mmdc` command was available; rendering was not run. |
+| Application/tooling tests | Not run: this audit changes documentation only. Prior test results are not claimed as new verification. |
+
+Structural validation does not establish approval, implemented behavior or production readiness. The two existing diagnostics require a separate correction to their ready/done artifact examples; no status was downgraded or approval fabricated to make validation green.
+
+## Original core-audit files reconciled
+
+| File / group | Change |
+|---|---|
+| [Product](../product.md) | Workspace/guest terminology, initial delivery modes, target journey and MVP scope caveat. |
+| [Requirements](../requirements.md) | Provenanced access/review/baseline/planning rules, distinct lifecycles and remaining policy. |
+| [Roadmap](../roadmap.md) | Workflow-aligned slices and explicit unresolved lightweight-pilot allocation; registry unchanged. |
+| [Context map](../context-map.md) and [authoring](../authoring.md) | Evidence routing, canonical owners and runtime-versus-repository boundaries. |
+| [Architecture index](README.md) and this audit | New navigation and reconciliation/handoff record. |
+| [Target architecture](../architecture.md) and [current backend](../../ARCHITECTURE.md) | Selected ownership versus topology alternatives; corrected implementation summary. |
+| [Identity overview](modules/identity/README.md) and [decision log](modules/identity/design-decisions.md) | Explicit incomplete code/mapping state and historical column-design scope. |
+| [Workflow discovery](../deliverypilot-workflow-discovery.md) | Reconciliation notes and resolved-versus-open Identity policy; Q/W evidence and diagrams preserved. |
+| [User Initialization](../features/FEAT-DP-002-user-initialization/feature.md) and [Organization summary](../features/FEAT-DP-003-organization/feature.md) | Corrected stale summaries and linked detailed-contract follow-ups; frontmatter unchanged. |
+
+## Organization refinement — 2026-11-03
+
+The user explicitly requested implementation of the Align FEAT-DP-003 Organization Documentation plan. Their preceding answers select U9/U10 in the [Identity decision log](modules/identity/design-decisions.md): name-only creation (trimmed/nonblank, at most 160 characters, duplicate names allowed, no slug); existing-Owner nomination/member acceptance for additional ownership; seven-day invitations; rotated resend restarting seven days; current inviter authority at acceptance with reissue after authority loss. These answers do not approve canonical artifacts.
+
+Applied work:
+
+- Refined all existing Organization UR/FR/US bodies and kept their stable IDs and draft/null approval state.
+- Added UR-DP-003-006 through UR-DP-003-008, FR-DP-003-008 through FR-DP-003-014, and US-DP-003-005 through US-DP-003-009 using the canonical CLI/templates.
+- Separated recipient acceptance from inviter administration, change recording from authorized audit retrieval, ordinary grants from protected ownership, and organization context from guest/project authority.
+- Completed explicit evidence references, BR/NFR applicability and Given/When/Then scenarios; proposals/undecided branches remain visibly separate.
+- Reconciled Identity overview/log/dictionary/ERD annotations/review scenarios and global requirements/workflow summaries. Original Q1–Q44/W1 records, authentication definitions and physical column sets remain unchanged. No nomination table/field is invented.
+
+### Initial refinement readiness boundary (historical)
+
+[Feature OD-01–11](../features/FEAT-DP-003-organization/feature.md#7-open-decisions-and-task-planning-blockers) records exact choices, proposed responsible roles and consequences: permissions/readership, creation retries, invitation conflicts/responses, ownership lifecycle, membership restoration, role lifecycle, revocation timing, retention/erasure, evidence/delivery failures, resource/navigation handoffs and organization recovery/lifecycle. All contracts remain draft.
+
+[TASK-DP-003-001](../features/FEAT-DP-003-organization/tasks/TASK-DP-003-001.md) remains blocked and byte-for-byte unchanged. Its creation/name questions are superseded by the source requirements; it requires separate source-aware review/replanning. Eight stories have no downstream task, intentionally: this update creates no coding tasks. No app/DTO/schema/migration/test code was changed.
+
+### Organization refinement validation
+
+Checks below were executed for this refinement using the available portable Python 3.14.10 executable because the PATH python alias is not a usable interpreter. Structural results do not establish business correctness or approval.
+
+| Check | Actual result |
+|---|---|
+| Repository validation baseline before editing | 37 artifacts, 2 pre-existing non-draft placeholder errors: FR-DP-002-003 and TASK-DP-002-004. |
+| python tools/docs.py validate --feature FEAT-DP-003 | Exit 1; 52 artifacts, the same 2 FEAT-DP-002 errors; no new diagnostic against this refinement. The command validates repository-wide integrity even with feature coverage selected. |
+| python tools/docs.py coverage --feature FEAT-DP-003 | Exit 1 due to the same errors; coverage graph produced: 8 UR, 14 FR, 9 US, 1 blocked TASK. Every UR has an FR; every FR has a US; 8 stories have no task (advisory and intentional). |
+| python tools/docs.py validate | Exit 1; 52 artifacts, the same 2 pre-existing errors only. Unrelated ready/done artifacts were not changed. |
+| git diff --check | Exit 0. Scoped checks also cover new, untracked Markdown files. Existing intentional Markdown hard-break spaces in the global requirements header are preserved. |
+| Affected local Markdown links | 211 relative file-link occurrences checked across 40 changed/new files; no missing local targets. Repository validator checked heading anchors and reported no new link diagnostics. |
+| IDs, metadata and scenario structure | CLI allocation and validation preserve unique canonical IDs/references. All 31 UR/FR/US artifacts are draft with null approval references; all 9 US have 53 Given/When/Then scenarios in total. Original ID/status/approval/priority fields on existing artifacts are unchanged. |
+| Preserved evidence/boundaries | Existing blocked task is byte-for-byte unchanged; original Q1–Q44/W1 rows, implemented authentication dictionary sections and ERD Mermaid blocks are unchanged. No source, tests, templates, tooling or migrations changed. |
+| Application/tooling tests and diagram rendering | Not run: no application/tooling behavior or Mermaid diagram blocks changed. These are documentation checks, not executed product scenarios or live-schema verification. |
+
+**Derived coverage summary:** all 8 URs have declared downstream FR coverage and all 14 FRs have declared story coverage. Only the existing creation story has a task; the other 8 remain without tasks by design. Re-run coverage rather than manually maintaining reverse-reference fields. Drafts remain blocked where feature OD decisions affect their behavior.
+
+### Organization refinement file list
+
+This is a change inventory, not a reverse requirement graph.
+
+| Files | Change |
+|---|---|
+| [Feature summary](../features/FEAT-DP-003-organization/feature.md) | Selected scope, U9/U10 provenance, explicit decision register and blocked-task handoff. |
+| Existing UR-DP-003-001 through UR-DP-003-005; new UR-DP-003-006 through UR-DP-003-008, under [ur/](../features/FEAT-DP-003-organization/ur/) | 8 human needs with source evidence and specific open questions. |
+| Existing FR-DP-003-001 through FR-DP-003-007; new FR-DP-003-008 through FR-DP-003-014, under [fr/](../features/FEAT-DP-003-organization/fr/) | 14 observable contracts with distinct security, integrity and policy boundaries. |
+| Existing US-DP-003-001 through US-DP-003-004; new US-DP-003-005 through US-DP-003-009, under [us/](../features/FEAT-DP-003-organization/us/) | 9 user-valued drafts and concrete acceptance scenarios. |
+| Identity [README](modules/identity/README.md), [decisions](modules/identity/design-decisions.md), [dictionary](modules/identity/data-dictionary.md), [ERD](modules/identity/erd.md), [scenarios](modules/identity/review-scenarios.md) | Selected follow-up behavior and remaining physical/lifecycle gates; original authentication baseline preserved. |
+| [Global requirements](../requirements.md), [workflow discovery](../deliverypilot-workflow-discovery.md), this audit | Current summaries and refinement history, without changing original approvals or Q/W answers. |
+
+## Joint Organization readiness review — 2026-11-03
+
+### Current outcome
+
+The user explicitly requested resolving the remaining choices together so the Organization requirements could become coding-ready inputs. User answers U11–U21, retained in the Identity decision log, resolve all OD-01–11 groups for the selected release. The earlier initial-refinement results above are historical, not the current readiness state.
+
+The feature and all 31 UR/FR/US artifacts now have internal status ready after the joint policy/semantic review; approval_ref remains null. Eight URs, 14 FRs and nine stories contain 88 Given/When/Then scenarios. Selected behavior covers readers/fields/defaults, protected targets/removal ceiling, creation/invitation/nomination retries and lifecycle, roles, navigation, revocation, evidence/retention and abuse limits. Scenario conditions distinguish valid reasons/current grants from denial cases. No executed application scenario, customer approval or production release is claimed.
+
+Explicit exclusions resolve scope rather than hide unknown branches: membership suspension/restoration UI/commands, workspace/account deletion/lifecycle changes, automated history erasure/purge, durable denied-attempt history, platform privileges and operator recovery are separately scoped. Denied-state, active-workspace and compromised-owner containment remain enforceable requirements. Built-in upgrades require separate reviewed work. Project/guest authority remains resource-owned.
+
+### Coding-task boundary
+
+TASK-DP-003-001 remains blocked and byte-for-byte unchanged; its old policy questions are superseded by resolved source contracts. Its API, persistence, authorization and dependency/test plan needs source-aware technical replanning. The eight other stories intentionally have no coding tasks; no new TASK document was created. Ready contracts are adequate business input for that planning, not an executable task or evidence the capability exists.
+
+Read-only source inspection used normal tools after CodeGraph reported no usable index. IdentityDbContext currently declares User, PasswordCredential and AuthSession business sets; the OrganizationMembership/OrganizationRole class drafts and lack of Organization Application use cases are not a mapped/implemented Organization workflow. This pass did not change source, project references, database schema, tests or migrations.
+
+### Current validation
+
+| Check | Actual result |
+|---|---|
+| python tools/docs.py validate --feature FEAT-DP-003 | Exit 0; 52 artifacts, 0 errors. |
+| python tools/docs.py coverage --feature FEAT-DP-003 | Exit 0; 8 UR, 14 FR, 9 US, 1 blocked TASK; every UR has FR coverage and every FR has story coverage; eight no-task advisories intentional. |
+| python tools/docs.py validate | Exit 0; 52 artifacts, 0 errors. |
+| git diff --check | Exit 0; scoped checks also cover new Markdown file formatting. |
+| Scoped integrity | 43 documentation files changed/new since the initial alignment baseline; 31 ready contracts with null approvals, 88 unique story-local AC IDs, CRLF/final-newline checks passed. All affected local targets exist; global validator reports no heading-link errors. |
+| Preserved boundaries | Original Q1–Q44/W1 rows, implemented authentication dictionary sections, physical column sets/types/nullability/defaults and ERD Mermaid blocks are unchanged; Organization task unchanged. Existing artifact IDs/priorities preserved; only intended Organization quality statuses changed. |
+| python tools/docs.py check-task --id TASK-DP-003-001 | Expected exit 1: task is blocked and codebase_verified is false. This is a technical task-planning gate, not a remaining business-policy blocker. |
+| Application/tooling tests and diagram rendering | Not run: source/tooling/diagram blocks unchanged. Validation is structural documentation evidence, not runtime verification. |
+
+The two initial FEAT-DP-002 validator diagnostics were corrected with the user's U21 scope authorization. Only notation changed: cookie expiry/value descriptions and the illustrative access-token string. The validator also treated real C# generic notation as placeholders; Markdown entities preserve rendered type signatures without changing types/behavior. FR-DP-002-003 stays ready; TASK-DP-002-004 stays done; no approval or test evidence was altered.
+
+### Derived requirement coverage snapshot
+
+Generated from current canonical frontmatter following the CLI coverage run; this is a review snapshot, not hand-maintained reverse metadata. Re-run coverage after future changes. Acceptance coverage is in the linked stories; all 14 FRs have concrete verification criteria.
+
+| FR | Source UR | Stories | NFR | Internal state / approval_ref |
+|---|---|---|---|---|
+| FR-DP-003-001 | UR-DP-003-001 | US-DP-003-001 | NFR-001, NFR-002, NFR-003, NFR-004 | ready / null |
+| FR-DP-003-002 | UR-DP-003-002 | US-DP-003-002 | NFR-001, NFR-002, NFR-003, NFR-004, NFR-008 | ready / null |
+| FR-DP-003-003 | UR-DP-003-002, UR-DP-003-008 | US-DP-003-002, US-DP-003-005 | NFR-001, NFR-002, NFR-003, NFR-004, NFR-008 | ready / null |
+| FR-DP-003-004 | UR-DP-003-003 | US-DP-003-003 | NFR-001, NFR-002, NFR-004 | ready / null |
+| FR-DP-003-005 | UR-DP-003-004, UR-DP-003-007 | US-DP-003-004, US-DP-003-007 | NFR-001, NFR-002, NFR-003, NFR-004, NFR-008 | ready / null |
+| FR-DP-003-006 | UR-DP-003-005 | US-DP-003-004, US-DP-003-009 | NFR-001, NFR-002, NFR-003, NFR-004, NFR-008 | ready / null |
+| FR-DP-003-007 | UR-DP-003-002, UR-DP-003-003 | US-DP-003-003 | NFR-001, NFR-002 | ready / null |
+| FR-DP-003-008 | UR-DP-003-006 | US-DP-003-006 | NFR-001, NFR-002, NFR-003, NFR-004 | ready / null |
+| FR-DP-003-009 | UR-DP-003-006 | US-DP-003-006 | NFR-001, NFR-002, NFR-003, NFR-004 | ready / null |
+| FR-DP-003-010 | UR-DP-003-007 | US-DP-003-007 | NFR-001, NFR-002, NFR-003, NFR-004 | ready / null |
+| FR-DP-003-011 | UR-DP-003-002 | US-DP-003-008 | NFR-001, NFR-002, NFR-008 | ready / null |
+| FR-DP-003-012 | UR-DP-003-002, UR-DP-003-008 | US-DP-003-002 | NFR-001, NFR-002, NFR-003, NFR-004, NFR-008 | ready / null |
+| FR-DP-003-013 | UR-DP-003-005 | US-DP-003-009 | NFR-001, NFR-002, NFR-003, NFR-008 | ready / null |
+| FR-DP-003-014 | UR-DP-003-004, UR-DP-003-008 | US-DP-003-005 | NFR-001, NFR-002, NFR-003, NFR-004 | ready / null |
+
+### Current file inventory
+
+The original refinement file list above covers the feature, all 8 UR/14 FR/9 US, the five edited Identity documents, global requirements, workflow discovery and this audit. The joint review additionally updates roadmap readiness/navigation and the two user-authorized FEAT-DP-002 notation fixes. Total: 43 documentation files relative to the initial alignment baseline (28 existing files changed and 15 new artifacts); no source/task implementation files were added.
+
+## Vision repositioning — 2026-11-06
+
+The user asked to refocus the product as an SDLC Agile Scrum project management platform for software outsourcing with AI-powered delivery risk management, and accepted the recommended defaults recorded as [V1–V5](../deliverypilot-workflow-discovery.md#196-vision-repositioning-decisions).
+
+| Area | Change applied | Remaining handoff |
+|---|---|---|
+| Product | `product.md` v2.0: definition, north star, outsourcing problem, personas (client PO, account manager), engagement model, Scrum lifecycle mapping, risk-first journeys C/D, MVP/MVP+1/V1/V2 scope, risk measures. | Validate ICP, risk-signal value and client-sharing expectations (Phase 00). |
+| Requirements | Glossary additions; BR-017/027/030 amended; new BR-046–BR-057 (engagement, Scrum events, velocity, Sprint Review acceptance, risk signals/register/sharing/health); NFR-013/014; acceptance journeys 8–10; open questions 10–12. | Thresholds, engagement fields and sharing defaults stay proposed. |
+| Roadmap | FEAT-DP-001/009/010/011/018 renamed; 001/011/019 promoted to MVP; 005 to V1; 006/017 to P1; new FEAT-DP-025–028; Kanban deferred to V2 without an ID; slices VS-00–VS-09 and phases rewritten. | Feature contracts for 025/001/004 not yet drafted. |
+| Architecture proposal | Engagement & Client and Delivery Risk Intelligence contexts; signal-engine design; ARCH-008/009; open questions 7–8. | Module placement and hosting decisions. |
+| Routing | Context map rows, README vision, workflow §16.1 mapping rows, `dp-product-discovery` skill now points to `product.md` instead of embedding product facts. | — |
+
+**Not changed:** FEAT-DP-002/003 artifacts, task statuses, approval references, source code, tests and migrations. Historical Scrum/Kanban mentions in [identity-domain-discovery.md](identity-domain-discovery.md) (Project policy, `execution.pull`, O3) and in the findings table above remain valid as post-MVP design inputs. They are not MVP scope.
+
+## Subsequent backend task planning — 2026-11-03
+
+The user invoked dp-task-planner plan-feature FEAT-DP-003 and selected backend tasks only. The [backend task index](../features/FEAT-DP-003-organization/backend-plan.md) records inspected source, proposed technical contracts and true dependencies. Fourteen TASK files now cover foundations and all source stories; TASK-DP-003-001 was replanned in place. TASK-DP-003-002 is the initial pending task; dependent tasks remain blocked pending prerequisite acceptance/current-source review. Earlier statements that the creation task was byte-for-byte unchanged describe the earlier requirements-review stage only.
+
+No UR/FR/US, application source, existing test, migration, project reference or deployment was changed by planning. The versioned invitation delivery task explicitly addresses the existing one-day verification-only contract, current-proof retry admission and real delivery status rather than treating intake acknowledgement as Delivered. Frontend implementation and Project/guest resource admission remain external handoffs, without silently selecting the proposed frontend stack or implementing a monolith. Planning validation results are recorded in the task index after the actual commands run.

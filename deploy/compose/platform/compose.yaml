@@ -1,0 +1,19 @@
+# Shared network only on servers. Local broker, topology jobs and Mailpit are
+# added by compose.local.yaml; production broker provisioning is operator-owned.
+services:
+  network-init:
+    image: ${DELIVERYPILOT_SETUP_IMAGE:?Set DELIVERYPILOT_SETUP_IMAGE}
+    command: [network-init]
+    restart: "no"
+    networks: [messaging, http]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+networks:
+  http:
+    name: ${DELIVERYPILOT_STACK:?Set DELIVERYPILOT_STACK}-http
+    ipam:
+      config:
+        - subnet: ${DELIVERYPILOT_HTTP_SUBNET:?Set DELIVERYPILOT_HTTP_SUBNET}
+  messaging:
+    name: ${DELIVERYPILOT_STACK:?Set DELIVERYPILOT_STACK}-messaging

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk.Web"><PropertyGroup><UserSecretsId>deliverypilot-notification-api</UserSecretsId></PropertyGroup><ItemGroup>
+<ProjectReference Include="../DeliveryPilot.Notification.Infrastructure/DeliveryPilot.Notification.Infrastructure.csproj" />
+<ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj" />
+</ItemGroup></Project>

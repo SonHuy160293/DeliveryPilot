@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>deliverypilot-identity-api</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../DeliveryPilot.Identity.Application/DeliveryPilot.Identity.Application.csproj" />
+    <ProjectReference Include="../DeliveryPilot.Identity.Infrastructure/DeliveryPilot.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.Observability/DeliveryPilot.Observability.csproj" />
+  </ItemGroup>
+</Project>

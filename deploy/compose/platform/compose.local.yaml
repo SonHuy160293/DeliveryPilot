@@ -1,0 +1,103 @@
+x-job: &job
+  image: ${DELIVERYPILOT_SETUP_IMAGE:?Set DELIVERYPILOT_SETUP_IMAGE}
+  restart: "no"
+  logging: &logging
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+services:
+  network-init:
+    build: &tools-build
+      context: ../../..
+      dockerfile: Dockerfile.deploy
+      args: {POSTGRES_IMAGE: "${DELIVERYPILOT_POSTGRES_IMAGE}"}
+  secret-stage:
+    <<: *job
+    build: *tools-build
+    command: [stage-secrets, platform]
+    volumes:
+      - type: bind
+        source: ${DELIVERYPILOT_SECRETS_DIR}
+        target: /source
+        read_only: true
+        bind: {create_host_path: false}
+      - broker-secrets:/staged/broker
+      - topology-secrets:/staged/topology
+  rabbitmq:
+    image: ${DELIVERYPILOT_RABBITMQ_IMAGE:?Set DELIVERYPILOT_RABBITMQ_IMAGE}
+    hostname: rabbitmq
+    user: "999:999"
+    environment:
+      RABBITMQ_DEFAULT_USER: deliverypilot-admin
+      RABBITMQ_DEFAULT_VHOST: ${DELIVERYPILOT_MESSAGING_VIRTUAL_HOST:-deliverypilot}
+    entrypoint: [/bin/sh, -ec]
+    command: ['export RABBITMQ_DEFAULT_PASS="$$(cat /run/secrets/broker-admin-password)"; exec docker-entrypoint.sh rabbitmq-server']
+    volumes: [rabbitmq-data:/var/lib/rabbitmq, "broker-secrets:/run/secrets:ro"]
+    depends_on: {secret-stage: {condition: service_completed_successfully}}
+    networks: [messaging]
+    healthcheck:
+      test: [CMD, rabbitmq-diagnostics, -q, ping]
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
+    restart: unless-stopped
+    stop_grace_period: 45s
+    logging: *logging
+    mem_limit: 1024m
+    ports:
+      - "127.0.0.1:${DELIVERYPILOT_RABBITMQ_AMQP_PORT:-25672}:5672"
+      - "127.0.0.1:${DELIVERYPILOT_RABBITMQ_MANAGEMENT_PORT:-25673}:15672"
+  broker-bootstrap:
+    <<: *job
+    build: *tools-build
+    command: [broker-bootstrap]
+    environment:
+      DELIVERYPILOT_MESSAGING_VIRTUAL_HOST: ${DELIVERYPILOT_MESSAGING_VIRTUAL_HOST:-deliverypilot}
+    volumes:
+      - type: bind
+        source: ${DELIVERYPILOT_SECRETS_DIR}
+        target: /source
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [messaging]
+    depends_on: {rabbitmq: {condition: service_healthy}}
+  topology:
+    image: ${DELIVERYPILOT_NOTIFICATION_WORKER_IMAGE:?Set DELIVERYPILOT_NOTIFICATION_WORKER_IMAGE}
+    command: [topology]
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      Messaging__Host: rabbitmq
+      Messaging__Port: "5672"
+      Messaging__VirtualHost: ${DELIVERYPILOT_MESSAGING_VIRTUAL_HOST:-deliverypilot}
+      Messaging__Username: deliverypilot-admin
+      Messaging__PasswordFile: /run/secrets/broker-admin-password
+      Messaging__Development: "true"
+      Messaging__UseTls: "false"
+      Messaging__QuorumSize: "1"
+      Observability__Enabled: "false"
+    volumes: ["topology-secrets:/run/secrets:ro"]
+    networks: [messaging]
+    depends_on: {broker-bootstrap: {condition: service_completed_successfully}}
+    restart: "no"
+    logging: *logging
+    build:
+      context: ../../..
+      dockerfile: Dockerfile.modules
+      target: notification-worker
+      args:
+        DOTNET_SDK_IMAGE: ${DELIVERYPILOT_DOTNET_SDK_IMAGE}
+        DOTNET_RUNTIME_IMAGE: ${DELIVERYPILOT_DOTNET_RUNTIME_IMAGE}
+  mailpit:
+    image: ${DELIVERYPILOT_MAILPIT_IMAGE:?Set DELIVERYPILOT_MAILPIT_IMAGE}
+    profiles: [mailpit]
+    networks: [messaging]
+    restart: unless-stopped
+    logging: *logging
+    mem_limit: 128m
+    ports:
+      - "127.0.0.1:${DELIVERYPILOT_MAILPIT_SMTP_PORT:-21025}:1025"
+      - "127.0.0.1:${DELIVERYPILOT_MAILPIT_HTTP_PORT:-28025}:8025"
+volumes:
+  rabbitmq-data: {}
+  broker-secrets: {}
+  topology-secrets: {}

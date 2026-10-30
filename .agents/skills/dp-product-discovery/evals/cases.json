@@ -1,0 +1,31 @@
+{
+  "skill": "dp-product-discovery",
+  "cases": [
+    {
+      "kind": "positive",
+      "prompt": "Research DeliveryPilot market alternatives and draft docs/product/vision.md without claiming approval",
+      "expect": [
+        "draft vision based on sourced claims",
+        "explicit unknowns",
+        "no code changes"
+      ]
+    },
+    {
+      "kind": "positive",
+      "prompt": "Investigate a new risk-prediction feature and create discovery proposal plus assumption register",
+      "expect": [
+        "feature discovery only",
+        "source ledger",
+        "hypothesis status"
+      ]
+    },
+    {
+      "kind": "negative",
+      "prompt": "Implement a .NET 10 API for querying project blockers",
+      "expect": [
+        "skill should not activate",
+        "leave coding to implementation workflow"
+      ]
+    }
+  ]
+}
