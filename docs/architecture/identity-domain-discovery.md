@@ -1,5 +1,8 @@
 # Identity Domain Discovery
 
+> **Historical reference — reviewed 2026-11-08:** Original alternatives/readiness are retained. Use the [Identity overview](modules/identity/README.md#verified-implementation-baseline) and [current schema](modules/identity/current-schema.md) for later evidence. Superseded module boundaries and unfinished-work statements below are not current instructions.
+
+
 > Status: Draft architecture recommendation; not an accepted ADR, approved requirement, implementation task, or physical ERD.
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Scope: Identity ERD prerequisites and its relationships with workspace, project, access, and future platform administration.

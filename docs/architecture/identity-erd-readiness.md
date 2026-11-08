@@ -1,5 +1,8 @@
 # Identity ERD Readiness
 
+> **Historical reference — reviewed 2026-11-08:** Original alternatives/readiness are retained. Use the [Identity overview](modules/identity/README.md#verified-implementation-baseline) and [current schema](modules/identity/current-schema.md) for later evidence. Superseded module boundaries and unfinished-work statements below are not current instructions.
+
+
 > Status: Draft conceptual/logical groundwork. Not a finalized physical ERD, accepted ADR, migration specification, or implementation authorization.
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Primary analysis: [Identity Domain Discovery](identity-domain-discovery.md).

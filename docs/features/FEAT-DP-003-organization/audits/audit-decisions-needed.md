@@ -1,5 +1,8 @@
 # FEAT-DP-003 audit decisions needed
 
+> **Historical snapshot — reviewed 2026-11-08:** Counts, blockers and tests below describe their recorded checkout. All 18 Organization Task files now record done; see [backend acceptance](../backend-acceptance.md) and [Gateway contract](../gateway-api-contract.md). Frontend and Project/guest handoffs remain separate. Original findings/reconciliation notes are preserved as history.
+
+
 ## Reconciliation — 2026-11-04
 
 **Session revocation (R-02), resolved:** On 2026-11-04 the user chose to block an Organization mutation from committing after its session is revoked. [Task 018](../tasks/TASK-DP-003-018.md) implements transaction serialization: revocation committed first denies the mutation; a mutation holding the session lock commits or rolls back before revocation can complete. PostgreSQL tests verify both orders, rollback and session ownership. The original audit statement below records the earlier state before this investigation; the decision is not client approval of the requirements.

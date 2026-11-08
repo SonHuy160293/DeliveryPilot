@@ -1,5 +1,8 @@
 # FEAT-DP-003 blocker resolution plan
 
+> **Historical snapshot — reviewed 2026-11-08:** Counts, blockers and tests below describe their recorded checkout. All 18 Organization Task files now record done; see [backend acceptance](../backend-acceptance.md) and [Gateway contract](../gateway-api-contract.md). Frontend and Project/guest handoffs remain separate. Original findings/reconciliation notes are preserved as history.
+
+
 ## Implementation reconciliation — 2026-11-04
 
 The original findings below are retained as audit history; this reconciliation records subsequent work.

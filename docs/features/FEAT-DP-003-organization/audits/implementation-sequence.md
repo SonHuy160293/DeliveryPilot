@@ -1,5 +1,8 @@
 # FEAT-DP-003 implementation sequence
 
+> **Historical snapshot — reviewed 2026-11-08:** Counts, blockers and tests below describe their recorded checkout. All 18 Organization Task files now record done; see [backend acceptance](../backend-acceptance.md) and [Gateway contract](../gateway-api-contract.md). Frontend and Project/guest handoffs remain separate. Original findings/reconciliation notes are preserved as history.
+
+
 ## Reconciliation — 2026-11-04
 
 The diagram and table below capture the original audit snapshot. [Task 017](../tasks/TASK-DP-003-017.md) and [task 018](../tasks/TASK-DP-003-018.md) were added as prerequisites of 006 and are complete. Tasks 005 and 006 are complete within their scopes. Task 013 is pending after its contract review. The [resolution reconciliation](blocker-resolution-plan.md#implementation-reconciliation--2026-11-04) records current evidence, and the [session policy](audit-decisions-needed.md#reconciliation--2026-11-04) records the user's decision. Downstream tasks continue to require their declared gates; frontend and Project/guest work remain external handoffs.

@@ -1,202 +1,237 @@
 # DeliveryPilot - Product Blueprint
 
-> **Version:** 1.1 (working baseline; reconciled 2026-11-03)
+> **Version:** 2.1 (lifecycle and execution visibility reconciled 2026-11-07)
 >
-> **Status:** Product direction incorporates user-confirmed workflow and selected Identity design; detailed artifact approval and customer validation remain separate.
+> **Status:** Current product direction under D1–D6, reviewed 2026-11-08. Compatible earlier Q/W/V and selected Identity choices retain their recorded scope. Detailed approval and customer validation remain separate.
 >
 > **Product type:** Multi-tenant B2B SaaS  
-> **Primary market hypothesis:** Software outsourcing agencies and engineering delivery teams  
+> **Primary market hypothesis:** Software outsourcing vendors running Scrum delivery for external clients (V5, not yet validated)  
 > **Document owner:** Product Owner  
 > **Related documents:** [Requirements](requirements.md) | [Workflow discovery](deliverypilot-workflow-discovery.md) | [Architecture workspace](architecture/README.md) | [Roadmap](roadmap.md)
 
-Workflow Q1–Q44 and W1 supply recorded product-owner direction. The [Identity decision log](architecture/modules/identity/design-decisions.md) records subsequent module/access choices. Derived workflow clarifications and physical schema proposals retain their own status; neither source establishes that a feature is implemented. See the [alignment audit](architecture/documentation-alignment-audit.md) for remaining handoffs.
+[Decisions D1–D6](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) establish the current eight-stage, post-contract product direction. They supersede the risk-first positioning and seven-stage summary where those conflict; earlier Q/W/V decisions otherwise retain their scope. Detailed artifact approval, customer validation and implementation remain separate. The [SDLC workflow](sdlc-workflow.md) owns stage gates and execution visibility; [Identity decisions](architecture/modules/identity/design-decisions.md) retain their access/design authority.
 
 ## 1. Product definition
 
-**DeliveryPilot is an AI-powered Software Delivery Lifecycle Management Platform.** It connects business intent and client commitments to planning, implementation, quality verification, acceptance, release, and continuous improvement. It is not only a task tracker or AI chat interface.
+**DeliveryPilot is a multi-tenant, AI-assisted software delivery management platform designed for outsourcing organizations executing fixed-price software projects using Agile Scrum.**
 
-**North star:** *Every software delivery commitment should be understandable, traceable, measurable, and proactively manageable.*
+It provides end-to-end visibility from project initiation to warranty and closure, connecting contractual scope, requirements, delivery planning, engineering execution, client approvals, and project health.
 
-**Value proposition:** From business intent to verified delivery, with end-to-end traceability, configurable governance, and evidence-based delivery intelligence.
+DeliveryPilot helps teams understand what was agreed, what is being delivered, what has changed, what is at risk, and what action should be taken next.
+
+**North star:** Every delivery commitment is traceable from agreement through execution, acceptance and closure, with evidence for the next decision.
 
 DeliveryPilot should answer:
 
-- What problem is this project solving, and what scope was agreed?
-- Which requirement version was approved, by whom, and when?
-- Which features, stories, implementation work, and tests satisfy a requirement?
-- What has changed since the scope or delivery-plan baseline?
-- Are capacity, dependencies, risks, and quality indicators threatening delivery?
-- What has been developed, tested, accepted, and released?
+- What did we agree to deliver to this client, under which contract type, and what has changed since?
+- Is the current Sprint Goal on track? Is the release or milestone on track?
+- Which risks threaten delivery right now, what evidence supports them, and who owns the response?
+- Is scope creeping, is velocity drifting, is budget or effort burning faster than planned?
+- Which client decisions, approvals or deliverables are we waiting on?
+- What did the client accept at Sprint Review, and what is ready to release?
 - What action is recommended next, and what evidence supports it?
 
 ## 2. Problem and opportunity
 
-Software teams commonly manage discovery, sign-off, engineering work, testing, and reporting in separate systems. For outsourcing agencies this makes it difficult to reconstruct client decisions, identify scope creep, coordinate approvals, or explain delivery delays. DeliveryPilot aims to reduce this fragmentation.
+The initial product addresses fixed-price outsourcing after contract signing. Research suggests recurring coordination problems; their prevalence and importance for our target customers still need validation. Candidate problems include:
 
-The initial differentiation to validate with customers is **client collaboration + requirement/version baselines + requirement-to-release traceability + explainable delivery risk assistance**. A backlog board alone is not the differentiator.
+- **Scope creep:** work added mid-Sprint or outside the agreed baseline without a recorded change decision.
+- **Client-side latency:** pending approvals, clarifications, environments or deliverables owned by the client.
+- **Velocity and capacity drift:** team rotation, leave, multi-project allocation and key-person dependency.
+- **Budget/effort burn:** spend or effort consumed faster than delivered value, especially on fixed-price work.
+- **Opaque status:** status reports are assembled by hand from tools that do not connect commitments, work and risks.
+
+Teams can configure existing trackers and service tools to cover parts of this workflow. Our hypothesis is that connecting agreements, execution and client decisions with less reconciliation work provides value. Differentiation to validate with pilots:
+
+1. **Explainable delivery risk management**: deterministic risk signals, a human-reviewed risk register, and AI explanation and mitigation suggestions.
+2. **Outsourcing-native Scrum:** engagements, contract type, client Product Owner and Sprint Review acceptance are first-class.
+3. **Commitment integrity:** version-bound scope baselines and Change Requests prevent silent scope changes.
+4. **Scoped client transparency:** clients see the shared delivery health, scope and decisions intended for them, and nothing else.
+
+A Scrum board alone is not the differentiator.
 
 ## 3. Customers, buyers, and users
 
-**Initial ICP hypothesis (not validated):** Software agencies with roughly 10-100 staff, multiple concurrent projects, and recurring external-client approvals.
+**Initial ICP hypothesis (V5, not validated):** Software outsourcing vendors with roughly 10–200 staff, several concurrent client engagements, Scrum delivery, and recurring client sign-off.
 
-The same workspace model supports a solo practitioner and a team. Solo use is a confirmed workflow capability (Q1/Q10), not a change to the unvalidated primary-market hypothesis.
+The same workspace model supports a solo freelancer and a vendor team (Q1/Q10); this does not change the ICP hypothesis.
 
-| Persona | Main jobs to be done |
-|---|---|
-| Executive / CTO | See portfolio health, strategic delivery risks, and decisions needing attention |
-| Delivery Manager | Coordinate commitments, escalations, and shared resources |
-| Project Manager | Maintain plans, milestones, dependencies, risks, and stakeholder communication |
-| Product Owner | Own goals, priorities, scope decisions, and backlog value |
-| Business Analyst | Discover needs, refine requirements, clarify rules, and maintain traceability |
-| Scrum Master | Facilitate Scrum and help address team impediments |
-| Tech Lead / Architect | Evaluate feasibility, dependencies, system design, and technical risk |
-| Developer | Receive clear work, resolve dependencies, and show implementation progress |
-| QA / Tester | Verify acceptance criteria, manage defects, and record evidence |
-| DevOps / SRE | Plan infrastructure, reliability, and release work |
-| Client stakeholder | Review shared scope and requirements, approve authorized artifacts, give UAT feedback |
-
-A person's job title is **not** an authorization role. Organization membership, project participation, explicit permissions, resource visibility and decision assignments determine access. A System Administrator has separately controlled platform authority; that assignment does not grant customer-content access or business approval authority.
-
-## 4. Organization, product, and project model
-
-- **Workspace** is the user-facing term for **Organization**; **tenant** describes its ownership and isolation boundary. Personal and team workspaces use the same model.
-- Registration establishes a global User identity. Workspace creation is a separate action available to a registered person, who becomes its initial Owner.
-- One organization can own many projects; a user account may belong to zero or multiple organizations. Multiple Owners are allowed with last-owner protection in normal administration.
-- In the MVP, each project has exactly one owning tenant.
-- An external **client organization** is a business relationship, not automatically a co-owner of the vendor's project data.
-- Workspace membership does not grant project access automatically. Project roles and invitations have separate authority; restricted guests may access selected projects/resources without general organization membership.
-- Client stakeholders receive intentionally scoped access through the Client Portal. Visibility, required reviewer assignment and permission to approve are separate facts.
-- A **product** is the evolving software outcome; a **project** is a bounded delivery initiative. MVP may store product vision within the project while leaving room for a separate Product entity later.
-- Initial projects select Scrum or Kanban. Hybrid execution and several independently scheduled teams per project are deferred (Q8/Q25). Initial Scrum uses one delivery team/calendar and at most one active Sprint; Kanban requires no Sprint.
-
-**Example:** Agency A owns an ERP implementation project. Client B can review designated requirements and UAT artifacts without accessing Agency A's internal estimates, confidential notes, or other projects.
-
-## 5. Product capabilities across the lifecycle
-
-These are capabilities, **not mandatory waterfall gates**. Discovery, refinement, engineering, acceptance, and replanning may overlap or repeat.
-
-| Capability | Core activities | Representative outputs |
+| Persona | Side | Main jobs to be done |
 |---|---|---|
-| Initiation and discovery | Problem definition, stakeholders, vision, goals, scope, MVP hypothesis, constraints | Project brief, vision, scope, assumptions |
-| Requirements engineering | User/business/functional/NFRs, rules, revisions, questions, reviews | Requirement versions, rules, review decisions |
-| Product and delivery backlog | Epics, features, stories, bugs, technical work, priorities, relations | Prioritized and traceable backlog |
-| Technical and delivery planning | Feasibility, architecture, estimates, availability, allocations, dependencies | Decisions, plans, forecasts, milestones |
-| Iterative delivery | Scrum Sprints or Kanban flow, assignments, blockers, work execution | Working increment, activity and progress evidence |
-| Verification and acceptance | Tests, defects, NFR checks, client feedback, UAT, sign-off | Quality and acceptance evidence |
-| Release and operations | Release readiness, deployments, incidents, feedback, changes | Release records, follow-up work, improvement actions |
+| Executive / CTO | Vendor | See engagement portfolio health and the delivery risks needing attention |
+| Account / Engagement Manager | Vendor | Own the client relationship, contract type, budget and escalations |
+| Delivery Manager | Vendor | Coordinate commitments, shared people and cross-engagement risk |
+| Project Manager | Vendor | Maintain releases, milestones, dependencies, risks and client communication |
+| Product Owner (vendor proxy) | Vendor | Refine and order work within explicit delegation; does not automatically inherit client acceptance or commercial authority |
+| Scrum Master | Vendor | Facilitate Scrum events, remove impediments, keep the risk register current |
+| Business Analyst | Vendor | Refine backlog items, acceptance criteria and requirements |
+| Tech Lead / Architect | Vendor | Assess feasibility, technical dependencies and technical risk |
+| Developer / QA / DevOps | Vendor | Deliver, verify and release increments; report blockers |
+| Client Product Owner | Client | Clarify priorities, sign off scope baselines, accept increments at Sprint Review |
+| Client Sponsor / Stakeholder | Client | Own business outcomes, funding and escalated trade-offs; follow shared health |
+| Client QA / UAT | Client | Validate agreed scenarios and record evidence; sign off only if designated |
+| Client Finance | Client | Check milestone evidence against payment terms; distinct from product acceptance authority |
 
-**Key distinction:** A story being marked Done is not the same as QA Passed, Client Accepted, or Released.
+A job title is **not** an authorization role. Organization membership, project participation, explicit permissions, resource visibility and decision assignments determine access. A System Administrator has separately controlled platform authority; it grants neither customer-content access nor business approval authority.
+
+## 4. Organization, engagement, and project model
+
+- **Workspace** is the user-facing term for **Organization**; **tenant** is its ownership and isolation boundary. The vendor owns the workspace.
+- Registration establishes a global User identity. Creating a workspace is a separate action; the creator becomes its initial Owner. Multiple Owners are allowed, with last-owner protection.
+- A **Client Organization** is an external business relationship recorded by the vendor. It is not a co-owner of vendor data and gains no access implicitly.
+- A **Client Engagement** (V3) records the commercial delivery context for one client: signed agreement reference, fixed price, agreed scope, assumptions, budget/effort, milestones, acceptance/payment conditions and the client-side Product Owner. Time & Materials and Dedicated Team are retained future concepts. Native invoicing, ledger and payment processing are outside the initial implementation; external financial evidence can be referenced.
+- One engagement can contain one or more **projects**. Each MVP project has exactly one owning tenant and belongs to at most one engagement. Internal (non-client) projects are allowed without an engagement.
+- A global User can hold memberships in multiple organizations and participate in multiple projects. Permissions, availability and assignments remain scoped: one employer cannot inspect another employer’s projects or workload. Cross-organization availability sharing needs explicit consent and policy.
+- Workspace membership does not grant project access. Client stakeholders participate as restricted guests with resource-scoped access through the Client Portal. Visibility, required-reviewer assignment and approval permission are separate facts.
+- A **product** is the evolving software outcome; a **project** is a bounded delivery initiative. The MVP may keep the Product Goal within the project.
+- MVP projects use **Scrum** (V1): one delivery team and calendar, at most one active Sprint, and future Sprints that may be planned. Kanban project mode, hybrid delivery and multiple independently scheduled teams per project are deferred.
+
+**Example:** Vendor A runs a fixed-price ERP engagement for Client B. Client B's Product Owner accepts increments at Sprint Review and sees the shared release health. They cannot see Vendor A's internal estimates, the risk notes marked internal, or other clients' engagements.
+
+## 5. Eight lifecycle and governance stages
+
+The [SDLC workflow](sdlc-workflow.md) defines activities, artifacts, client/vendor authority, entry/exit gates and exception routes for:
+
+1. Initialization.
+2. Requirements analysis and validation.
+3. Solution design and delivery planning.
+4. Iterative Scrum delivery.
+5. System testing and UAT.
+6. Release and deployment.
+7. Hypercare and warranty.
+8. Project closure and handover.
+
+These are lifecycle/governance stages, not a strict waterfall workflow. Refinement, design, development and testing continue during Sprints. UAT and deployment may repeat per release; development and warranty can coexist for different delivered scope.
+
+Preserve the original Sprint start/end dates and selected-work snapshot. A separate execution timeline shows actual work, blocked intervals, carry-over and later completion; forecasts and recovery scenarios remain distinct from facts. A late item does not extend the Sprint.
+
+Done (DoD), QA verified, client accepted, released, warranty complete and commercially closed remain separate facts. Daily Scrum serves Developers; PM status/reporting views can reuse its evidence without turning that event into an approval meeting.
 
 ## 6. Critical product concepts
 
 | Concept | Meaning / boundary |
 |---|---|
-| Business objective | Outcome and value to be achieved |
-| User requirement | A stakeholder or user's need |
-| Functional requirement | Required system behavior |
-| Non-functional requirement | Required quality, reliability, security, etc. |
-| Business rule | Domain policy or decision rule |
-| Reviewer approval / final acceptance | Revision-specific reviewer decision / separate authorized action making reviewed content current after applicable gates |
-| Scope baseline | Explicit selection of agreed artifact versions; acceptance alone does not establish it |
-| Delivery-plan baseline | Separate agreed reference plan; forecasts and draft scenarios do not replace it |
-| Change request | Controlled proposal to change a baseline or commitment |
-| Epic / feature / user story | Backlog decomposition to deliver valuable capabilities |
-| Technical work item | Infrastructure, security, refactoring, spike or other work not necessarily under a story |
-| Estimate / capacity / forecast | Distinct concepts: expected effort, available work capacity, predicted delivery outcome |
+| Client Engagement | Commercial delivery context with a client: contract type, planned budget/effort, milestones, client PO |
+| Contract type | Fixed-price in the initial product; T&M and Dedicated Team are future concepts, not initial supported workflows |
+| Product Goal / Sprint Goal | Long-term objective / commitment for one Sprint |
+| Product Backlog / Sprint Backlog / Increment | Scrum artifacts; requirements remain separate linked artifacts |
+| Requirement (UR/FR/NFR) and business rule | Need, behavior, quality constraint, policy; version-bound when agreed |
+| Scope baseline | Explicit selection of agreed artifact versions signed off by the client; acceptance alone does not establish it |
+| Change request | Controlled proposal to change a baseline or commitment, with impact assessment |
+| Velocity | Historical completed estimate per Sprint for one team; a planning input, never a target or an individual metric |
+| Capacity | Declared available time for a Sprint, after leave and allocations |
+| Risk signal | Deterministic, explainable detection of an objective condition (for example, an approval overdue by N days) |
+| Candidate finding | Evidence-backed concern awaiting human review; not automatically a risk |
 | Risk / issue / blocker / dependency | Potential event / occurred problem / active obstruction / work relationship |
-| Approval | An authorized decision on a particular artifact version |
-| Release | Recorded delivery of software, distinct from iteration completion |
+| Risk exposure | Reviewed probability × impact rating with an owner and response |
+| Delivery health | Explainable summary of a Sprint, release or engagement, derived from signals and reviewed risks; never a score of individuals |
+| Release | Recorded delivery of software, distinct from Sprint completion |
 
-The canonical cross-feature constraints are in [requirements.md](requirements.md). A requirement can be satisfied by multiple backlog items and vice versa. Runtime Stories may link directly to URs; FR/NFR refinement is used where applicable. This does not change repository frontmatter conventions.
+The canonical cross-feature constraints are in [requirements.md](requirements.md).
 
 ## 7. Core user journeys
 
-### Journey A - Requirement to delivery
+### Journey A - Engagement to Sprint
 
-1. A registered person creates a workspace, or joins through authorized access, then creates/accesses a project under its own permissions.
-2. PM/PO/BA records purpose, scope, stakeholders and assumptions; user needs and candidate Features evolve together during discovery.
-3. Contributors propose one UR change at a time per UR and submit immutable review revisions, including the relevant Feature mapping.
-4. Required internal review and the selected client mode apply to the exact revision. An authorized person explicitly accepts it after the gates; scope-baseline establishment is a separate action.
-5. The team refines linked Stories/AC and applicable FR/NFR/rules, prepares test scenarios, and checks readiness. A fixed Epic-to-Story hierarchy is not mandatory.
-6. The team estimates and checks dependencies/declared capacity, compares scenarios, explicitly applies a reviewed plan and separately establishes any plan baseline. AI assistance is optional.
-7. Scrum selection or Kanban pull rechecks readiness; Dev/QA work, verification, applicable UAT and release retain distinct outcomes and evidence. Controlled changes return affected scope/specifications/plans to the relevant gates.
-
-This summarizes the confirmed target journey, not a declaration that every step belongs to the first release. The [workflow](deliverypilot-workflow-discovery.md#3-complete-workflow) retains the detailed loops; [roadmap scope gaps](roadmap.md#workflow-coverage-and-release-decisions) identify unresolved release allocation.
+1. A vendor Owner creates the workspace; an authorized user records the Client Engagement (contract type, budget/effort, milestones, client PO) and creates the Scrum project.
+2. The team builds the Product Backlog: Epics/Features/Stories with acceptance criteria and linked requirements where useful.
+3. The client PO signs off the release or Sprint scope baseline for the exact versions selected (V2). Silence is not approval.
+4. At Sprint Planning the team sets a Sprint Goal, checks declared capacity against velocity history and readiness, and selects the Sprint Backlog.
+5. The team executes, reports blockers and records material Sprint changes with their reason and delta.
 
 ### Journey B - Client scope change
 
-1. Client or team proposes a change to baselined scope or a delivery commitment, including agreed Story criteria even if the UR text is unchanged.
-2. New proposed content remains separate from the current agreement and its baselines.
-3. Team assesses dependent features, effort, timeline, risk, and cost if applicable.
-4. Authorized decision-makers approve, reject, or defer the change. Approval does not itself accept revised specifications or apply a new plan.
-5. Applicable review, readiness and feasibility checks govern explicit backlog/plan/baseline reconciliation. Rejected or deferred proposals retain the current baselines; routine changes within the agreement remain lightweight.
+1. The client or the team proposes a change to baselined scope or a commitment.
+2. The proposed content stays separate from the current agreement.
+3. The team assesses the impact on backlog, effort, Sprint/release dates, budget burn (by contract type) and risk.
+4. Authorized decision-makers approve, reject or defer. Approval does not itself apply a new plan or baseline.
+5. Explicit reconciliation updates the backlog and baseline. Routine edits within the agreement stay lightweight.
 
-### Journey C - Proactive delivery intervention
+### Journey C - Delivery risk intervention
 
-1. Dependencies, blocked work, planned effort, availability, and milestones generate delivery signals.
-2. Rules detect objective concerns before optional AI explanation.
-3. A finding records evidence and affected artifacts.
-4. PM reviews suggested options; no automatic commitment change occurs.
-5. The team records action and outcome for later improvement.
+1. Delivery events (Sprint progress, blockers, approvals, capacity, scope changes, effort/budget burn) feed deterministic risk signals.
+2. A signal produces a candidate finding with evidence and affected Sprint, release, engagement or work.
+3. Optional AI explains the finding, links related evidence and suggests mitigation options, with uncertainty stated (MVP+1).
+4. The PM or Scrum Master confirms, links, dismisses or requests information. Confirmed risks get an owner, exposure rating and response.
+5. Responses that change a commitment go through a Change Request. Nothing changes commitments automatically.
+6. Selected risk and health information is explicitly shared with the client; the outcome is recorded for later learning.
 
-## 8. MVP and release strategy
+### Journey D - Sprint Review and client acceptance
 
-**MVP goal:** An agency can demonstrate the core requirement-to-work and client-review path of Journey A in a secure, auditable workspace, execute Scrum or Kanban work, and register a blocker. Journey A now describes the broader confirmed target workflow. The minimum planning, change-control and verification/release evidence needed for the pilot still needs explicit release allocation; do not claim full journey coverage from the current registry. See [roadmap](roadmap.md).
+1. The team presents the increment; the client PO accepts, rejects or gives feedback per item.
+2. Rejected items return to the backlog with feedback; new needs become backlog items or Change Requests.
+3. Accepted, released and Done remain distinct evidence. Velocity uses completed work under the team’s DoD, not client sign-off; review feedback informs scope and risk decisions.
 
-**MVP:** Organization/membership; project and discovery; requirements and versioning; configurable basic approval; backlog; core Scrum/Kanban delivery; basic risks/issues; scoped Client Portal; traceability.
+## 8. Product scope and proposed delivery sequence
 
-**Next release (existing proposed allocation):** Capacity/estimation tools, QA/UAT/release management, formal change-request management, forecasting, rule-based blocker detection and AI assistance. Their placement does not waive version-bound review, preservation of agreed scope, or honest labeling of delivery evidence in earlier slices. Lightweight outcomes versus full management tooling need the roadmap decisions noted above.
+**Initial product scope:** Post-contract project delivery across all eight stages, requirements collaboration, Scrum planning/execution, client acceptance, risks, traceability, reporting and AI assistance. Contract inputs are recorded or referenced; presales is research context, not an in-product stage.
 
-**Later:** Cross-project resource and portfolio analysis, richer integrations, probabilistic predictions, enterprise governance, and validated commercial features.
+| Capability area | Coverage |
+|---|---|
+| Organization and project access | Multi-organization identity, separate memberships/project grants and scoped client collaboration |
+| Agreement and requirements | Epics/features, versioned requirements/stories, acceptance criteria, optional vendor/client review policy, scope baselines and controlled change |
+| Delivery and execution visibility | Tasks/technical work, Sprint timeboxes, capacity, workload, burndown, blockers, actual execution and separate forecasts |
+| Quality and engineering evidence | API specification revisions, build/environment availability, consumer integration status, external test results and export |
+| Lifecycle decisions | UAT, release, warranty obligations, handover and closure evidence |
+| Shared understanding | Permission-aware search, weekly/Sprint reports, project health and client decision queues |
+| AI assistance | Evidence-backed risk explanations, draft reports, Sprint planning and recovery scenarios under human control |
 
-**MVP non-goals:** Billing, project co-ownership across organizations, enterprise-grade custom workflow builders, hybrid delivery, advanced predictive AI, and automated employee scoring. Multiple Owners within one workspace remain in the selected design.
+**Proposed first usable increment (MVP):** Secure engagement-to-Sprint-Review journey with baselines, lightweight change control, client decisions, original-versus-actual execution visibility, manual evidence links and health reporting. It is a first delivery slice, not complete implementation of the eight-stage product.
 
-## 9. AI product principles
+**Proposed subsequent increments:** AI risk/report assistance; detailed requirement review; QA/UAT/release; forecast scenarios; API collaboration; warranty and closure; deeper integrations and planning assistance. The [roadmap](roadmap.md) records feature allocation and gaps. Automated connector coverage is selected with pilot teams; the product accepts referenced evidence before every connector exists.
 
-- Prefer explainable rules for objective conditions such as over-capacity or overdue approvals.
-- Use AI for interpretation, drafting, alternative scenarios, and context-aware recommendations.
-- Every actionable finding should link to authorized evidence and indicate uncertainty.
-- Human approvers retain control over baselines, assignments, client communications, and delivery commitments.
-- Apply tenant and user authorization before retrieving any content for an AI analysis.
-- Do not claim statistically reliable forecasts without enough representative history and evaluation.
-- Do not use workload signals as automated judgments of employee worth or performance.
+**Outside the initial implementation:** CRM, presales proposals, payroll, full accounting, source-code hosting and a proprietary load-testing engine. Native invoices/payments remain external. Kanban mode, multiple independent teams per project, cross-tenant co-ownership, custom workflow builders and portfolio planning remain deferred under earlier decisions. No autonomous AI commitments or employee ranking.
 
-See the [target architecture](architecture.md) for proposed technical guardrails and the [architecture workspace](architecture/README.md) for selected module design and implementation boundaries.
+## 9. AI and risk-management principles
+
+- **Rules first.** Objective conditions (overdue client approval, capacity exceedance, scope added mid-Sprint, blocked age, burn ahead of plan) are detected by deterministic, configurable rules that work without an LLM.
+- **AI interprets; it does not decide.** AI explains findings, connects evidence, drafts mitigations and status narratives. Humans confirm risks and own responses.
+- Every finding links to authorized evidence, states what was observed versus inferred, and shows uncertainty.
+- Human authority covers baselines, assignments, client communications, and delivery commitments. AI cannot change them or promise dates to clients.
+- Apply tenant and user authorization before retrieving content for AI, and treat client-supplied text as untrusted input.
+- Do not claim calibrated predictions or confidence without representative history and evaluation.
+- Never use velocity, workload or risk data to score or rank individuals.
+- Measure precision, false positives, time-to-detection and cost before expanding AI scope.
+
+See the [target architecture](architecture.md) for proposed technical guardrails and the [architecture workspace](architecture/README.md) for selected module design.
 
 ## 10. Success criteria and measures
 
-**Customer outcome hypotheses:** Shorter approval turnaround; fewer unnoticed scope changes; improved ability to explain delivery status and impacts; earlier detection of material delivery risks.
+**Customer outcome hypotheses:** Earlier detection of material delivery risk; fewer unrecorded scope changes; higher Sprint Goal and milestone predictability; faster client sign-off; less manual status reporting.
 
 Candidate product measures:
 
-- Adoption: activated organizations, active projects, pilot-to-paid conversion.
-- Requirements: approval lead time, rework rate, approved-version traceability coverage.
-- Delivery: milestone predictability, blocked work age, cycle time, throughput, forecast error.
-- Quality: defect escape rate, UAT pass rate, reopened work.
-- AI: finding precision, false positive rate, time-to-detection, accepted recommendations, cost per analysis.
+- Risk: time-to-detection before impact, finding precision and false-positive rate, accepted mitigation rate, share of risks with owner and response.
+- Delivery: Sprint Goal hit rate, committed-vs-completed variance, carry-over rate, milestone predictability, blocked-work age.
+- Scope: scope-creep ratio (work added without a CR), CR turnaround, baseline change count.
+- Client: sign-off lead time, Sprint Review acceptance rate, client portal engagement.
+- Commercial (by contract type): effort/budget burn versus plan.
+- Adoption: activated workspaces, active engagements, pilot-to-paid conversion; AI cost per analysis.
 
-Define precise measurement methods before treating these as performance targets. Metrics must not be used to rank individuals by story points or hours.
+Define precise measurement methods before treating these as targets. Metrics must not rank individuals by story points, hours or velocity.
 
 ## 11. Product principles
 
-1. **Business value first.** Validate problems before replicating competitor features.
-2. **Trace critical commitments.** Keep the why, decision, version, and resulting delivery evidence connected.
-3. **Support Agile; do not force Waterfall.** Lifecycle capabilities can run concurrently or iteratively.
-4. **Human decision, AI assistance.** No autonomous modifications to approved commitments.
+1. **Delivery continuity.** Connect agreements, execution, acceptance and closure; surface threats early with evidence.
+2. **Scrum-native, outsourcing-aware.** Model Scrum events and artifacts alongside engagements, contract types and client roles.
+3. **Protect the agreement.** Version-bound baselines and Change Requests; no silent scope changes.
+4. **Human decision, AI assistance.** No autonomous change to commitments, assignments or client communication.
 5. **Security by design.** Tenant isolation and scoped client access are foundational.
-6. **Evidence before certainty.** Expose source evidence and forecast assumptions.
-7. **Ship vertical slices.** Favor complete business journeys over isolated technical modules.
+6. **Evidence before certainty.** Expose sources, assumptions and uncertainty.
+7. **Ship vertical slices.** Deliver complete engagement journeys over isolated technical modules.
 8. **Design for evolution.** Clear boundaries without premature distributed complexity.
 
 ## 12. Open product hypotheses
 
-These decisions require customer evidence and/or formal acceptance:
+These need customer evidence and/or formal acceptance:
 
-- Actual initial ICP, buyer, purchasing process and willingness to pay.
-- Customer validation of the initial one-UR proposal workflow and its Feedback Only / Approval Required modes; any later package/milestone approval needs separate scope refinement.
-- The minimum client-facing visibility necessary for a pilot.
-- Initial Product/Project distinction and client engagement/contract needs.
-- Billing, data residency, regulatory constraints, and integrations.
-- MVP delivery team, infrastructure budget, target dates, and the lightweight planning/change/verification outcomes needed before claiming the full target journey.
+- Actual ICP, buyer (CTO, delivery head or account manager), purchasing process and willingness to pay.
+- Which risk signals pilot vendors value most, and acceptable false-positive levels.
+- Minimum client-facing visibility: which health, risk and scope information vendors are willing to share.
+- Which monetary and effort fields pilots need, which are vendor-private, and which may be shared with clients.
+- Whether Sprint-level or release-level scope sign-off fits pilot contracts.
+- Whether Kanban demand (maintenance and support engagements) justifies earlier delivery than V2.
+- Data residency, regulatory constraints, AI-provider restrictions and first engineering/test integrations. Native billing is excluded initially; finance evidence depth remains to validate.
+- MVP team, infrastructure budget and target dates.
 
 **Change discipline:** Update this file when the *product direction or business rationale* changes. Put cross-feature behavior in [requirements.md](requirements.md), evidence in [workflow discovery](deliverypilot-workflow-discovery.md), module design in the [architecture workspace](architecture/README.md), topology alternatives in [architecture.md](architecture.md), and release allocation in [roadmap.md](roadmap.md). Preserve each source's authority label.

@@ -1,38 +1,37 @@
 # DeliveryPilot
 
-**AI-Powered Software Delivery Lifecycle Management Platform**
+**DeliveryPilot is a multi-tenant, AI-assisted software delivery management platform designed for outsourcing organizations executing fixed-price software projects using Agile Scrum.**
 
-DeliveryPilot is a multi-tenant B2B SaaS product for software agencies and engineering teams to manage software delivery from **product discovery and client requirements through backlog planning, implementation, QA/UAT and release**. Its differentiators are versioned client approvals, requirement-to-release traceability, delivery governance, and explainable AI recommendations—not simply another task board.
+It connects contractual scope, requirements, delivery planning, engineering execution, client approvals and project health, from initiation through warranty and closure. Teams can understand what was agreed, what is being delivered, what changed, what is at risk and what action to take next.
 
-> **Product status:** Blueprint agreed; detailed requirements and MVP assumptions are being validated.<br>
-> **Repository status:** The supplied backend documentation describes Identity, Notification and a YARP Gateway; product roadmap capabilities are not necessarily implemented.<br>
-> **North star:** Every software delivery commitment should be understandable, traceable, measurable and proactively manageable.
+> **Product status:** Current direction incorporates [D1–D6](docs/deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions); detailed requirements and release proposals still require review.
+> **Repository status:** Backend documentation describes Identity, Notification and YARP Gateway components. Product direction and roadmap entries are not proof of implemented features.
 
 ## Who it serves
 
-Product Owners and Business Analysts work from vision and requirements to reviewed backlog items. Project/Delivery Managers track dependencies, milestones, risks and capacity. Developers, QA and DevOps deliver verifiable work. External client stakeholders can participate in controlled reviews and approvals. Executives obtain delivery and portfolio visibility.
+Vendor delivery and project managers and Scrum Masters run Sprints and manage delivery risk. Account and engagement managers own the client relationship and contract context. Product Owners and BAs maintain the Product Backlog and requirements. Developers, QA and DevOps deliver verifiable increments. Client Product Owners sign off scope, accept increments at Sprint Review and follow the delivery health shared with them. Executives see engagement health.
 
-**Initial market hypothesis:** Software outsourcing companies coordinating multiple teams and client projects. This customer focus and commercial assumptions still require validation.
+**Initial market hypothesis:** Software outsourcing vendors (≈10–200 staff) running Scrum delivery for external clients. This customer focus and its commercial assumptions still require validation.
 
 ## Product scope and MVP
 
-The MVP targets one end-to-end, client-inclusive workflow:
+The [SDLC workflow](docs/sdlc-workflow.md) covers eight lifecycle/governance stages: initialization, requirements validation, design/planning, Scrum delivery, system testing/UAT, release, hypercare/warranty, and closure/handover. Refinement, design and testing continue during Sprints; UAT and releases can repeat.
 
-```text
-Organization → Project → Vision/Scope → Requirement Version → Review/Approval
-    → Feature/User Story → Scrum or Kanban Work → Delivery Evidence → Traceability
-```
+Original Sprint dates remain fixed. A separate execution view shows actual work, blockers, carry-over and later completion, with forecasts/scenarios clearly labelled. Requirements, work, acceptance and release evidence remain distinct and traceable.
 
-Requirements and backlog items are separate but linked business artifacts. Approvals are configurable and reference specific versions; not every Story requires client approval. Scrum and Kanban have different work policies and metrics. AI begins with explainable, rule-based signals and supports human decisions rather than silently changing commitments.
+Initial scope starts after contract signing. CRM, presales proposals, payroll, full accounting, source hosting and a proprietary load-testing engine are excluded. External engineering/test tools supply linked evidence. AI supports human decisions and cannot silently change commitments.
 
-For planned features and release priorities, see [Product Roadmap](docs/roadmap.md). The full product intent and non-goals live in [Product Blueprint](docs/product.md).
+The proposed first increment covers engagement-to-Sprint-Review with controlled scope, execution visibility, risks and client participation. Full lifecycle coverage follows through the [roadmap](docs/roadmap.md); the [Product Blueprint](docs/product.md) separates product scope from release sequencing.
 
 ## Documentation — source of truth
 
 | Document | Purpose |
 |---|---|
+| [Documentation Index](docs/README.md) | Current reading paths, authority and historical references |
 | [Product Blueprint](docs/product.md) | Vision, audiences, business value, lifecycle, MVP |
 | [Cross-feature Requirements](docs/requirements.md) | Shared business rules, governance, NFRs |
+| [SDLC Workflow](docs/sdlc-workflow.md) | Eight stages, gates, actors and original-versus-actual execution |
+| [Research Analysis](docs/research/analysis/README.md) | Evidence, personas, pains, lifecycle model and validation questions |
 | [Product Roadmap](docs/roadmap.md) | Feature registry, priorities and planned releases |
 | [Context Map](docs/context-map.md) | Efficient context routing for people and AI agents |
 | [Authoring Policy](docs/authoring.md) | Stable artifact IDs, statuses, traceability and review rules |

@@ -1,9 +1,11 @@
 # DeliveryPilot - Cross-Feature Requirements and Business Rules
 
-> **Status:** Working cross-feature contract, reconciled 2026-11-03. Recorded user-confirmed workflow/design choices are distinguished from proposals; no canonical artifact approval is conferred.
+> **Status:** Working cross-feature contract, reviewed 2026-11-08 against current D1–D6 direction and recorded feature decisions. User-confirmed rules remain distinct from proposals; no artifact approval is conferred.
 >
 > **Owner:** Product Owner / Business Analyst  
 > **Related documents:** [Product](product.md) | [Workflow discovery](deliverypilot-workflow-discovery.md) | [Architecture workspace](architecture/README.md) | [Roadmap](roadmap.md) | [Organization feature](features/FEAT-DP-003-organization/feature.md)
+
+> **2026-11-07 reconciliation:** [D1–D6](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) update the product boundary and lifecycle. BR-058–BR-067 distinguish that direction from proposed operating rules. Existing stable IDs and approval evidence are preserved.
 
 ## 1. Purpose and authority
 
@@ -12,7 +14,7 @@ This file owns **cross-feature behavioral expectations, domain vocabulary, busin
 Use these labels:
 
 - **Agreed direction:** Product principles accepted during planning; still subject to discovery refinement.
-- **User-confirmed:** A choice recorded in workflow Q1–Q44/W1 or the Identity design decision log. Applies only to that recorded scope; does not promote UR/FR/US statuses or imply customer validation.
+- **User-confirmed:** A choice recorded in workflow Q1–Q44/W1, vision decisions V1–V5, lifecycle decisions D1–D6, or the Identity design decision log. Applies only to that recorded scope; does not promote UR/FR/US statuses or imply customer validation.
 - **Proposed rule:** Recommended domain policy, not yet signed off by stakeholders.
 - **Open decision:** A choice requiring a project or customer decision.
 
@@ -29,6 +31,9 @@ Evidence is maintained in [workflow discovery](deliverypilot-workflow-discovery.
 | Project | Bounded delivery initiative under one owning tenant in MVP |
 | Product | Long-lived software solution that may span multiple projects |
 | Client Organization | External customer business; does not implicitly gain ownership or access |
+| Client Engagement | Vendor-owned record of the delivery relationship with one client: contract type, planned budget/effort, milestones, client Product Owner (V3) |
+| Contract type | Fixed-price in initial scope; Time & Materials and Dedicated Team are future concepts. Applicable policies must identify their supported contract model. |
+| Client Product Owner | Client-side person assigned to clarify priorities, sign off scope baselines and accept increments; the assignment, not a role name, grants decision authority |
 | Stakeholder | Person or party with interest in, responsibility for, or authority over project outcomes |
 | Requirement | Recorded business/user/functional/quality need or constraint |
 | Requirement proposal / review revision | Editable proposed UR change / immutable submitted snapshot; initially one active proposal per UR |
@@ -41,7 +46,11 @@ Evidence is maintained in [workflow discovery](deliverypilot-workflow-discovery.
 | Change Request | Proposal to modify an established scope/commitment |
 | Backlog Item | Piece of planned work representing value, defect, investigation, or technical obligation |
 | Sprint | Scrum timebox with an explicit Sprint Goal and selected backlog |
-| Kanban Flow | Pull-oriented workflow with explicit work policies and WIP management |
+| Product Goal / Sprint Goal | Long-term product objective / single-Sprint commitment |
+| Increment | Work meeting the DoD in a Sprint; client acceptance is a separate recorded fact |
+| Sprint Review / Retrospective | Scrum events that record increment feedback/acceptance and improvement actions |
+| Velocity | Completed estimate per Sprint for one team, used only as a planning and risk input |
+| Kanban Flow | Pull-oriented workflow with explicit work policies and WIP management (project mode deferred to release V2 by decision V1) |
 | Estimate | Expected amount/size of work, with uncertainty |
 | Capacity | Resource time actually available in a planning interval |
 | Forecast | Predicted timing/outcome based on scope, dependencies, data and assumptions |
@@ -49,6 +58,22 @@ Evidence is maintained in [workflow discovery](deliverypilot-workflow-discovery.
 | Issue | Problem that has already occurred |
 | Blocker | Obstacle preventing work from progressing |
 | Dependency | Relationship between work or deliverables; may be healthy or problematic |
+| Risk signal | Deterministic, configurable detection of an objective condition with defined inputs |
+| Candidate finding | Evidence-backed concern from a signal or AI analysis awaiting human review |
+| Risk exposure | Reviewed probability and impact rating of a confirmed risk, with owner and response |
+| Delivery health | Explainable summary for a Sprint, release or engagement derived from signals and reviewed risks; never an individual score |
+
+Additional shared vocabulary:
+
+| Term | Business meaning |
+|---|---|
+| Lifecycle stage | Governance/activity view over project or release scope; not a mandatory exclusive project status |
+| Original Sprint snapshot | Preserved start/end dates and originally selected work; later scope changes have separate records |
+| Execution timeline | Actual work and blocked intervals with as-of time; forecasts/scenarios are separately labelled |
+| API contract revision | Version of interface specification, separate from its availability in a deployed build/environment |
+| Consumer integration | Consumer-specific compatibility/integration evidence against an API revision and build |
+| Test run evidence | Results tied to specification revision, build, environment, scenario/configuration and execution time |
+| Warranty / closure | Coverage obligations / explicit completion and handover decisions; release alone establishes neither |
 
 ## 3. Identity, ownership, and collaboration
 
@@ -113,7 +138,7 @@ W1 adds iterative UR/Feature discovery before review and parallel Story/AC plus 
 | ID | Cross-feature requirement / rule | Status |
 |---|---|---|
 | BR-016 | Approval is applied only when an applicable policy requires it. | Agreed direction |
-| BR-017 | A user story does not require client approval by default. | Agreed direction |
+| BR-017 | A user story does not require client approval by default. Client acceptance of an increment at Sprint Review is a separate recorded decision (BR-049). | Agreed direction; V2 |
 | BR-018 | Each approval decision records request, target version, actor, decision, timestamp, and applicable policy. | Agreed direction |
 | BR-019 | Review decisions require assigned authority for the exact revision under project policy. Visibility or a `Client` role alone does not make someone an approver. | User-confirmed: Q11/Q12/Q15 |
 | BR-020 | Approved baselines must not be silently replaced by later versions. | Agreed direction |
@@ -143,10 +168,10 @@ Affected requirements and versions, Feature mappings, specifications/AC, tests/e
 | BR-024 | Product backlog can represent initiatives, epics, features, stories, defects, spikes, and technical work. | Agreed direction |
 | BR-025 | Technical/security/DevOps/NFR work may exist independently from user stories. | Agreed direction |
 | BR-026 | Priority, defect severity, MoSCoW scope class, and deadline must be modeled separately. | Agreed direction |
-| BR-027 | Initial projects select Scrum or Kanban; Kanban requires no Sprint. Scrum starts with one team/calendar and at most one active Sprint; future Sprints may be planned. Hybrid and several independently scheduled teams per project are deferred. | User-confirmed: Q8/Q25 |
+| BR-027 | MVP projects use Scrum: one team/calendar and at most one active Sprint; future Sprints may be planned. Kanban project mode (no Sprint required) is post-MVP; hybrid and several independently scheduled teams per project are deferred. | User-confirmed: Q8/Q25, narrowed by V1 |
 | BR-028 | A Scrum project can configure Sprint duration within a maximum of one month. | Agreed direction |
 | BR-029 | The Scrum Team retains ownership of Sprint Planning decisions; AI suggestions do not constitute commitments. | Agreed direction |
-| BR-030 | Development complete, QA verified, UAT accepted and Released must remain distinguishable concepts. | Agreed direction |
+| BR-030 | Development complete (DoD), QA verified, client accepted (Sprint Review or UAT) and Released must remain distinguishable concepts. | Agreed direction |
 | BR-031 | Work item links must prevent invalid dependency cycles when the relationship is defined as a blocking dependency. | Proposed rule |
 | BR-032 | A team can refine/discover future scope while delivering already-ready work. | Agreed direction |
 
@@ -162,7 +187,18 @@ Story-level acceptance criteria describe observable outcomes. Draft refinement a
 
 Dev/QA work and draft test scenarios cover relevant AC/FR/NFR/rules. Drafted scenarios are not executed tests. DoD, QA, applicable UAT and release retain separate evidence; failed required checks return to correction/reverification, while changed expectations follow change control (Q41/W1; detailed disposition A4). Full test-management and automated deployment suites are deferred, not the distinction between those facts.
 
-Execution-board moves change permitted state or rank, not dates, acceptance or release. Material active-Sprint changes retain the original selection, delta, reason and explicit PM/team decision. Kanban WIP is advisory by default; optional enforced mode needs a recorded authorized exception to exceed the limit (Q28/Q30/Q40). Exact thresholds and states remain project/feature design.
+Execution-board moves change permitted state or rank, not dates, acceptance or release. Material active-Sprint changes retain the original selection, delta, reason and explicit PM/team decision (Q28/Q30). Kanban WIP rules (Q40) apply when the post-MVP Kanban mode is delivered. Exact thresholds and states remain project/feature design.
+
+### Scrum events and outsourcing engagement rules
+
+| ID | Cross-feature requirement / rule | Status |
+|---|---|---|
+| BR-046 | A client project belongs to at most one Client Engagement in the vendor's workspace; internal projects need none. The engagement's contract type is recorded and its changes are attributable. | User-confirmed: V3; field details proposed |
+| BR-047 | Each Sprint records its Sprint Goal, original selection, start/end dates, declared capacity and outcome (completed, carried over, removed). Closed Sprint records are not silently rewritten. | Proposed rule |
+| BR-048 | Velocity is computed per team from completed work in closed Sprints using the project's estimation method. It is a planning and signal input only, never a target or an individual measure. | Proposed rule; see BR-034/BR-044 |
+| BR-049 | Sprint Review records per-item client feedback or acceptance by an assigned client decision-maker. Acceptance is bound to the reviewed increment item and does not imply QA, UAT or release. Silence is not acceptance. | User-confirmed: V2; Q11 principle |
+| BR-050 | In MVP, client scope sign-off targets an explicit release or Sprint scope baseline (exact selected versions). Per-UR proposal review (Q4/Q9–Q16) remains valid behavior delivered later. | User-confirmed: V2 |
+| BR-051 | Retrospective improvement actions have an owner and status, and may link to the risks or issues they address. | Proposed rule |
 
 ## 7. Estimation, planning, and resources
 
@@ -191,7 +227,35 @@ A usable schedule needs scope/priorities, milestone flexibility, calendars, esti
 | BR-044 | Workload data must not drive unreviewed employee performance scoring. | Agreed direction |
 | BR-045 | Predictions should not claim calibrated confidence without adequate data and evaluation. | Agreed direction |
 
+### Delivery risk management rules (V4 capability; broader positioning under D1)
+
+| ID | Cross-feature requirement / rule | Status |
+|---|---|---|
+| BR-052 | The MVP risk-signal catalog includes at least: overdue client approval/decision, client-owned dependency waiting, scope added to an active Sprint without a recorded decision, work added outside the scope baseline without a CR, Sprint Goal at risk (remaining work vs. remaining capacity), velocity deviation from recent history, capacity overcommitment, blocked-work age, high carry-over, and effort/budget burn ahead of plan for the engagement's contract type. Each signal declares inputs, configurable criteria and the evidence it cites. | User-confirmed: V4 (families); thresholds proposed |
+| BR-053 | Risk signals run without an AI provider. A provider outage must not stop detection, the risk register or manual reporting. | User-confirmed: V4; BR-040 |
+| BR-054 | A confirmed risk records owner, affected scope (engagement, release, Sprint or work), probability, impact, response strategy (avoid, mitigate, transfer, accept), actions, due dates and history. | Proposed rule |
+| BR-055 | Risk, finding and delivery-health information is internal by default. Sharing with the client is an explicit, attributable action on selected items; client-visible text never exposes internal estimates or notes not explicitly shared. | Proposed rule; BR-004 |
+| BR-056 | AI risk insights (MVP+1) present observations, inferences, cited evidence and uncertainty separately. Suggested mitigations are drafts until a person acts on them. | User-confirmed: V4; BR-041/BR-042 |
+| BR-057 | Delivery-health indicators must be decomposable into their contributing signals and reviewed risks; no opaque composite score. | Proposed rule |
+
 Authorized reviewers confirm, link, dismiss or request information; material decisions and follow-up remain attributable. Reevaluate relevant changes, deduplicate findings, and notify meaningful new/worsening evidence instead of repeatedly resurfacing unchanged dismissed findings. Manual blocker reporting does not depend on AI; every explanation and notification obeys recipient access (Q35–Q38). AI may suggest eligible assignments or future Sprint placement but cannot apply them (Q42).
+
+### Lifecycle, execution and engineering evidence
+
+| ID | Rule | Authority |
+|---|---|---|
+| BR-058 | Initial product scope starts after contract signing. CRM, presales proposals, payroll, full accounting, source hosting and a proprietary load-testing engine are excluded. Referenced contract/payment/test evidence may be captured. | User-confirmed: D4–D6 |
+| BR-059 | Support eight lifecycle/governance stages with continuous refinement, design, development and testing; UAT and releases may repeat for different scope. | User-confirmed: D3 |
+| BR-060 | Preserve the original Sprint timebox. Visualizing actual execution does not extend that Sprint or overwrite its original plan. Preserve initial selection and record subsequent changes separately. | User-confirmed: D2 (timebox/separate view); selection history proposed |
+| BR-061 | Distinguish original plan, current work, actual events, forecasts and scenarios. Show as-of time, source and unknown/stale data; an AI prediction is not an actual event. | Proposed rule |
+| BR-062 | Closing a Sprint records unfinished work. Later selection is explicit; count a completed item once in velocity, retain original noncompletion and carry-over links. Reopened defects or split work must not duplicate delivered value. | Proposed rule |
+| BR-063 | API specification revisions, deployed build/environment availability and consumer integration status are separate facts. A new revision notifies authorized affected consumers and requires compatibility re-evaluation; prior integration evidence remains historical. | Proposed rule derived from user API idea |
+| BR-064 | Imported test evidence and exported reports identify API revision, build, environment, run time, scenario/configuration and provenance. External tools execute load tests. Never expose credentials from imported curl/specification text. | Proposed rule; D6 integration direction |
+| BR-065 | Release, hypercare completion, warranty expiry, handover, final acceptance and commercial closure are separately evidenced. Closure may reference open obligations with an accountable owner. | Proposed rule |
+| BR-066 | Search, reports, exports, notifications and AI retrieval enforce current tenant/project/resource permissions. Multi-organization identity does not allow employers to inspect one another's work or infer hidden assignments. | Proposed consolidation of existing access principles |
+| BR-067 | AI may draft reports, risk explanations and planning/recovery scenarios. Humans review outputs; applying a plan or sending client communication is a separate authorized action. No autonomous baseline, timebox or approval changes. | Proposed consolidation; D4 AI assistance |
+
+The [SDLC workflow](sdlc-workflow.md) provides examples and exceptions. These rules do not select module ownership, API endpoints or storage design.
 
 ## 9. Non-functional requirements to refine
 
@@ -211,6 +275,8 @@ These are **NFR categories**, not yet numeric SLAs:
 | NFR-010 | Accessibility | Keyboard and assistive-technology behavior verified against selected standard |
 | NFR-011 | Maintainability | Module contracts and tests support change without cross-module coupling |
 | NFR-012 | Interoperability | Documented APIs, imports/exports and integration policy for selected providers |
+| NFR-013 | AI evaluation and cost | Finding precision/false-positive measurement, evaluation datasets, per-analysis token/cost budgets, timeouts and provider fallback defined before AI insights are enabled for pilots |
+| NFR-014 | Signal freshness | Maximum delay between a relevant delivery event and signal re-evaluation, and visible last-checked time, agreed per signal family |
 
 **Do not invent targets** such as 99.9% availability or 300 ms p95 until workloads, hosting cost, support expectations and pilot acceptance needs are known.
 
@@ -220,9 +286,12 @@ These are **NFR categories**, not yet numeric SLAs:
 2. **Client access:** External approver sees only the intended shared requirement/package; unrelated artifacts remain inaccessible.
 3. **Approval revision:** Approval of Requirement v1 does not automatically approve v2.
 4. **Requirement traceability:** Requirement links lead to authorized features, stories and verification records without changing the requirement's ownership.
-5. **Scrum vs Kanban:** A Scrum team can manage a Sprint Goal and backlog; a Kanban team can flow work without Sprint enrollment.
+5. **Scrum delivery:** A Scrum team can plan a Sprint with a Sprint Goal and declared capacity, record material Sprint changes, and close the Sprint with completed/carried-over outcomes. (Kanban flow without Sprint enrollment is a post-MVP scenario.)
 6. **Multi-project capacity:** A member's capacity is allocated across projects without double counting.
 7. **AI guardrail:** A risk finding can be dismissed or accepted; its suggestion cannot directly rewrite an approved delivery baseline.
+8. **Risk signal to decision:** Scope added to an active Sprint without a recorded decision raises a candidate finding with evidence; the PM confirms it as a risk with owner and response, and the record keeps the original evidence.
+9. **Client-scoped health:** A client PO sees only the delivery-health items and risks explicitly shared for their engagement, never another engagement's data or internal notes.
+10. **Sprint Review acceptance:** A client PO accepts one increment item and rejects another; acceptance does not mark the item QA-verified or released, and the rejected item returns to the backlog with feedback.
 
 These are target-workflow acceptance themes, not assertions that every capability is allocated to MVP. Additional cases are in [workflow scenario seeds](deliverypilot-workflow-discovery.md#15-acceptance-scenario-seeds) and [Identity review scenarios](architecture/modules/identity/review-scenarios.md). Feature-level scenarios belong in `features/FEAT-DP-XXX-<slug>/us/US-DP-XXX-NNN.md`, linked to their FRs; `feature.md` remains a summary.
 
@@ -237,7 +306,20 @@ These are target-workflow acceptance themes, not assertions that every capabilit
 7. Which workload and success metrics are ethically and operationally appropriate for teams?
 8. Which customer workflows justify integrations with GitHub, GitLab, Azure DevOps, Slack or Teams?
 9. Which lightweight planning, baseline-change and delivery-evidence outcomes belong in the first pilot, given the current V1 feature assignments?
+10. Which BR-052 signals and default thresholds do pilot vendors consider useful, and what false-positive rate is acceptable?
+11. Which monetary and effort fields are needed for fixed-price pilots, and which are internal versus client-shared?
+12. Which risk and health information will vendors share with clients by default?
 
-The joint Organization review U9–U21 resolves its selected business scope; see [decision disposition](features/FEAT-DP-003-organization/feature.md#7-open-decisions-and-task-planning-blockers). Creation replay is protected for 24 hours with changed-content conflicts and explicit new intent after expiry. U19 selects post-commit/new-decision denial, admitted-read completion, Identity commit rechecks, job reauthorization and fail-closed unavailable facts. U20 selects minimal audit fields/reasons, required success-audit/write consistency and workspace-lifetime history. Membership restoration, workspace/account lifecycle deletion, automated purge/erasure and operator/platform recovery are explicitly outside this release, with denied-state/containment rules enforced. Exact APIs, persistence and inter-module integrations still need source-aware task design. Do not reopen selected multiple ownership, durable membership, role combination, invitation proof or pending-offer uniqueness as unanswered questions.
+The joint Organization review U9–U21 resolves its selected business scope; see [decision disposition](features/FEAT-DP-003-organization/feature.md#7-open-decisions-and-task-planning-blockers). Creation replay is protected for 24 hours with changed-content conflicts and explicit new intent after expiry. U19 selects post-commit/new-decision denial, admitted-read completion, Identity commit rechecks, job reauthorization and fail-closed unavailable facts. U20 selects minimal audit fields/reasons, required success-audit/write consistency and workspace-lifetime history. Membership restoration, workspace/account lifecycle deletion, automated purge/erasure and operator/platform recovery are explicitly outside this release, with denied-state/containment rules enforced. Organization backend contracts and persistence are documented in the [current Identity baseline](architecture/modules/identity/README.md#verified-implementation-baseline). Future Project/Portal integrations still need source-aware task design. Do not reopen selected multiple ownership, durable membership, role combination, invitation proof or pending-offer uniqueness as unanswered questions.
 
 **Rule of use:** Do not convert questions or proposed rules into "approved" user requirements without stakeholder validation.
+
+## 12. Additional acceptance scenarios to refine
+
+- An unfinished item finishes in a later Sprint: original dates and noncompletion remain visible, and delivered points are counted once.
+- A new release enters UAT while another is under warranty: decisions apply to the correct release scope.
+- An API revision changes after one consumer integrated: historical integration stays attributable, with the new revision awaiting compatibility evidence.
+- A user belongs to two vendors: searching their name in one tenant never reveals the other vendor’s work.
+- A report generated from stale data identifies the gap and cannot silently change a client commitment.
+
+These are scenario seeds, not executed tests. Monetary visibility, first connector selection, warranty terms and detailed review policies still need pilot validation.

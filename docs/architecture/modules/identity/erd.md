@@ -1,8 +1,10 @@
 # Identity ERD
 
-> Status: Existing authentication baseline plus candidate logical and nine-table proposed physical views. New schema remains a review draft, not implemented persistence.
+> Status: Historical physical-design proposal (2026-11-03), retained for rationale; superseded for implementation inventory.
 > Decision authority: [Design decisions](design-decisions.md). Attributes and integrity: [Data dictionary](data-dictionary.md).
 > Organization business behavior is selected for the bounded release. Physical organization/platform definitions still require technical review, mappings/migrations and runtime evidence; privileged platform/recovery operations remain separately scoped.
+
+> **Current reference — 2026-11-08:** [Current mapped schema](current-schema.md) documents fourteen mapped business tables, including later replay, invitation-delivery and nomination persistence. The physical diagrams/columns and technical gates below are the original proposal, not a current implementation checklist. Selected conceptual ownership remains valid; PlatformRoleAssignment is not a mapped table.
 
 ## Conceptual ownership
 

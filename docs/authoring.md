@@ -3,12 +3,14 @@
 ## Canonical owners
 
 - `product.md`: product intent, audience, scope and non-goals.
+- `sdlc-workflow.md`: current lifecycle stages, actors, gates and execution-visibility examples; shared invariants remain in requirements.
+- `research/analysis/`: evidence and proposed product interpretations, not approved feature contracts.
 - `requirements.md`: global BR/NFRs, governance and quality rules.
 - `../ARCHITECTURE.md`: current backend as documented; source/tests/deployments verify implementation claims.
 - `architecture.md`: target architecture alternatives and proposed trade-offs; not an accepted runtime-consolidation decision.
 - `architecture/README.md`: entry point to module design, evidence and reconciliation records.
 - `architecture/modules/<module>/`: selected module scope, local terminology, decision provenance, ERD, dictionary and review scenarios. Physical proposals do not prove schema deployment.
-- `deliverypilot-workflow-discovery.md`: user-confirmed Q1–Q44/W1 workflow evidence, derived clarifications and deferred details; an input to canonical contracts, not their approval.
+- `deliverypilot-workflow-discovery.md`: user-confirmed Q1–Q44/W1, V1–V5 and D1–D6 decision evidence, derived clarifications and deferred details; an input to canonical contracts, not their approval.
 - `roadmap.md`: registered feature IDs, priorities, dependencies and release intent.
 - `context-map.md`: selective context routing; do not duplicate content.
 - `features/<feature>/feature.md`: specific problem, actors, scope, evidence, open decisions and artifact navigation.
@@ -83,3 +85,11 @@ Never cite absent stakeholder interviews. Future API/source paths must be marked
 - Docs regression tests are under `tools/docs_validation/`, run with `python -m unittest discover -s tools/docs_validation -p "test_*.py" -v`.
 - For application tasks, inspect the existing solution/test projects and extend the appropriate test project rather than adding conflicting root test infrastructure.
 - Older docs tooling placed `tests/test_docs.py` in root `tests/`. The optional checksum-guarded `tools/docs_validation/migrate_legacy_tests.py` defaults to a dry run and only removes exact known generated files with `--apply`; never remove an unknown/modified test or the containing directory.
+
+## Currency and historical records
+
+Reviewed 2026-11-08. The [documentation index](README.md) distinguishes current guidance, proposals and dated evidence. Substantive narrative references should identify status, review/record date, authority and replacement. Artifact frontmatter remains governed by existing templates; do not add unsupported fields or promote statuses during documentation cleanup.
+
+Historical test results describe their recorded environment/revision, not the current test count. Snapshot plans/audits preserve original text and link to current Task metadata and acceptance records. Implementation summaries cite inspected source/contracts/migrations and distinguish source presence, executed verification and deployment state. Preserve anchors or provide replacement links when moving content.
+
+The [Identity current schema](architecture/modules/identity/current-schema.md) owns physical implementation inventory. Original ERD/dictionary sections retain historical design rationale and are not current migration instructions.

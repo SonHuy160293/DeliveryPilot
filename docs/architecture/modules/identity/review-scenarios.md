@@ -1,5 +1,8 @@
 # Identity Design Review Scenarios
 
+> **Currency — reviewed 2026-11-08:** Selected policy/scenario intent retains recorded authority. Implementation observations and technical proposals below are dated snapshots; use the [verified baseline](README.md#verified-implementation-baseline), [current schema](current-schema.md) and [acceptance record](../../../features/FEAT-DP-003-organization/backend-acceptance.md) for later evidence. No decision or approval status changes.
+
+
 > Status: Design walkthrough inputs, not executed application tests. User-selected rules are identified; proposed outcomes still require the relevant decision round.
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Sources: [Decision log](design-decisions.md), [ERD](erd.md), [dictionary](data-dictionary.md), [workflow discovery](../../../deliverypilot-workflow-discovery.md).

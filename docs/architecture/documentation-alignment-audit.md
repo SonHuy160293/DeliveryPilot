@@ -1,5 +1,7 @@
 # Core documentation alignment audit
 
+> Latest reconciliation: [Cross-document reconciliation — 2026-11-08](#cross-document-reconciliation--2026-11-08). Earlier entries retain their historical scope.
+
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Scope: Product, cross-feature requirements, roadmap, context routing and authoring policy against workflow discovery and the architecture workspace.
 > Status: Core reconciliation applied; unresolved release, contract and implementation handoffs remain explicit. This is an audit record, not approval evidence or a new implementation task.
@@ -197,3 +199,54 @@ The original refinement file list above covers the feature, all 8 UR/14 FR/9 US,
 The user invoked dp-task-planner plan-feature FEAT-DP-003 and selected backend tasks only. The [backend task index](../features/FEAT-DP-003-organization/backend-plan.md) records inspected source, proposed technical contracts and true dependencies. Fourteen TASK files now cover foundations and all source stories; TASK-DP-003-001 was replanned in place. TASK-DP-003-002 is the initial pending task; dependent tasks remain blocked pending prerequisite acceptance/current-source review. Earlier statements that the creation task was byte-for-byte unchanged describe the earlier requirements-review stage only.
 
 No UR/FR/US, application source, existing test, migration, project reference or deployment was changed by planning. The versioned invitation delivery task explicitly addresses the existing one-day verification-only contract, current-proof retry admission and real delivery status rather than treating intake acknowledgement as Delivered. Frontend implementation and Project/guest resource admission remain external handoffs, without silently selecting the proposed frontend stack or implementing a monolith. Planning validation results are recorded in the task index after the actual commands run.
+
+## Eight-stage lifecycle and execution visibility — 2026-11-07
+
+**Authority:** Product-owner clarification and subsequent request to implement the documentation plan, recorded as [D1–D6](../deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions). This authorizes documentation alignment; it is not detailed requirement approval, customer validation or permission to execute application tasks.
+
+| Finding | Reconciliation applied | Remaining handoff |
+|---|---|---|
+| Definition centered on delivery risk and stopped near release | Product v2.1 and root README now describe post-contract fixed-price SDLC management through warranty/closure; risk remains a core capability | Validate buyer/value hypotheses with real vendor/client participants |
+| Seven-stage discovery and engagement-wide research could imply one sequential pipeline including presales | New canonical sdlc-workflow.md defines LC01–LC08, overlapping activities, release-specific gates and named client/vendor authority; historical PH research is mapped explicitly | Refine detailed stage policies and release scope in feature contracts |
+| Timeline language could conflate late work with extending a Sprint | Preserved original timebox/selection, actual execution, forecast and scenario are separated; worked carry-over example and missing/stale/split/reopened-work cases added | Select event capture, estimation/split/reopening and forecast presentation policies |
+| Feature registry lacked explicit API and warranty/closure ownership | Existing 009 owns actual Sprint execution; 018 owns forecast/scenarios; new proposed 029 API Contract & Integration Evidence and 030 Warranty, Handover & Closure | Discovery and dependency review before generating detailed artifacts; no module or schema decisions inferred |
+| Full product scope and MVP were conflated | Product/roadmap distinguish first usable agreement-to-review increment from subsequent full eight-stage coverage; first connectors remain a pilot decision | Validate minimum coherent release and integration effort |
+| Original analysis was incomplete and used older phase boundaries | Completed README and chapters 00/01/04/07/08; reconciled 02/03/05/06; evidence limits, qualitative rankings, counterexamples, MoSCoW and interview guide now explicit | No interviews performed; pain frequency, adoption and willingness to pay remain hypotheses |
+| Shared constraints lacked current scope/execution/evidence vocabulary | Added BR-058–BR-067 with user-confirmed direction separated from proposed operational rules; vocabulary remains in requirements rather than a competing new global glossary | Detailed rules still require normal feature refinement; cross-organization privacy and optional review policy need scenario review |
+| Navigation did not distinguish lifecycle authority from research | Updated context map and authoring owners; research remains evidence/proposals, workflow owns current stage/gate narrative | Target architecture may require future domain-placement review; runtime topology unchanged |
+
+**Preserved:** Existing feature IDs 001–028, FEAT-DP-002/003 contracts and statuses, approval references, source code, tests, migrations and hosting boundaries. Original SDLC research remains industry context; its presales/contracting and fictional Atlas figures do not expand the initial product or estimate DeliveryPilot implementation. Source hosting, full accounting and load execution remain external capabilities.
+
+**Validation:** The required `python tools/docs.py validate` was attempted and could not start: `python.exe` resolves to the WindowsApps alias, with no usable Python interpreter exposed. The discovery checker also requires Python and was not run. Node-based checks passed for 19 changed/new documentation files: 314 local links, 97 tables, 13 fenced blocks, research metadata, stable BR/feature ID uniqueness and preservation of detailed feature artifacts. A repository-wide scan found no broken inbound anchors to those documents. These are a limited fallback, not the canonical validator. `git diff --check` checks whitespace. Mermaid flow definitions were reviewed as text; no diagram renderer or application tests were run for this docs-only change.
+
+**Next:** Use the [validation guide](../research/analysis/08-assumptions-and-interviews.md) and refine the affected roadmap features. Rerun the canonical validator and discovery checker when Python is available. Do not implement source changes or treat research proposals as approved requirements from this refactor alone.
+
+## Cross-document reconciliation — 2026-11-08
+
+Status: Applied documentation corrections, not requirement approval or application implementation. Authority: user-authorized review/correction plan and existing D/Q/V/U decisions. Source inspection used the current Identity DbContext, model snapshot, configurations, migrations, AuthController and canonical Task metadata. CodeGraph was attempted and reported no usable index; text/source inspection followed. No live deployment or database was inspected.
+
+| Finding | Severity | Applied correction / disposition |
+|---|---|---|
+| C01 Organization implementation described as unmapped/in progress | High | Identity overview, User Initialization summary and roadmap now point to the implemented bounded backend and recorded acceptance. Backend versus frontend/Project/deployed state remains explicit. Resolved. |
+| C02 Nine-table physical proposal presented as current schema | High | Added current-schema.md with fourteen shared-schema mapped tables/columns and migration/configuration links. Original ERD/dictionary retained as historical proposal with replacement links; PlatformRoleAssignment remains unmapped. Resolved for inventory; future platform design remains deferred. |
+| C03 Contract glossary implies three initial contract models | High | Product/requirements now identify fixed-price initial scope and T&M/Dedicated Team as future concepts; budget questions narrowed to fixed-price pilot disclosure. Resolved. |
+| C04 Target architecture trails D1–D6 and implies infrastructure replacement | Medium | Added execution/API/warranty/closure coverage and qualified topology-specific advice. Current outbox/broker/Gateway preserved; consolidation and future module placement remain explicit unresolved architecture decisions. |
+| C05 Roadmap integration and AI report allocations differ | Medium | V1 pilot evidence adapters versus V2 broader coverage now consistent; 028 registry includes proposed later report drafts. Existing release proposals/IDs retained. Resolved. |
+| C06 Logout scope called open after current-session decision | Medium | UR now cites resolved D-006 scope. Draft FR/US clarify guarded Organization write commit ordering from task 018; refresh/logout HTTP races remain genuinely unresolved. No status/approval change. |
+| C07 Historical audits/readiness/plans compete with current evidence | Medium | Added current navigation/replacement notices to original design, audit and planning records; acceptance counts labelled recorded. Original text/results and anchors preserved. Resolved by explicit classification, not deletion. |
+| C08 Current reading path unclear | Medium | Added docs/README.md; context map, architecture index and authoring policy route current facts and define currency discipline. Resolved. |
+
+**Scenario consistency review:** Initial fixed-price input links to scope/criteria and controlled change; optional detailed review stays distinct from MVP baseline sign-off. Scope swaps require impact/authority rather than equal points. Original Sprint timebox and noncompletion persist through later delivery; actuals are distinct from forecasts. Acceptance, deployment, payment and warranty/closure remain separate. API revision/build/environment/consumer/test provenance remains explicit. General admitted-request behavior is qualified by Organization guarded-write serialization. These are cross-document reviews, not executed application tests.
+
+**Preserved:** Stable IDs, artifact statuses/approval references, historical test records, application source/tests, migrations and deployment topology. Remaining decisions include first connectors, detailed warranty/closure policies, optional approval configuration, forecast/credit edge policies, future platform assurance and host/module placement. Each routes to its existing feature/architecture owner rather than being silently selected here.
+
+### Reconciliation verification
+
+- Canonical validator: 69 artifacts, zero errors. Python was located outside PATH at the bundled DeepSeek Harness runtime; earlier WindowsApps-alias failures remain historical evidence, not a current blocker.
+- Feature coverage: Organization has zero unlinked downstream artifacts; User Initialization has one advisory gap, the draft logout story US-DP-002-003 without an implementation task. This is an explicit planned handoff, not a missing reference or permission to create/execute a task.
+- Discovery checker: all ten analysis documents pass, zero errors/warnings. An initial wildcard invocation was corrected to pass expanded file paths.
+- Repository-wide Node checks: 124 Markdown files, 1,237 local links (including anchors), 271 tables and 120 fenced blocks; zero structural issues. All 69 feature/artifact metadata records retain their IDs, statuses and approval references; no dependency cycles found.
+- Source-backed inventory: fourteen shared-schema tables/columns extracted from the checked-out EF snapshot; mappings, migration files and AuthController inspected. This is static source verification, not application test execution or deployment proof.
+- Whitespace: git diff --check passes. Mermaid definitions were reviewed as text and fenced structure checked; no Mermaid renderer was available/run, so rendered diagram validation remains a limitation. No application tests were rerun for these documentation-only corrections.
+
+Remaining validation/decision owners: documentation maintainer for rendered Mermaid review; feature owners for the open policies above; authentication feature owner for draft refresh/logout HTTP contract planning. No unresolved high-priority document conflict remains in the reviewed correction set.

@@ -1,5 +1,8 @@
 # FEAT-DP-003 backend implementation plan
 
+> **Planning snapshot — reviewed 2026-11-08:** All 18 canonical Task files now record done. Planning-time statuses and missing-component statements below are historical. Use [acceptance](backend-acceptance.md), [Gateway contract](gateway-api-contract.md) and [frontend handoff](frontend-integration.md) for recorded outcomes and remaining external work.
+
+
 Planned 2026-11-03, Asia/Saigon using dp-task-planner. The user selected backend tasks only after repository inspection found no frontend project/package manifest. This plan writes documentation only; no application source, migration, test or deployment was executed or changed.
 
 Source contract: 8 UR, 14 FR and 9 US are internally ready with null approval references and 88 acceptance scenarios. The [feature decision disposition](feature.md#7-open-decisions-and-task-planning-blockers) and Identity U9–U21 own business intent. Ready is internal completeness, not client approval. Planned APIs/types/tables below are new technical proposals consistent with inspected source, never claims they currently exist.

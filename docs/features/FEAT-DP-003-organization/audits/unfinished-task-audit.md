@@ -1,5 +1,8 @@
 # FEAT-DP-003 unfinished-task audit
 
+> **Historical snapshot — reviewed 2026-11-08:** Counts, blockers and tests below describe their recorded checkout. All 18 Organization Task files now record done; see [backend acceptance](../backend-acceptance.md) and [Gateway contract](../gateway-api-contract.md). Frontend and Project/guest handoffs remain separate. Original findings/reconciliation notes are preserved as history.
+
+
 ## Reconciliation — 2026-11-04
 
 This is a historical audit; later changes supersede its point-in-time status counts and test descriptions. Task 013 has been reviewed and is pending. Tasks 017 and 018 were completed to pin permission classification and serialize session revocation. Tasks 005 and 006 are complete within their scopes. The full Identity test project passed 129 tests without skips on disposable PostgreSQL 18. See the [resolution reconciliation](blocker-resolution-plan.md#implementation-reconciliation--2026-11-04) and [session decision](audit-decisions-needed.md#reconciliation--2026-11-04). No requirement approval or production state was changed.

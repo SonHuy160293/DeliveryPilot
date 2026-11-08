@@ -1,6 +1,6 @@
 # Identity & Organization Module Design
 
-> Status: Working design with the existing authentication baseline and a proposed nine-table physical column draft. Organization business choices are jointly resolved for task planning; proposed physical design and operational gates still prevent production finalization.
+> Status: Selected Identity ownership with implemented Organization backend; historical physical proposals retained separately. Reviewed 2026-11-08.
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Module name: Identity. Internal areas: Authentication, Organization Management, and Platform Access.
 > Authority: User-selected design scope and recorded decisions are distinguished from implemented behavior and unreviewed proposals. This documentation does not approve canonical requirements or itself authorize application implementation; the user's later model/mapping implementation instruction has its own scope.
@@ -25,8 +25,9 @@ MFA, account recovery, SSO, support-access grants, billing/entitlements and plat
 |---|---|
 | [Glossary](GLOSSARY.md) | Business language used consistently throughout the design. |
 | [Design decisions](design-decisions.md) | Selected scope, user answers, proposed defaults, decision rounds and evidence. |
-| [ERD](erd.md) | Conceptual ownership, logical relationships, existing physical baseline and new proposed column diagrams. |
-| [Data dictionary](data-dictionary.md) | Existing columns plus types, nullability/defaults, integrity and purpose for nine proposed tables. |
+| [Current mapped schema](current-schema.md) | Source-backed table/column inventory, migration links and relationship view. |
+| [ERD](erd.md) | Selected conceptual ownership plus historical physical proposal; not the current schema inventory. |
+| [Data dictionary](data-dictionary.md) | Historical column-design rationale; current physical definitions are in the mapped-schema reference. |
 | [Review scenarios](review-scenarios.md) | Expected behavior, decision dependencies and validation results; not application test claims. |
 
 ## Evidence and reconciliation
@@ -51,24 +52,17 @@ The important ownership correction is local integrity: OrganizationMembership ca
 
 ## Verified implementation baseline
 
-Source and migration history were inspected; no live database was queried.
+Reviewed 2026-11-08 against the checked-out DbContext, configurations, snapshot, migrations and AuthController. CodeGraph was attempted but reported no usable index; source was inspected directly. No live database was queried and no application tests were rerun.
 
-**Implementation reconciliation — 2026-11-03:** The later model/mapping task is incomplete. Eight new plain domain classes are present in [Models](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Domain/Models/): Organization, OrganizationMembership, OrganizationRole, OrganizationRolePermission, OrganizationRoleAssignment, OrganizationInvitation, OrganizationInvitationRoleOffer and PlatformRoleAssignment. IdentityAuditEvent is absent, and none of the eight has an EF configuration or DbContext registration. The mapped business model remains User, PasswordCredential and AuthSession; no new collaboration migration/schema or authorization workflow is established. The [alignment audit](../../documentation-alignment-audit.md) records the handoff; this documentation audit does not verify factory completeness or rerun application tests.
-
-| Existing object | Source evidence | Implication |
-|---|---|---|
-| `shared.Users` | [User mapping](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Configurations/UserConfiguration.cs) and [InitialIdentity](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261025052513_InitialIdentity.cs) | Preserve identity, fields and case-insensitive email uniqueness. |
-| `shared.PasswordCredentials` | [Credential mapping](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Configurations/PasswordCredentialConfiguration.cs) and [credential migration](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261101173630_AddRegistrationCredentials.cs) | One password credential at most per User; local restricted User FK. |
-| `shared.AuthSessions` | [Session mapping](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Configurations/AuthSessionConfiguration.cs) and [session migration](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261102041840_AddAuthSessions.cs) | Multiple independent sessions; verifier, fixed refresh deadline and revocation. |
-| Operational messaging/reliability records | [IdentityDbContext](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/DbContexts/IdentityDbContext.cs) | Retain separately from business entities; history of outbox/delivery work is not a membership or security-audit model. |
-
-Current registration creates an active User without verified email, authentication tokens or workspace membership. Login issues an identity-oriented JWT and rotating refresh proof. Recorded policy uses configurable 10-minute access and fixed seven-day refresh lifetimes. Identity checks active account and unrevoked session per protected bearer request. This is not organization authorization, email ownership proof, MFA or privileged elevation.
-
-Refresh/revoke services exist; refresh/logout HTTP endpoints remain planned. Existing logout policy allows already-admitted requests to finish. Initial registration/login rate limiting, lockout and durable security-event storage were deferred; this design does not silently add them to that contract.
-
-**Joint Organization readiness review — U11–U21:** readers/defaults, protected targets/delegation, fields/reasons, retries, role/nomination lifecycle, revocation, retention, abuse limits and release exclusions are selected in the log and canonical contracts. No open business-policy blocker remains for the selected scope. Physical nomination persistence, authorization interfaces, mappings and runtime evidence still need source-aware task design/implementation.
+- Fourteen business tables are mapped in shared, including Organization foundations, audit, creation replay, invitations/delivery and ownership nominations. Use the [current schema](current-schema.md) for exact inventory and source links. The old nine-table proposal is historical. PlatformRoleAssignment is not registered/mapped here.
+- The bounded Organization backend and 30 Gateway operations have recorded completion evidence in [task 014](../../../features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md) and the [acceptance matrix](../../../features/FEAT-DP-003-organization/backend-acceptance.md). Those prior test results are not newly executed verification.
+- AuthController exposes registration and login; no public refresh/logout HTTP routes are present. Session service behavior is distinct from endpoint availability. Registration remains active/unverified and does not grant workspace access.
+- General admitted-request policy permits completion; guarded Organization mutations additionally serialize session revocation through commit under [task 018](../../../features/FEAT-DP-003-organization/tasks/TASK-DP-003-018.md).
+- Frontend integration, Project/guest admission, operational platform privilege/recovery and production environment state are separate handoffs. Requirement readiness and null approval references remain unchanged.
 
 ## Design sequence and gates
+
+The following table records the original design-stage assessment (2026-11-03). Its implementation/physical-readiness statements are historical; use the verified baseline and current schema above. Deferred platform assurance/recovery remains deferred.
 
 | Stage | Work and output | Current state / gate |
 |---|---|---|

@@ -1,8 +1,10 @@
 # Identity Data Dictionary
 
-> Status: Existing authentication baseline plus proposed physical columns for nine new tables. New definitions are a review draft, not implemented or approved schema.
+> Status: Historical physical-design proposal (2026-11-03), retained for rationale; superseded for implementation inventory.
 > Recorded: 2026-11-03, Asia/Bangkok.
 > Companion views: [ERD](erd.md), [decisions](design-decisions.md), [review scenarios](review-scenarios.md).
+
+> **Current reference — 2026-11-08:** [Current mapped schema](current-schema.md) documents fourteen mapped business tables, including later replay, invitation-delivery and nomination persistence. The physical diagrams/columns and technical gates below are the original proposal, not a current implementation checklist. Selected conceptual ownership remains valid; PlatformRoleAssignment is not a mapped table.
 
 ## Evidence and notation
 

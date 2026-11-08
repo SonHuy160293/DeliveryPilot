@@ -1,6 +1,8 @@
 # DeliveryPilot Workflow Discovery Report
 
-> Version: 1.1
+> **Current direction — 2026-11-07:** [D1–D6](#197-lifecycle-and-execution-visibility-decisions) establish post-contract fixed-price delivery across eight lifecycle/governance stages, including warranty and closure. The [SDLC workflow](sdlc-workflow.md) is the current stage/gate reference. Earlier seven-stage and risk-first summaries below are historical where superseded; compatible Q/W/V decisions remain valid. Product direction is not detailed artifact approval.
+
+> Version: 1.2
 > Recorded: 2026-11-03, Asia/Bangkok
 > Status: User-confirmed workflow discovery; derived alignment guidance proposed for review
 > Purpose: Foundation for subsequent User Requirements, Functional Requirements, user stories, acceptance scenarios, and ERD design.
@@ -8,9 +10,12 @@
 
 > **Documentation reconciliation — 2026-11-03:** A subsequent user-requested audit aligned the core product/requirements/roadmap/context/authoring documents with this report and the selected [Identity design](architecture/modules/identity/README.md). See the [alignment audit](architecture/documentation-alignment-audit.md) for corrections and remaining feature/release decisions. Q1–Q44/W1 retain their original meaning; this note does not approve derived A1–A4 guidance or downstream artifacts.
 
+> **Vision repositioning — 2026-11-06:** The user refocused the product on Scrum delivery for software outsourcing with AI-powered delivery risk management. Decisions V1–V5 in [§19.6](#196-vision-repositioning-decisions) narrow some release allocations below (notably Kanban, Q8/Q40, and per-UR proposal review, Q4/Q9–Q16). Read Kanban-specific passages as post-MVP scope.
+
 DeliveryPilot manages software delivery from project discovery and agreed requirements through planning, execution, verification, and release. AI assists people by explaining evidence, proposing feasible plans, and identifying potential delivery problems. People retain authority over agreements, assignments, plans, and releases.
 
-The agreed model supports a solo practitioner and a team through the same workspace structure. User needs and candidate Features evolve together before a versioned, pull-request-style requirement proposal connects agreement to specifications, delivery work, and evidence. Scrum and Kanban share the governance model while retaining different execution policies.
+The agreed model supports a solo practitioner and a team through the same workspace structure. User needs and candidate Features evolve together before a versioned, pull-request-style requirement proposal connects agreement to specifications, delivery work, and evidence. Scrum is the initial delivery mode; the historical Kanban model is deferred and shares governance concepts with different execution policies.
+
 
 ## 1. Scope and authority
 
@@ -352,7 +357,7 @@ Missing information remains visible. Relevant information must be established be
 
 ### 5.2 Delivery modes
 
-The initial modes are Scrum and Kanban. Agile is the broader approach, rather than a third execution mode with undefined behavior.
+Current release direction: Scrum is the initial mode; Kanban is deferred under V1. The original Q8/Q40 model supports a later Kanban path. Agile is the broader approach, not a third execution mode.
 
 Each initial Scrum project has one delivery team, one Sprint calendar, and at most one active Sprint. Future Sprints may be planned while the current Sprint runs.
 
@@ -937,6 +942,12 @@ This mapping is derived navigation. It does not create features, change prioriti
 | FEAT-DP-018 Delivery Forecasting | Evidence-backed forecasts, uncertainty, infeasible alternatives, and freshness. |
 | FEAT-DP-012 QA Management | Draft test scenarios, Dev/QA coordination, verification of AC/FR/NFR/rules, failure/rework, and later detailed test management. |
 | FEAT-DP-016 Release Management | Applicable UAT, release gates, authorized contents, delivery evidence, and outcome review. |
+| FEAT-DP-025 Client Engagement Management (V3) | Client organization, contract type, budget/effort, milestones and client PO context for projects. |
+| FEAT-DP-026 Scrum Events & Ceremonies (V2) | Sprint Review acceptance/feedback (§13) and Retrospective follow-up. |
+| FEAT-DP-027 Delivery Health Dashboard (V4) | Explainable health from §12 signals and reviewed problems, internal and client-shared. |
+| FEAT-DP-028 AI Risk Insights (V4) | §12 AI interpretation of findings and mitigation drafts under human control. |
+
+After the 2026-11-06 repositioning, FEAT-DP-001 is named Delivery Risk Signals, FEAT-DP-009 Scrum Delivery (Kanban material in §10 is post-MVP), FEAT-DP-010 Delivery Risk Register, FEAT-DP-011 Team Capacity & Velocity, and FEAT-DP-018 Sprint & Release Forecasting. See the [roadmap](roadmap.md#2-feature-registry).
 
 ### 16.2 Suggested refinement sequence
 
@@ -1118,6 +1129,33 @@ On 2026-11-03, Asia/Saigon, the user explicitly answered the FEAT-DP-003 review 
 ### 19.5 Joint Organization coding-readiness decisions
 
 U11–U21 are explicit user answers in this conversation, 2026-11-03, Asia/Saigon, subsequently recorded in [Identity decisions](architecture/modules/identity/design-decisions.md). They settle reader/default/target policy, member/audit fields, creation replay, invitation and nomination lifecycle/races, role retirement/upgrades, membership/navigation, revocation, history/evidence, abuse limits and explicit lifecycle/recovery deferrals. Original Q1–Q44/W1 are unchanged. The [Organization contracts](features/FEAT-DP-003-organization/feature.md) now use these choices as reviewed inputs for task planning; internal readiness is not customer approval or implemented behavior.
+
+### 19.6 Vision repositioning decisions
+
+On 2026-11-06 the user (product owner) explicitly asked to refocus DeliveryPilot as an **SDLC Agile Scrum Project Management Platform for Software Outsourcing with AI-powered Delivery Risk Management**, and accepted the recommended defaults below. These are user-confirmed product-direction choices. They are not retroactively attributed to Q1–Q44/W1, do not approve any UR/FR/US/Task, and establish no implemented behavior. Where a V decision narrows an earlier Q decision, the earlier decision is retained as history and marked superseded for the affected scope only.
+
+| Ref | Confirmed decision | Supersedes / narrows | Limitation |
+|---|---|---|---|
+| V1 | Scrum is the only delivery mode for MVP. Kanban project mode moves to V2; a Sprint board view inside Scrum remains. | Narrows Q8 (Scrum **or** Kanban) and Q40 (Kanban WIP) to post-MVP scope; Q25 (one team, one active Sprint) unchanged. | Kanban rules stay recorded for later refinement; they are not deleted. |
+| V2 | Keep version-bound approval, baselines and Change Request integrity. Simplify MVP client governance to (a) client sign-off of a release/Sprint scope baseline and (b) Sprint Review acceptance of the increment. Per-UR proposal review moves to V1. | Narrows release allocation of Q4/Q9–Q16; their behavior rules remain valid where the proposal workflow is later delivered. | Q11 (silence is not approval), Q13 (frozen revisions), Q18/Q22/Q39 (baselines, CR) still apply in MVP. |
+| V3 | Add a minimal **Client Engagement** record in MVP: client organization, contract type (Fixed-price, Time & Materials, Dedicated Team), planned budget/effort, milestones, and client-side Product Owner. Billing/invoicing remain out of scope. | Pulls the engagement part of FEAT-DP-022 forward; no change to Q1–Q6 ownership. | Exact fields, currencies and visibility are feature refinement. |
+| V4 | Delivery risk management is the primary differentiator. MVP ships deterministic risk signals plus a human-reviewed risk register; AI explanation and mitigation suggestions follow as MVP+1; forecasting/prediction stays V1/V2 and is gated on representative data. | Re-allocates Q35–Q38 signal/finding behavior from V1 to MVP; Q31–Q34/Q42 AI planning remains V1. | AI guardrails BR-040–BR-045 are unchanged. |
+| V5 | Target segment is stated as **software outsourcing vendors (≈10–200 staff) running Scrum delivery for external clients**. This remains a hypothesis to validate with pilots. | Replaces the generic "agencies and engineering delivery teams" hypothesis. | No customer evidence is claimed. |
+
+### 19.7 Lifecycle and execution visibility decisions
+
+Recorded 2026-11-07 from the product owner's latest clarification and request to implement the documentation plan. These are user-provided direction, not customer interview findings or version-specific UR/FR/US approval.
+
+| ID | Confirmed direction | Reconciliation |
+|---|---|---|
+| D1 | Multi-tenant, AI-assisted software delivery management for fixed-price outsourcing using Agile Scrum, from initiation through warranty and closure | Broadens the product definition beyond V4's risk-first positioning; risk management remains a core capability. |
+| D2 | Preserve the original Sprint timebox; separately visualize the real implementation situation | Actual work, blockers and later completion must not rewrite original dates. Forecast and scenario policies remain proposals. |
+| D3 | Keep eight lifecycle/governance stages; refinement, design, development and testing continue in Sprints; UAT/deployment can repeat | Supersedes W1's seven-stage summary, not its compatible detailed behaviors. Current stage definitions live in sdlc-workflow.md. |
+| D4 | Initial scope: delivery after contract signing, requirements collaboration, Scrum, client acceptance, risks, traceability, reporting and AI assistance | Presales and contracting remain research/input context rather than initial product workflows. |
+| D5 | Exclude CRM, presales proposal management, payroll, full accounting, source hosting and a proprietary load-testing engine initially | Commercial evidence links remain useful; native invoicing/payment processing stays outside the initial implementation. |
+| D6 | External engineering and test tools can provide evidence | Integration depth and first connectors need prioritization; does not authorize recreating source hosting or test engines. |
+
+Source: Product-owner clarification in this conversation: “preserve the sprint timebox”, “visualize real situation”, “eight stages ... lifecycle and governance stages”, and the supplied product definition/scope. The subsequent “implement the plan” authorizes documentation refactoring. Operational rules not explicitly selected remain proposed in the cross-feature requirements.
 
 ## 20. Handoff conclusion
 
