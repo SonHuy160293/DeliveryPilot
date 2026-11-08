@@ -61,7 +61,9 @@ The Gateway ([`proxy.json`](src/Gateway/DeliveryPilot.Gateway/proxy.json)) publi
 - `POST /identity/api/v1/auth/register`
 - `POST /identity/api/v1/auth/login`
 
-The Organization, membership, role and invitation APIs are **not** published through the Gateway yet ([TASK-DP-003-014](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md)). Integration endpoints are internal and must never be published. The Gateway applies forwarding, CORS, request-size and timeout rules. Its readiness endpoint validates proxy configuration only; module API readiness checks include their databases.
+The allowlist also publishes 30 Organization method/path pairs under `/identity/api/v1`: workspace creation/personal listing, permissions, role definitions/retirement, member reads and guarded role/membership actions, manager and recipient invitations, ownership nominations and permitted audit history. Exact routes and methods are defined in `proxy.json` and checked by the Gateway route tests. These routes remove only `/identity`, use GUID-constrained identifiers, a 30-second timeout and a 16,384-byte body ceiling. Private responses, including Gateway-generated errors, are no-store. The configured CORS policy permits GET/POST/PUT and the Idempotency-Key request header; Identity remains responsible for current bearer/session and workspace authorization. [TASK-DP-003-014](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md) records verification and external handoffs.
+
+Integration endpoints, including invitation delivery eligibility and Users integration, remain internal and must never be published. The Gateway applies forwarding, CORS, request-size and timeout rules. Its readiness endpoint validates proxy configuration only; module API readiness checks include their databases.
 
 ## Authentication and authorization model
 
@@ -111,7 +113,7 @@ Runtime facts at the last verification. The linked artifact owns each item.
 - Membership removal and suspension: [TASK-DP-003-011](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-011.md).
 - Additional-Owner nomination: [TASK-DP-003-012](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-012.md).
 - Audit history query: [TASK-DP-003-013](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-013.md).
-- Gateway publication of the Organization APIs: [TASK-DP-003-014](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md).
+- Organization backend journey/deployment verification and external handoffs: [TASK-DP-003-014](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md).
 - Custom role retirement: [TASK-DP-003-015](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-015.md).
 - Rate limiting, lockout and email verification for the auth endpoints: deferred by [FR-DP-002-004](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-004.md) and [FR-DP-002-001](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-001.md).
 - Migration for `NotificationInboxDbContext`.
