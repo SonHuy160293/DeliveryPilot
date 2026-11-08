@@ -22,6 +22,8 @@ Read the [current SDLC workflow](../../sdlc-workflow.md) for the canonical eight
 | 07 | [Opportunities and priorities](07-opportunities-and-priorities.md) | How-might-we questions, MoSCoW and feature traceability |
 | 08 | [Assumptions and interviews](08-assumptions-and-interviews.md) | Validation backlog, interview guide and prototype tests |
 
+The [original seven-part discovery analysis](../analysis-original/README.md) is preserved alongside this reconciled set. Its historical phase and scope proposals are retained for comparison; the current product lifecycle is LC01–LC08.
+
 ## Authority and evidence labels
 
 - **user-provided:** The product owner's direction, including D1–D6. It is not evidence of customer prevalence or usability.
