@@ -776,6 +776,78 @@ namespace DeliveryPilot.Identity.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DeliveryPilot.Identity.Domain.Models.OrganizationOwnershipNomination", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MembershipId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("NominatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedByUserId");
+
+                    b.HasIndex("NominatedByUserId");
+
+                    b.HasIndex("OrganizationId", "MembershipId")
+                        .IsUnique()
+                        .HasDatabaseName("UxOwnershipNominationsPendingMember")
+                        .HasFilter("\"Status\" = 'pending'");
+
+                    b.HasIndex("Status", "ExpiresAt");
+
+                    b.HasIndex("MembershipId", "Status", "CreatedAt", "Id");
+
+                    b.HasIndex("OrganizationId", "Status", "CreatedAt", "Id");
+
+                    b.ToTable("OrganizationOwnershipNominations", "shared", t =>
+                        {
+                            t.HasCheckConstraint("CkOrganizationOwnershipNominationsClosure", "(\"Status\" = 'pending' AND \"ClosedAt\" IS NULL AND \"ClosedByUserId\" IS NULL AND \"Reason\" IS NULL AND \"Version\" = 1 AND \"UpdatedAt\" = \"CreatedAt\") OR (\"Status\" IN ('accepted','declined','cancelled','expired') AND \"ClosedAt\" IS NOT NULL AND \"ClosedAt\" >= \"CreatedAt\" AND \"UpdatedAt\" = \"ClosedAt\" AND \"Version\" = 2 AND ((\"Status\" = 'expired' AND \"ClosedByUserId\" IS NULL AND \"ClosedAt\" >= \"ExpiresAt\") OR (\"Status\" <> 'expired' AND \"ClosedByUserId\" IS NOT NULL AND \"ClosedAt\" < \"ExpiresAt\")))");
+
+                            t.HasCheckConstraint("CkOrganizationOwnershipNominationsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkOrganizationOwnershipNominationsReason", "\"Reason\" IS NULL OR (char_length(btrim(\"Reason\")) BETWEEN 1 AND 1000 AND \"Status\" = 'cancelled')");
+
+                            t.HasCheckConstraint("CkOrganizationOwnershipNominationsTimes", "\"ExpiresAt\" = \"CreatedAt\" + interval '168 hours' AND \"UpdatedAt\" >= \"CreatedAt\" AND \"Version\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("DeliveryPilot.Identity.Domain.Models.OrganizationRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1284,6 +1356,33 @@ namespace DeliveryPilot.Identity.Infrastructure.Persistence.Migrations
                     b.HasOne("DeliveryPilot.Identity.Domain.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Identity.Domain.Models.OrganizationOwnershipNomination", b =>
+                {
+                    b.HasOne("DeliveryPilot.Identity.Domain.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("ClosedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DeliveryPilot.Identity.Domain.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("NominatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DeliveryPilot.Identity.Domain.Models.Organization", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DeliveryPilot.Identity.Domain.Models.OrganizationMembership", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "MembershipId")
+                        .HasPrincipalKey("OrganizationId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

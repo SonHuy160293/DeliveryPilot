@@ -8,6 +8,8 @@ depends_on: ["FEAT-DP-002"]
 ---
 # FEAT-DP-003 — Organization & Membership
 
+Frontend integration handoff for the implemented backend: start with the [workflow playbook](frontend-integration.md), then use the [Gateway API contract and cURL reference](gateway-api-contract.md). These describe verified implementation and integration gaps; they do not change requirement approvals or authorize frontend route/dependency changes.
+
 > **Migration provenance:** Preserves the previous candidate feature discovery. The migrated contracts were draft; the subsequent joint readiness review below changes internal completeness status without customer approval. Initial candidate IDs `*-DP-002-01` were previously zero-padded to `*-DP-002-001`. On 2026-11-01, User Initialization was inserted as FEAT-DP-002; Organization moved to FEAT-DP-003 and its artifacts to `*-DP-003-NNN` at the user's request. Historical Organization IDs are superseded by this mapping; statuses and approval evidence are unchanged.
 
 ## 1. Problem and outcome

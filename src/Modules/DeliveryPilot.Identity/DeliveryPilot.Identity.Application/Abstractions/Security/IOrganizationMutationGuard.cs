@@ -2,6 +2,8 @@ namespace DeliveryPilot.Identity.Application.Abstractions.Security;
 
 public interface IOrganizationMutationGuard
 {
+    Task<OrganizationMutationScope> AcquireForNominationAsync(Guid organizationId, Guid nominationId, CancellationToken cancellationToken = default);
+
     Task<OrganizationMutationScope> AcquireForInvitationAsync(
         Guid organizationId,
         Guid invitationId,

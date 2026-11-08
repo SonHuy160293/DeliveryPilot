@@ -9,7 +9,7 @@ namespace DeliveryPilot.Identity.Tests.Organizations;
 public sealed class OrganizationReadRoutesTests
 {
     [Fact]
-    public void MemberControllersExposeReadAndRoleAssignmentRoutes()
+    public void MemberControllersExposeReadsRoleAssignmentsAndProtectedMembershipActions()
     {
         var services = new ServiceCollection();
         services.AddLogging();
@@ -21,12 +21,14 @@ public sealed class OrganizationReadRoutesTests
                 || x.DisplayName?.Contains("MeOrganizationsController", StringComparison.Ordinal) == true)
             .Select(x => x.AttributeRouteInfo?.Template)
             .Order(StringComparer.Ordinal).ToArray();
-        Assert.Equal(6, routes.Length);
+        Assert.Equal(8, routes.Length);
         Assert.Contains("api/v{version:apiVersion}/me/organizations", routes);
         Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members", routes);
         Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/me", routes);
         Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/{membershipId:guid}", routes);
         Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/{membershipId:guid}/roles/{roleId:guid}/grant", routes);
         Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/{membershipId:guid}/roles/{roleId:guid}/revoke", routes);
+        Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/{membershipId:guid}/remove", routes);
+        Assert.Contains("api/v{version:apiVersion}/organizations/{organizationId:guid}/members/{membershipId:guid}/demote-owner", routes);
     }
 }

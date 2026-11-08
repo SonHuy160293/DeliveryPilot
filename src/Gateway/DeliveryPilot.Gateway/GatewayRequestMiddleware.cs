@@ -14,6 +14,19 @@ public sealed class GatewayRequestMiddleware(RequestDelegate next, ILogger<Gatew
 
     public async Task InvokeAsync(HttpContext context)
     {
+        if (context.Request.Path.StartsWithSegments("/identity/api/v1/organizations", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/identity/api/v1/organization-invitations", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/identity/api/v1/me/organizations", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/identity/api/v1/me/ownership-nominations", StringComparison.OrdinalIgnoreCase))
+        {
+            // OnStarting survives Response.Clear in the safe error writer and overrides upstream caching.
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers.CacheControl = "no-store";
+                return Task.CompletedTask;
+            });
+        }
+
         long start = Stopwatch.GetTimestamp();
         try
         {

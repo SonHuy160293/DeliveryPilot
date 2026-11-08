@@ -21,7 +21,7 @@ using Xunit;
 
 namespace DeliveryPilot.Gateway.Tests;
 
-public sealed class GatewayHttpTests
+public sealed partial class GatewayHttpTests
 {
     private const string TestRoute = "/identity/api/v1/proxy-test";
     private const string Webhook = "/notification/api/v1/webhooks/email/resend";
@@ -489,6 +489,7 @@ public sealed class GatewayHttpTests
                 {
                     path = context.Request.Path.Value, query = context.Request.QueryString.Value, body,
                     authorization = context.Request.Headers.Authorization.ToString(), signature = context.Request.Headers["svix-signature"].ToString(),
+                    idempotencyKey = context.Request.Headers["Idempotency-Key"].ToString(),
                     correlation = context.TraceIdentifier, traceId = Activity.Current?.TraceId.ToString(), traceparent = context.Request.Headers["traceparent"].ToString(),
                     remoteIp = context.Connection.RemoteIpAddress?.ToString(), scheme = context.Request.Scheme,
                 });

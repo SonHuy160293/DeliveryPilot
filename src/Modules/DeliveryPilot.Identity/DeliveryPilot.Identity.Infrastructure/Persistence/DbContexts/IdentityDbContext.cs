@@ -12,6 +12,7 @@ public sealed class IdentityDbContext : DbContext
     public DbSet<AuthSession> AuthSessions => Set<AuthSession>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<OrganizationMembership> OrganizationMemberships => Set<OrganizationMembership>();
+    public DbSet<OrganizationOwnershipNomination> OrganizationOwnershipNominations => Set<OrganizationOwnershipNomination>();
     public DbSet<OrganizationRole> OrganizationRoles => Set<OrganizationRole>();
     public DbSet<OrganizationRolePermission> OrganizationRolePermissions => Set<OrganizationRolePermission>();
     public DbSet<OrganizationRoleAssignment> OrganizationRoleAssignments => Set<OrganizationRoleAssignment>();

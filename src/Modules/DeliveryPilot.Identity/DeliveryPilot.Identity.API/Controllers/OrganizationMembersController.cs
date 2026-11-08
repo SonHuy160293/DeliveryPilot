@@ -1,9 +1,11 @@
 using DeliveryPilot.AspNetCore.Controllers;
+using DeliveryPilot.Identity.API.Contracts.Organizations;
+using DeliveryPilot.Identity.Application.Features.OrganizationMemberships.Commands.DemoteOwner;
+using DeliveryPilot.Identity.Application.Features.OrganizationMemberships.Commands.RemoveMembership;
+using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Commands.ChangeRoleAssignment;
 using DeliveryPilot.Identity.Application.Features.Organizations.Queries.GetMyMembership;
 using DeliveryPilot.Identity.Application.Features.Organizations.Queries.GetOrganizationMember;
 using DeliveryPilot.Identity.Application.Features.Organizations.Queries.ListOrganizationMembers;
-using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Commands.ChangeRoleAssignment;
-using DeliveryPilot.Identity.API.Contracts.Organizations;
 using DeliveryPilot.SharedKernel.Cqrs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +17,22 @@ namespace DeliveryPilot.Identity.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class OrganizationMembersController(ISender sender) : ApiController(sender)
 {
+    [HttpPost("{membershipId:guid}/remove")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> RemoveAsync(Guid organizationId, Guid membershipId, RemoveMembershipRequest request, CancellationToken cancellationToken)
+    {
+        var result = await Sender.SendAsync(new RemoveMembershipCommand(organizationId, membershipId, request.ExpectedMembershipVersion, request.Reason, HttpContext.TraceIdentifier), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : HandleFailure(result);
+    }
+
+    [HttpPost("{membershipId:guid}/demote-owner")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> DemoteOwnerAsync(Guid organizationId, Guid membershipId, DemoteOwnerRequest request, CancellationToken cancellationToken)
+    {
+        var result = await Sender.SendAsync(new DemoteOwnerCommand(organizationId, membershipId, request.ExpectedMembershipVersion, request.Reason, HttpContext.TraceIdentifier), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : HandleFailure(result);
+    }
+
     [HttpPost("{membershipId:guid}/roles/{roleId:guid}/grant")]
     public Task<IActionResult> GrantAsync(Guid organizationId, Guid membershipId, Guid roleId, ChangeRoleAssignmentRequest request, CancellationToken cancellationToken)
         => ChangeRoleAsync(organizationId, membershipId, roleId, request, true, cancellationToken);

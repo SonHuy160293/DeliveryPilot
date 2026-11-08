@@ -69,6 +69,726 @@
             "RequestHeaderRemove": "Forwarded"
           }
         ]
+      },
+      "identity-organization-create": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-my-organizations": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/me/organizations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-permissions": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/permissions"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-roles-list": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/roles"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-roles-create": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/roles"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-roles-update": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "PUT"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/roles/{roleId:guid}"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-roles-retire": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/roles/{roleId:guid}/retire"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-list": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-me": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/me"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-detail": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/{membershipId:guid}"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-remove": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/{membershipId:guid}/remove"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-demote": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/{membershipId:guid}/demote-owner"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-grant": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/{membershipId:guid}/roles/{roleId:guid}/grant"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-members-revoke": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/members/{membershipId:guid}/roles/{roleId:guid}/revoke"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-issue": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-list": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-detail": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations/{invitationId:guid}"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-resend": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations/{invitationId:guid}/resend"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-reissue": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations/{invitationId:guid}/reissue"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-invitations-cancel": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/invitations/{invitationId:guid}/cancel"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-invitation-preview": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organization-invitations/{invitationId:guid}/preview"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-invitation-accept": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organization-invitations/{invitationId:guid}/accept"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-invitation-decline": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organization-invitations/{invitationId:guid}/decline"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-ownership-nominate": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/ownership-nominations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-ownership-list": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/ownership-nominations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-ownership-accept": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/ownership-nominations/{nominationId:guid}/accept"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-ownership-decline": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/ownership-nominations/{nominationId:guid}/decline"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-ownership-cancel": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "POST"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/ownership-nominations/{nominationId:guid}/cancel"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-my-ownership-nominations": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/me/ownership-nominations"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "identity-organization-audit-events": {
+        "ClusterId": "identity",
+        "Match": {
+          "Methods": [
+            "GET"
+          ],
+          "Path": "/identity/api/v1/organizations/{organizationId:guid}/audit-events"
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "Prefix": "Remove",
+            "X-Forwarded": "Set"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
       }
     },
     "Clusters": {

@@ -572,6 +572,7 @@ public sealed class InvitationManagementHttpTests
             await db.Set<InboxMessage>().Where(x => _statusMessageIds.Contains(x.MessageId)).ExecuteDeleteAsync();
             await db.IdentityAuditEvents.Where(x => x.OrganizationId != null && ids.Contains(x.OrganizationId.Value)).ExecuteDeleteAsync();
             await db.OrganizationInvitationDeliveries.Where(x => ids.Contains(x.OrganizationId)).ExecuteDeleteAsync();
+            await db.OrganizationOwnershipNominations.Where(x => ids.Contains(x.OrganizationId)).ExecuteDeleteAsync();
             await db.OrganizationInvitationRoleOffers.Where(x => ids.Contains(x.OrganizationId)).ExecuteDeleteAsync();
             await db.OrganizationInvitations.Where(x => ids.Contains(x.OrganizationId) && x.ReplacesInvitationId != null).ExecuteDeleteAsync();
             await db.OrganizationInvitations.Where(x => ids.Contains(x.OrganizationId)).ExecuteDeleteAsync();

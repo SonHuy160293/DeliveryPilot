@@ -25,10 +25,15 @@ function Assert-True([bool]$Condition, [string]$Message) { if (-not $Condition) 
 function Http-Status([string]$Path, [string]$Method = 'GET', [hashtable]$Headers = @{}) {
     $request = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::new($Method), ($base + $Path))
     try {
-        if ($Method -eq 'POST') { $request.Content = [Net.Http.StringContent]::new('{}', [Text.Encoding]::UTF8, 'application/json') }
+        if ($Method -in @('POST','PUT')) { $request.Content = [Net.Http.StringContent]::new('{}', [Text.Encoding]::UTF8, 'application/json') }
         foreach ($key in $Headers.Keys) { $null = $request.Headers.TryAddWithoutValidation($key, [string]$Headers[$key]) }
         $response = $client.SendAsync($request).GetAwaiter().GetResult()
-        try { return [int]$response.StatusCode } finally { $response.Dispose() }
+        try {
+            if ($Path -match '^/identity/api/v1/(organizations|organization-invitations|me/(organizations|ownership-nominations))(/|$)') {
+                Assert-True ($response.Headers.CacheControl -and $response.Headers.CacheControl.NoStore) 'Private response omitted no-store.'
+            }
+            return [int]$response.StatusCode
+        } finally { $response.Dispose() }
     } finally { $request.Dispose() }
 }
 function Compose-Model([string]$Module) {
@@ -57,6 +62,15 @@ try {
     Assert-True ((Http-Status '/health/live') -eq 200 -and (Http-Status '/health/ready') -eq 200) 'Gateway health failed.'
     Assert-True ((Http-Status '/identity/api/v1/auth/register' 'POST') -eq 400) 'Registration route did not reach Identity.'
     Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST') -eq 400) 'Login route did not reach Identity.'
+    $routeModel = Get-Content -LiteralPath (Join-Path $repoRoot 'src/Gateway/DeliveryPilot.Gateway/proxy.json') -Raw | ConvertFrom-Json
+    $organizationRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Name -notin @('identity-register','identity-login','notification-resend') })
+    Assert-True ($organizationRoutes.Count -eq 30) 'Organization allowlist changed without acceptance review.'
+    foreach ($entry in $organizationRoutes) {
+        $path = [regex]::Replace($entry.Value.Match.Path, '\{\w+:guid\}', '019a0000-0000-7000-8000-000000000001')
+        Assert-True ((Http-Status $path $entry.Value.Match.Methods[0]) -eq 401) 'Protected Organization action did not reach bearer authentication.'
+        Assert-True ((Http-Status $path 'DELETE') -eq 405) 'Organization action accepted an unsupported method.'
+    }
+    Assert-True ((Http-Status '/identity/api/v1/integrations/organization-invitation-deliveries/019a0000-0000-7000-8000-000000000001/eligibility' 'POST') -eq 404) 'Invitation eligibility became public.'
     Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST') -eq 400) 'Webhook route did not reach Notification.'
     Assert-True ((Http-Status '/identity/api/v1/integrations/users/123' 'POST') -eq 404) 'Integration path became public.'
     Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend') -eq 405) 'Wrong method did not return 405.'
@@ -76,6 +90,7 @@ try {
                 Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST') -eq 400) 'Stopping Identity interrupted Notification.'
                 Assert-True ((Http-Status '/identity/api/v1/auth/register' 'POST') -in @(502,504)) 'Unavailable Identity destination did not return a forwarding failure.'
                 Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST') -in @(502,504)) 'Unavailable Identity login destination did not return a forwarding failure.'
+                Assert-True ((Http-Status '/identity/api/v1/organizations' 'POST') -in @(502,504)) 'Unavailable Organization destination did not return a safe private forwarding failure.'
             }
         } finally {
             & docker start $container *> $log
@@ -96,6 +111,8 @@ try {
     Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST' $headers) -eq 400) 'Production webhook forwarding failed.'
     Assert-True ((Http-Status '/identity/api/v1/auth/register' 'POST' $headers) -eq 400) 'Production registration forwarding failed.'
     Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST' $headers) -eq 400) 'Production login forwarding failed.'
+    Assert-True ((Http-Status '/identity/api/v1/me/organizations' 'GET' $headers) -eq 401) 'Production Organization read forwarding failed.'
+    Assert-True ((Http-Status '/identity/api/v1/organizations' 'POST' $headers) -eq 401) 'Production Organization mutation forwarding failed.'
     Write-Output 'PASS: production webhook, registration, and login forwarding.'
 } finally {
     if ($restore) {

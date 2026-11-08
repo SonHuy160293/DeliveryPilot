@@ -23,6 +23,13 @@ public sealed class OrganizationMutationGuard(
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
+    public Task<OrganizationMutationScope> AcquireForNominationAsync(Guid organizationId, Guid nominationId, CancellationToken cancellationToken = default)
+    {
+        EnsureCommandTransaction();
+        (Guid actorUserId, Guid? sessionId) = ResolveCurrentPrincipal();
+        return AcquireInternalAsync(organizationId, actorUserId, sessionId, null, cancellationToken, nominationId: nominationId);
+    }
+
     public Task<OrganizationMutationScope> AcquireForInvitationAsync(
         Guid organizationId,
         Guid invitationId,
@@ -64,7 +71,8 @@ public sealed class OrganizationMutationGuard(
         Guid? sessionId,
         Guid? targetMembershipId,
         CancellationToken cancellationToken,
-        Guid? invitationId = null)
+        Guid? invitationId = null,
+        Guid? nominationId = null)
     {
         if (organizationId == Guid.Empty)
         {
@@ -95,6 +103,16 @@ public sealed class OrganizationMutationGuard(
                     .Where(invitation => invitation.OrganizationId == organizationId && invitation.Id == invitationId.Value)
                     .Select(invitation => invitation.IssuedByUserId).SingleOrDefaultAsync(cancellationToken)
                 : Guid.Empty;
+
+            if (nominationId.HasValue)
+            {
+                var nomination = await dbContext.OrganizationOwnershipNominations.AsNoTracking()
+                    .Where(item => item.OrganizationId == organizationId && item.Id == nominationId.Value)
+                    .Select(item => new { item.MembershipId, item.NominatedByUserId }).SingleOrDefaultAsync(cancellationToken);
+                targetMembershipId = nomination?.MembershipId;
+                targetLookupId = targetMembershipId ?? Guid.Empty;
+                sponsorUserId = nomination?.NominatedByUserId ?? Guid.Empty;
+            }
 
             // Step 2: Lock active account eligibility rows in ascending Id order so competing account-state changes cannot invalidate the decision before commit.
             List<User> lockedUsers = await dbContext.Users
@@ -185,6 +203,8 @@ public sealed class OrganizationMutationGuard(
                 .Where(a => a.OrganizationId == organizationId)
                 .ToListAsync(cancellationToken);
 
+            // Eligibility may expire while waiting for locks. Evaluate the loaded facts now.
+            DateTimeOffset authorityTime = _timeProvider.GetUtcNow();
             OrganizationMemberSecurityContext actorContext = BuildContextFromLoadedState(
                 organization,
                 actorMembership,
@@ -192,7 +212,7 @@ public sealed class OrganizationMutationGuard(
                 roles,
                 rolePermissions,
                 assignments,
-                now);
+                authorityTime);
 
             OrganizationMembership? targetMembership = null;
             OrganizationMemberSecurityContext? targetContext = null;
@@ -211,7 +231,7 @@ public sealed class OrganizationMutationGuard(
                         roles,
                         rolePermissions,
                         assignments,
-                        now);
+                        authorityTime);
                 }
             }
 
@@ -220,15 +240,28 @@ public sealed class OrganizationMutationGuard(
                 usersById,
                 roles,
                 assignments,
-                now);
+                authorityTime);
 
             OrganizationMutationScope? sponsor = null;
             OrganizationMembership? sponsorMembership = lockedMemberships.SingleOrDefault(membership => membership.UserId == sponsorUserId);
             if (sponsorMembership is not null && usersById.TryGetValue(sponsorUserId, out User? sponsorUser))
             {
                 OrganizationMemberSecurityContext sponsorContext = BuildContextFromLoadedState(
-                    organization, sponsorMembership, sponsorUser.Status, roles, rolePermissions, assignments, now);
+                    organization, sponsorMembership, sponsorUser.Status, roles, rolePermissions, assignments, authorityTime);
                 sponsor = new OrganizationMutationScope(organization, sponsorMembership, sponsorContext, activeEligibleOwnerCount);
+            }
+
+            OrganizationTargetRoleFacts? targetRoles = null;
+            if (targetMembership is not null)
+            {
+                HashSet<Guid> currentTargetRoleIds = assignments.Where(assignment => assignment.MembershipId == targetMembership.Id &&
+                    assignment.RevokedAt is null && (assignment.ExpiresAt is null || assignment.ExpiresAt > authorityTime))
+                    .Select(assignment => assignment.RoleId).ToHashSet();
+                List<OrganizationRole> currentTargetRoles = roles.Where(role => currentTargetRoleIds.Contains(role.Id) && role.RetiredAt is null).ToList();
+                targetRoles = new OrganizationTargetRoleFacts(
+                    targetMembership.Id,
+                    currentTargetRoles.Any(OrganizationCapabilityCatalog.IsSystemOwnerRole),
+                    currentTargetRoles.Any(OrganizationCapabilityCatalog.IsSystemAdminRole));
             }
 
             return new OrganizationMutationScope(
@@ -238,7 +271,8 @@ public sealed class OrganizationMutationGuard(
                 activeEligibleOwnerCount,
                 targetMembership,
                 targetContext,
-                sponsor);
+                sponsor,
+                targetRoles);
         }
         catch (Exception ex) when (OrganizationAuthorizationService.IsStoreUnavailable(ex, cancellationToken))
         {

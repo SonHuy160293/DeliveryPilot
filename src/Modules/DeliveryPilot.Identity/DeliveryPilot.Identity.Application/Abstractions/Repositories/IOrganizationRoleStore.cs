@@ -15,4 +15,6 @@ public interface IOrganizationRoleStore
     Task<OrganizationRoleAssignment?> FindAssignmentAsync(Guid organizationId, Guid membershipId, Guid roleId, CancellationToken cancellationToken);
 
     void AddAssignment(OrganizationRoleAssignment assignment);
+
+    Task<bool> HasRetirementReferencesAsync(Guid organizationId, Guid roleId, DateTimeOffset now, CancellationToken cancellationToken);
 }

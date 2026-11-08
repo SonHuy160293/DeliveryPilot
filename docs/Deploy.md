@@ -1,6 +1,10 @@
 # Run DeliveryPilot locally
 
-The current checkout contains a backend: a gateway, Identity and Notification APIs and workers, PostgreSQL databases, RabbitMQ and a local Mailpit mailbox. There is no frontend in this deployment. Run commands from the repository root. The examples use Windows PowerShell; Linux users can use the Bash equivalents below.
+The current checkout contains a backend: a gateway, Identity and Notification APIs and workers, PostgreSQL databases, RabbitMQ and a local Mailpit mailbox. Run the separate `DeliveryPilot-Web` frontend checkout alongside this deployment for browser workflows. Run backend commands from this repository root. The examples use Windows PowerShell; Linux users can use the Bash equivalents below.
+
+The Gateway publishes the explicit Organization allowlist under `/identity/api/v1`, including workspace creation/listing, permissions, roles/retirement, member management, invitations, ownership nominations and audit history. Use the exact methods in `src/Gateway/DeliveryPilot.Gateway/proxy.json`; there is no catch-all or public integration/dispatch route. Identity validates bearer sessions and current workspace authority. New Organization routes have a 16 KB body ceiling, a 30-second timeout and no-store responses, including errors. Browser CORS permits GET/POST/PUT and the Idempotency-Key header for workspace creation; configure the exact trusted frontend origin for each environment.
+
+Organization publication acceptance extends `scripts/Test-GatewayDeployment.ps1 -Config <disposable-config>` with all 30 protected routes, unsupported-method/private-path checks, no-store and destination-outage checks. `scripts/Test-Deployment.ps1 -Config <disposable-config>` invokes that check and the deployed Notification smoke tests. These scripts require a disposable `deliverypilot-verify-*` Development/Mailpit stack and are not production release commands. Detailed backend acceptance and external UI/Project handoffs are recorded under FEAT-DP-003 task 014.
 
 ## Prerequisites
 
@@ -75,6 +79,16 @@ bash scripts/deliverypilot.sh status
 bash scripts/deliverypilot.sh logs
 bash scripts/deliverypilot.sh down
 ```
+
+## Run the frontend and test an invitation
+
+In `deploy/env/local.env`, use `DELIVERYPILOT_FRONTEND_ORIGIN=http://127.0.0.1:5173` and retain `DELIVERYPILOT_EMAIL_MODE=Mailpit` for local capture. Existing env files are preserved by `init`, so update the origin explicitly and rerun `up` to apply it to Notification, Identity and Gateway. Older captured emails retain their original links.
+
+In the separate `DeliveryPilot-Web` repository, copy `.env.example` to `.env.local` if needed. Its `/identity/` API base and development proxy target `http://127.0.0.1:19090` forward requests to this Gateway without stripping the prefix. Run `npm run dev` and open `http://127.0.0.1:5173`; the frontend reserves that port and fails rather than silently changing the email landing origin.
+
+Use disposable accounts and a workspace to issue an invitation from the frontend. Open its new message at `http://localhost:28025` and follow the review link. An existing account signs in, previews the offer, then explicitly accepts or declines. A new recipient registers, signs in, then reopens the original email: registration creates no session or membership and retires the invitation proof. Reload and account changes also require reopening the email. Acceptance checks current membership before entering the workspace.
+
+Mailpit captures email locally and does not send to real inboxes. Real delivery uses separately configured Resend credentials, a verified sender/domain and an HTTPS frontend origin reachable by the recipient. Do not place provider secrets in frontend configuration. Use trusted local HTTPS if the browser requires it for Secure cookies; do not relax cookie flags.
 
 ## Run application processes on the host
 

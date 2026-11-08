@@ -20,6 +20,39 @@ public sealed record IdentityAuditEntry(
     int? EventOrdinal = null,
     bool RequiresReason = false)
 {
+    public static IdentityAuditEntry ForOwnershipNomination(
+        OrganizationOwnershipNomination nomination,
+        string? previousStatus,
+        IdentityAuditActor actor,
+        DateTimeOffset now,
+        string correlationId,
+        long? membershipVersion = null)
+    {
+        ArgumentNullException.ThrowIfNull(nomination);
+        string details = JsonSerializer.Serialize(new
+        {
+            nominatedByUserId = nomination.NominatedByUserId,
+            previousStatus,
+            newStatus = nomination.Status,
+            expiresAt = nomination.ExpiresAt,
+            closedByUserId = nomination.ClosedByUserId,
+            closedAt = nomination.ClosedAt,
+        });
+        return new IdentityAuditEntry(
+            nomination.OrganizationId,
+            membershipVersion.HasValue ? nomination.MembershipId : null,
+            membershipVersion,
+            IdentityAuditSchemaCatalog.OrganizationOwnershipNominationAggregate,
+            nomination.Id,
+            nomination.Version,
+            previousStatus is null ? IdentityAuditSchemaCatalog.OwnershipNominationCreated : IdentityAuditSchemaCatalog.OwnershipNominationClosed,
+            actor,
+            now,
+            correlationId,
+            details,
+            nomination.Reason);
+    }
+
     public static IdentityAuditEntry ForOrganizationCreated(
         Organization organization,
         IdentityAuditActor actor,

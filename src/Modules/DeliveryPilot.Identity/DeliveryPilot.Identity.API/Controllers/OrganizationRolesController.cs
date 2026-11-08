@@ -1,6 +1,7 @@
 using DeliveryPilot.AspNetCore.Controllers;
 using DeliveryPilot.Identity.API.Contracts.Organizations;
 using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Commands.CreateOrganizationRole;
+using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Commands.RetireOrganizationRole;
 using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Queries.ListOrganizationRoles;
 using DeliveryPilot.Identity.Application.Features.OrganizationRoles.Commands.UpdateOrganizationRole;
 using DeliveryPilot.SharedKernel.Cqrs;
@@ -14,6 +15,14 @@ namespace DeliveryPilot.Identity.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class OrganizationRolesController(ISender sender) : ApiController(sender)
 {
+    [HttpPost("{roleId:guid}/retire")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> RetireAsync(Guid organizationId, Guid roleId, RetireOrganizationRoleRequest request, CancellationToken cancellationToken)
+    {
+        var result = await Sender.SendAsync(new RetireOrganizationRoleCommand(organizationId, roleId, request.ExpectedVersion, request.Reason, HttpContext.TraceIdentifier), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : HandleFailure(result);
+    }
+
     [HttpGet]
     public async Task<IActionResult> ListAsync(Guid organizationId, [FromQuery] int limit = 50, [FromQuery] string? cursor = null, CancellationToken cancellationToken = default)
     {

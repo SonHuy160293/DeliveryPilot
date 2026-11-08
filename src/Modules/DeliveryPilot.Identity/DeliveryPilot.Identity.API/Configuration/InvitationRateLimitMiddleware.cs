@@ -11,8 +11,10 @@ public sealed class InvitationRateLimitMiddleware(RequestDelegate next)
     public async Task InvokeAsync(HttpContext context)
     {
         Type? controller = context.GetEndpoint()?.Metadata.GetMetadata<ControllerActionDescriptor>()?.ControllerTypeInfo.AsType();
-        bool invitationEndpoint = controller == typeof(OrganizationInvitationsController) || controller == typeof(InvitationResponsesController);
-        if (invitationEndpoint)
+        bool protectedEndpoint = controller == typeof(OrganizationInvitationsController) || controller == typeof(InvitationResponsesController) ||
+            controller == typeof(OrganizationMembersController) || controller == typeof(OrganizationOwnershipController) ||
+            controller == typeof(MyOwnershipNominationsController) || controller == typeof(OrganizationAuditController) || controller == typeof(OrganizationRolesController);
+        if (protectedEndpoint)
         {
             context.Response.Headers.CacheControl = "no-store";
         }
@@ -31,7 +33,7 @@ public sealed class InvitationRateLimitMiddleware(RequestDelegate next)
                 exception.Message,
                 TraceId: context.TraceIdentifier)));
         }
-        catch (BadHttpRequestException exception) when (invitationEndpoint && !context.Response.HasStarted && exception.StatusCode == StatusCodes.Status413PayloadTooLarge)
+        catch (BadHttpRequestException exception) when (protectedEndpoint && !context.Response.HasStarted && exception.StatusCode == StatusCodes.Status413PayloadTooLarge)
         {
             context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
             await context.Response.WriteAsJsonAsync(ApiResponse.Fail(new ApiErrorResponse(

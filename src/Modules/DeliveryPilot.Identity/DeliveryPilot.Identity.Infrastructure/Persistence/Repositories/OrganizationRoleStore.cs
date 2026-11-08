@@ -79,4 +79,21 @@ public sealed class OrganizationRoleStore(IdentityDbContext db) : IOrganizationR
     }
 
     public void AddAssignment(OrganizationRoleAssignment assignment) => db.OrganizationRoleAssignments.Add(assignment);
+
+    public async Task<bool> HasRetirementReferencesAsync(Guid organizationId, Guid roleId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await db.OrganizationRoleAssignments.AsNoTracking().AnyAsync(
+                item => item.OrganizationId == organizationId && item.RoleId == roleId && item.RevokedAt == null && (item.ExpiresAt == null || item.ExpiresAt > now), cancellationToken)
+                || await (from offer in db.OrganizationInvitationRoleOffers.AsNoTracking()
+                          join invitation in db.OrganizationInvitations.AsNoTracking() on offer.InvitationId equals invitation.Id
+                          where offer.OrganizationId == organizationId && invitation.OrganizationId == organizationId && offer.RoleId == roleId && invitation.Status == "pending"
+                          select offer).AnyAsync(cancellationToken);
+        }
+        catch (Exception exception) when (OrganizationAuthorizationService.IsStoreUnavailable(exception, cancellationToken))
+        {
+            throw OrganizationAuthorizationService.CreateAuthorityUnavailable();
+        }
+    }
 }

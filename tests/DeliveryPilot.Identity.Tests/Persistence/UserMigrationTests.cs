@@ -89,7 +89,7 @@ public sealed class UserMigrationTests
         await context.SaveChangesAsync();
         await context.Database.MigrateAsync();
         Assert.Equal("test-version-1$opaque-verifier", (await context.PasswordCredentials.SingleAsync()).PasswordHash);
-        await AssertTablesAsync(context, "shared.AuthSessions", "shared.IdentityAuditEvents", "shared.OrganizationCreationAttempts", "shared.OrganizationInvitationDeliveries", "shared.OrganizationInvitationRoleOffers", "shared.OrganizationInvitations", "shared.OrganizationMemberships", "shared.OrganizationRoleAssignments", "shared.OrganizationRolePermissions", "shared.OrganizationRoles", "shared.Organizations", "shared.PasswordCredentials", "shared.Users");
+        await AssertTablesAsync(context, "shared.AuthSessions", "shared.IdentityAuditEvents", "shared.OrganizationCreationAttempts", "shared.OrganizationInvitationDeliveries", "shared.OrganizationInvitationRoleOffers", "shared.OrganizationInvitations", "shared.OrganizationMemberships", "shared.OrganizationOwnershipNominations", "shared.OrganizationRoleAssignments", "shared.OrganizationRolePermissions", "shared.OrganizationRoles", "shared.Organizations", "shared.PasswordCredentials", "shared.Users");
 
         var now = DateTimeOffset.UtcNow;
         context.AuthSessions.Add(AuthSession.Create(Guid.NewGuid(), user.Id, new byte[AuthSession.RefreshVerifierLength], now, now.AddDays(7)));
@@ -121,7 +121,65 @@ public sealed class UserMigrationTests
         await context.Database.MigrateAsync();
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
-        await AssertTablesAsync(context, "shared.AuthSessions", "shared.IdentityAuditEvents", "shared.OrganizationCreationAttempts", "shared.OrganizationInvitationDeliveries", "shared.OrganizationInvitationRoleOffers", "shared.OrganizationInvitations", "shared.OrganizationMemberships", "shared.OrganizationRoleAssignments", "shared.OrganizationRolePermissions", "shared.OrganizationRoles", "shared.Organizations", "shared.PasswordCredentials", "shared.Users");
+        await AssertTablesAsync(context, "shared.AuthSessions", "shared.IdentityAuditEvents", "shared.OrganizationCreationAttempts", "shared.OrganizationInvitationDeliveries", "shared.OrganizationInvitationRoleOffers", "shared.OrganizationInvitations", "shared.OrganizationMemberships", "shared.OrganizationOwnershipNominations", "shared.OrganizationRoleAssignments", "shared.OrganizationRolePermissions", "shared.OrganizationRoles", "shared.Organizations", "shared.PasswordCredentials", "shared.Users");
+    }
+
+    [PostgreSqlFact]
+    public async Task OwnershipNominationMigrationPreservesMembershipRolesAndAuditHistory()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await using var context = database.Context();
+        string[] migrations = context.Database.GetMigrations().ToArray();
+        string added = migrations.Single(migration => migration.EndsWith("_AddOrganizationOwnershipNominations", StringComparison.Ordinal));
+        string previous = migrations[Array.IndexOf(migrations, added) - 1];
+        var migrator = context.GetService<IMigrator>();
+        await migrator.MigrateAsync(previous);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var user = User.Create($"nomination-upgrade-{Guid.NewGuid():N}@example.test", "Preserved Owner", status: "active");
+        var organization = Organization.Create("Preserved workspace", user.Id, now);
+        var membership = OrganizationMembership.Create(organization.Id, user.Id, user.Id, now);
+        OrganizationBuiltInRoleSeed seed = OrganizationCapabilityCatalog.CreateBuiltInRoles(organization.Id, now);
+        var assignment = OrganizationRoleAssignment.Create(organization.Id, membership.Id, seed.OwnerRole.Id, user.Id, now);
+        context.Users.Add(user);
+        context.Organizations.Add(organization);
+        context.OrganizationMemberships.Add(membership);
+        context.OrganizationRoles.AddRange(seed.Roles);
+        context.OrganizationRolePermissions.AddRange(seed.Permissions);
+        context.OrganizationRoleAssignments.Add(assignment);
+        await context.SaveChangesAsync();
+        Guid auditId;
+        await using (var transaction = await context.Database.BeginTransactionAsync())
+        {
+            var writer = new DeliveryPilot.Identity.Infrastructure.Auditing.IdentityAuditWriter(
+                context,
+                TimeProvider.System,
+                Microsoft.Extensions.Logging.Abstractions.NullLogger<DeliveryPilot.Identity.Infrastructure.Auditing.IdentityAuditWriter>.Instance);
+            IdentityAuditEvent entry = await writer.StageAsync(DeliveryPilot.Identity.Application.Abstractions.Auditing.IdentityAuditEntry.ForOrganizationCreated(
+                organization,
+                DeliveryPilot.Identity.Application.Abstractions.Auditing.IdentityAuditActor.User(user.Id),
+                now,
+                "nomination-migration-upgrade"));
+            auditId = entry.Id;
+            await context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+
+        await migrator.MigrateAsync(added);
+        context.ChangeTracker.Clear();
+        Assert.Equal(membership.Id, (await context.OrganizationMemberships.SingleAsync()).Id);
+        Assert.Equal(assignment.Id, (await context.OrganizationRoleAssignments.SingleAsync()).Id);
+        Assert.Equal(user.Id, (await context.Users.SingleAsync()).Id);
+        Assert.Equal(auditId, (await context.IdentityAuditEvents.SingleAsync()).Id);
+        Assert.Empty(await context.OrganizationOwnershipNominations.ToListAsync());
+        var nomination = OrganizationOwnershipNomination.Create(organization.Id, membership.Id, user.Id, now);
+        context.OrganizationOwnershipNominations.Add(nomination);
+        await context.SaveChangesAsync();
+        await migrator.MigrateAsync(previous);
+        Assert.Equal(assignment.Id, (await context.OrganizationRoleAssignments.AsNoTracking().SingleAsync()).Id);
+        Assert.Equal(auditId, (await context.IdentityAuditEvents.AsNoTracking().SingleAsync()).Id);
+        await migrator.MigrateAsync(added);
+        Assert.Empty(await context.OrganizationOwnershipNominations.AsNoTracking().ToListAsync());
+        Assert.False(context.Database.HasPendingModelChanges());
     }
 
     private static async Task AssertTablesAsync(IdentityDbContext context, params string[] expected)

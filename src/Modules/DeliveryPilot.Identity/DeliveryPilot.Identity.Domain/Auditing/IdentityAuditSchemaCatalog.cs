@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace DeliveryPilot.Identity.Domain.Auditing;
 
@@ -451,6 +452,7 @@ public static class IdentityAuditSchemaCatalog
     private static bool ContainsForbiddenReasonPattern(string value)
     {
         return value.Contains("http://", StringComparison.OrdinalIgnoreCase)
+               || Regex.IsMatch(value, @"[^\s<>(),;:]+@[^\s<>(),;:]+", RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, TimeSpan.FromMilliseconds(100))
                || value.Contains("https://", StringComparison.OrdinalIgnoreCase)
                || value.Contains("Bearer ", StringComparison.OrdinalIgnoreCase)
                || value.Contains("token=", StringComparison.OrdinalIgnoreCase)

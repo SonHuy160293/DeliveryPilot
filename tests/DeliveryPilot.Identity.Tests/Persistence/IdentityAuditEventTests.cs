@@ -16,6 +16,18 @@ namespace DeliveryPilot.Identity.Tests.Persistence;
 public sealed class IdentityAuditEventTests
 {
     [Fact]
+    public void AuditReasonsRejectEmailAddressesWithoutEchoingThem()
+    {
+        foreach (string email in new[] { "private@example.test", "person@internal", "person+tag@example.test" })
+        {
+            ArgumentException exception = Assert.Throws<ArgumentException>(() => IdentityAuditSchemaCatalog.ValidateAndNormalizeReason($"Contact {email} about departure", true));
+            Assert.DoesNotContain(email, exception.Message, StringComparison.Ordinal);
+        }
+
+        Assert.Equal("Reviewed @ retrospective", IdentityAuditSchemaCatalog.ValidateAndNormalizeReason("Reviewed @ retrospective", true));
+    }
+
+    [Fact]
     public void RoleMetadataAuditUsesAllowlistedBeforeAndAfterValues()
     {
         Guid organizationId = Guid.CreateVersion7();

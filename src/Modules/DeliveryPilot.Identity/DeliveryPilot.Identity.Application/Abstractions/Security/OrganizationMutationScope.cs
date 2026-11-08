@@ -11,7 +11,8 @@ public sealed record OrganizationMutationScope(
     int ActiveEligibleOwnerCount,
     OrganizationMembership? TargetMembership = null,
     OrganizationMemberSecurityContext? Target = null,
-    OrganizationMutationScope? Sponsor = null)
+    OrganizationMutationScope? Sponsor = null,
+    OrganizationTargetRoleFacts? TargetRoles = null)
 {
     public const string AccessDeniedErrorCode = "Organization.AccessDenied";
     public const string AccessDeniedMessage = "Access is not permitted.";
@@ -202,7 +203,7 @@ public sealed record OrganizationMutationScope(
         }
 
         // Multi-role Owner target uses protected Owner rules.
-        if (targetMember.IsSystemOwner)
+        if (IsOwnerTarget(targetMember))
         {
             if (!Actor.IsSystemOwner)
             {
@@ -218,7 +219,7 @@ public sealed record OrganizationMutationScope(
         }
 
         // Removing an Admin membership is Owner-only.
-        if (targetMember.IsSystemAdmin)
+        if (IsAdminTarget(targetMember))
         {
             if (!Actor.IsSystemOwner)
             {
@@ -242,7 +243,7 @@ public sealed record OrganizationMutationScope(
         EnsureOwnerAuthority();
         EnsurePrivilegedChangeAllowed();
 
-        if (targetMember.OrganizationId != Organization.Id || !targetMember.IsSystemOwner)
+        if (targetMember.OrganizationId != Organization.Id || !IsOwnerTarget(targetMember))
         {
             throw CreateAccessDenied();
         }
@@ -255,4 +256,10 @@ public sealed record OrganizationMutationScope(
 
     public static ForbiddenException CreateAccessDenied()
         => new(AccessDeniedErrorCode, AccessDeniedMessage);
+
+    private bool IsOwnerTarget(OrganizationMemberSecurityContext target)
+        => target.IsSystemOwner || (target.OrganizationId == Organization.Id && TargetRoles?.MembershipId == target.MembershipId && TargetRoles.HasOwnerGrant);
+
+    private bool IsAdminTarget(OrganizationMemberSecurityContext target)
+        => target.IsSystemAdmin || (target.OrganizationId == Organization.Id && TargetRoles?.MembershipId == target.MembershipId && TargetRoles.HasAdminGrant);
 }
