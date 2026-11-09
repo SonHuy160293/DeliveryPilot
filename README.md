@@ -4,7 +4,7 @@
 
 It connects contractual scope, requirements, delivery planning, engineering execution, client approvals and project health, from initiation through warranty and closure. Teams can understand what was agreed, what is being delivered, what changed, what is at risk and what action to take next.
 
-> **Product status:** Current direction incorporates [D1–D6](docs/deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions); detailed requirements and release proposals still require review.
+> **Product status:** Current direction incorporates [D1–D8](docs/deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) (Scrum-only, fixed-price-only); detailed requirements and release proposals still require review.
 > **Repository status:** Backend documentation describes Identity, Notification and YARP Gateway components. Product direction and roadmap entries are not proof of implemented features.
 
 ## Who it serves

@@ -44,7 +44,7 @@ Evidence register (references such as W/Q3 below are local citations, not new ar
 |---|---|---|
 | W | [Workflow discovery v1.1](../deliverypilot-workflow-discovery.md), read completely, §§1–20 | Q1–Q44/W1 are recorded discovery evidence; §14 concepts and §19.3 clarifications are derived proposals. §18 explicitly defers field/security/architecture detail. |
 | R | [Cross-feature requirements](../requirements.md), especially §§3, 5, 8–9 | BR-001–008, BR-018–023, BR-043 and NFR-001–004/008/011; file is a draft candidate contract. |
-| P | [Product blueprint](../product.md), §§3–6 | Personas, single owning organization, client collaboration; older hybrid-mode direction differs from W/Q8, which defers hybrid. |
+| P | [Product blueprint](../product.md), §§3–6 | Personas, single owning organization, client collaboration. |
 | O | [Organization feature](../features/FEAT-DP-003-organization/feature.md), §§2–7, and its draft FRs | Project-specific permissions belong to FEAT-DP-004; ownership, removal, invitations and support policy need refinement. Stale implementation/dependency summaries are not runtime evidence. |
 | I | [User initialization feature](../features/FEAT-DP-002-user-initialization/feature.md) and its FR/task records | Current registration/login decisions must not be replaced silently by invitation or privileged-access proposals. |
 | A | [Current architecture](../../ARCHITECTURE.md), [solution](../../DeliveryPilot.slnx), [Identity host](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/Program.cs), [project references](../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj), [deployment](../../deploy/compose/identity/compose.yaml) | Separate executable/module/database configuration; not evidence of a running deployment. |
@@ -63,7 +63,7 @@ Evidence register (references such as W/Q3 below are local citations, not new ar
 - **Implemented:** `RetainUsersOnly` removed historical collaboration/security tables, but later migrations added credentials and sessions. Historical table names do not establish current organizations, RBAC, invitations, or platform administration.
 - **Implemented:** Identity checks active account/session state per bearer request. This does not establish organization/project revocation or cross-host authorization. No live database or deployment was inspected.
 - **Conflict:** target monolith/combined Identity & Organization and independently hosted current modules differ. This report recommends logical ownership only; acceptance and placement remain open.
-- **Conflict:** older generic BR/feature questions lag specific W decisions (guest access, creator ownership, hybrid deferral). Preserve both sources and reconcile canonical requirements later; no statuses or approval references are changed here.
+- **Conflict:** older generic BR/feature questions lag specific W decisions (guest access, creator ownership). Preserve both sources and reconcile canonical requirements later; no statuses or approval references are changed here.
 
 ## 3. Ubiquitous Language
 
@@ -272,7 +272,7 @@ This inventory is **Proposed** except the three C1 entities marked Implemented. 
 | **IdentityChallenge / authenticator — Identity — conditional roots** | Purpose-bound email/recovery proof; factor/issuer linkage only if selected identity policy requires it | User reference, verifier/expiry/consumption/attempt limits; unique external issuer+subject if federation is selected | Short-lived single-use proof or enrolled/revoked factor. Candidate only; MFA/federation/recovery choice changes this model. |
 | **Organization — Organization — root** | Workspace ownership: OrganizationId, name, status, security version, policy | One Organization to many local memberships/invitations/roles; logical one-to-many Projects via scalar OrganizationId | Create/active/suspend/archive; tenant scope. No cross-module cascade; deletion/retention workflow separate. |
 | **OrganizationMembership — Organization — root** | Durable User/workspace relationship: MembershipId, OrganizationId, UserId, status, joined/changed timestamps, version | Unique OrganizationId+UserId across lifecycle. Local Organization FK; UserId scalar. Zero/many role assignments/history events. | Active/suspended/removed; reactivation explicit with fresh grants. Owner protection spans memberships. Retain history; removing access does not erase actor evidence. |
-| **Project — Project — root** | Delivery container: ProjectId, OrganizationId, name/purpose, Draft/Active/Archived status, Scrum/Kanban policy, security version | Exactly one logical owning Organization; local one-to-many participants/roles/invitations. OrganizationId scalar validated by contract. | Draft creation with initial admin; archive/read policy open. Project scope; tenant ownership immutable by default. Retain references from delivery history. |
+| **Project — Project — root** | Delivery container: ProjectId, OrganizationId, name/purpose, Draft/Active/Archived status, Scrum policy, security version | Exactly one logical owning Organization; local one-to-many participants/roles/invitations. OrganizationId scalar validated by contract. | Draft creation with initial admin; archive/read policy open. Project scope; tenant ownership immutable by default. Retain references from delivery history. |
 | **ProjectMembership — Project — root** | Participation: MembershipId, ProjectId, UserId, Internal/External kind, status, eligibility provenance, version | Unique ProjectId+UserId; local Project FK; optional scalar originating OrganizationMembershipId. No universal org-membership FK. | Active/suspended/removed; internal eligibility checked externally. Explicit conversion/reactivation; no automatic restoration. Retain versioned roles/duties history. |
 
 ### Access and collaboration concepts
@@ -502,7 +502,7 @@ Codes below are proposed catalog examples, not registered runtime permissions. *
 | Draft scenario / `plans.propose` / Planning | Project plan | — | — | D | D | — | Q29/Q31–Q33; AI has no apply authority |
 | Apply plan / `plans.apply` / Planning | Current scenario/input versions | — | — | D | D, normally PM | — | Q29/Q34/Q42; team feasibility, freshness, applicable CR |
 | Establish plan baseline / `plans.baseline.establish` / Planning | Applied plan revision | — | — | D | D | — | Q18; separate explicit action |
-| Sprint select / Kanban pull / `execution.select`, `execution.pull` / Execution | Project/work item | — | — | D | D + team policy | — | Q23/Q25/Q40; readiness, one active Scrum Sprint, no Kanban Sprint requirement |
+| Sprint select / `execution.select` / Execution | Project/work item | — | — | D | D + team policy | — | Q23/Q25; readiness, one active Scrum Sprint |
 | State/rank/task assignment / `work.transition`, `work.rank`, `work.assign` / Execution | Work item | — | — | D | D | — | Q28/Q30; normal execution does not imply date/baseline/release changes |
 | Material Sprint change/WIP exception / `sprint.change`, `flow.override` / Execution | Sprint/flow policy | — | — | D | D + PM/team policy | — | Q30/Q40; original selection, reason/delta, explicit exception |
 | QA evidence / `quality.verify` / Quality | Work/specification versions | — | — | D | D, QA authority | — | Q41/W1; failed QA returns to correction; Done is not passed |
@@ -514,7 +514,7 @@ Codes below are proposed catalog examples, not registered runtime permissions. *
 
 ### Scenario validation against the full journey
 
-The model supports foundation → discovery → agreement → specifications/readiness → planning → Scrum/Kanban execution → QA/UAT/release → controlled change, without putting delivery entities in Identity. Access inputs are necessary for each stage; business owners retain their version/gate decisions.
+The model supports foundation → discovery → agreement → specifications/readiness → planning → Scrum execution → QA/UAT/release → controlled change, without putting delivery entities in Identity. Access inputs are necessary for each stage; business owners retain their version/gate decisions.
 
 | Stress scenario | Required result / model implication |
 |---|---|
@@ -579,7 +579,7 @@ Questions are recorded for review in one pass, not silently answered as approved
 | F1 / Blocking only for future support access | Customer consent, emergency exception and permitted support actions | Explicit justified expiring grant, no business approvals; capability remains disabled until reviewed. | Product/security; future support grant and decision evidence |
 | O1 / Optional/deferred | SSO/SCIM, delegated approval chains/quorum, generic policy engine | Defer absent validated demand; preserve contract seams. | Product/architecture |
 | O2 / Optional/deferred | Platform entitlements, billing, broad support tooling and separate platform service | Keep capability candidates only; no implementation or release commitment. | Product/operations |
-| O3 / Optional/deferred | Cross-org project ownership/transfer, hybrid mode, multiple delivery teams | Single owner and initial Scrum/Kanban per W; revisit explicitly. | Product/architecture |
+| O3 / Optional/deferred | Cross-org project ownership/transfer, multiple delivery teams | Single owner and Scrum-only per W and D7; revisit explicitly. | Product/architecture |
 
 Working assumptions: identifiers remain stable; modules can obtain authenticated authoritative contracts; ordinary users are human subjects; permission definitions are versioned by their owning capability; no legal-signature or retention obligation is invented. If these assumptions fail, revise the affected recommendations before ERD finalization. The initial current-session behavior and unverified registration decisions are preserved, not overridden by this report's future privilege/invitation recommendations.
 

@@ -86,7 +86,7 @@ Each module has explicit application contracts and persistence ownership; cross-
 | Context | Owns | Important outbound references |
 |---|---|---|
 | Identity (selected combined design) | Authentication, organizations, organization memberships/roles/invitations and protected platform assignments | Minimal identity/organization facts through contracts; project/resource authority stays with its owner |
-| Engagement & Client | Client organization record, engagement, contract type, planned budget/effort, milestones, client PO assignment | Organization ID; projects by scalar ID |
+| Engagement & Client | Client organization record, engagement, fixed-price agreement reference, planned budget/effort, milestones, client PO assignment | Organization ID; projects by scalar ID |
 | Project Governance | Project, Product Goal/brief, stakeholders, team participation, configuration | Organization, engagement and client references |
 | Requirements Management | Requirement, revision, rules, traceability links | Project, review and backlog artifacts |
 | Approval / Governance | Sign-off requests and decisions, scope baselines, change requests | Versioned artifacts and authorized approvers |
@@ -180,7 +180,7 @@ Separate **original Sprint snapshot**, **actual execution**, **estimation**, **c
 ```text
 Sprint/work events + approvals + capacity + engagement/burn + scope changes
                       |
-     Signal engine (deterministic, configurable per contract type)
+     Signal engine (deterministic, configurable per project)
                       |
      Candidate findings (evidence refs, dedup, last-checked)
                       |
@@ -198,7 +198,7 @@ Sprint/work events + approvals + capacity + engagement/burn + scope changes
 
 ### Signal engine
 
-- Each signal is a versioned definition: identifier, inputs, criteria/thresholds (configurable per project and contract type), evidence query and severity mapping.
+- Each signal is a versioned definition: identifier, inputs, criteria/thresholds (configurable per project), evidence query and severity mapping.
 - Evaluation is triggered by relevant domain events (via outbox) and by a scheduled sweep for time-based conditions such as overdue approvals and blocked age. NFR-014 defines freshness.
 - Evaluations are idempotent and deduplicated per signal and affected target. Unchanged dismissed findings do not resurface; new or worsening evidence does.
 - The engine reads source facts through owning-module contracts or read models, never another module's DbContext.

@@ -31,8 +31,8 @@ Evidence is maintained in [workflow discovery](deliverypilot-workflow-discovery.
 | Project | Bounded delivery initiative under one owning tenant in MVP |
 | Product | Long-lived software solution that may span multiple projects |
 | Client Organization | External customer business; does not implicitly gain ownership or access |
-| Client Engagement | Vendor-owned record of the delivery relationship with one client: contract type, planned budget/effort, milestones, client Product Owner (V3) |
-| Contract type | Fixed-price in initial scope; Time & Materials and Dedicated Team are future concepts. Applicable policies must identify their supported contract model. |
+| Client Engagement | Vendor-owned record of the delivery relationship with one client: fixed-price agreement reference, planned budget/effort, milestones, client Product Owner (V3) |
+| Contract model | Fixed-price; the only supported contract model (D8). |
 | Client Product Owner | Client-side person assigned to clarify priorities, sign off scope baselines and accept increments; the assignment, not a role name, grants decision authority |
 | Stakeholder | Person or party with interest in, responsibility for, or authority over project outcomes |
 | Requirement | Recorded business/user/functional/quality need or constraint |
@@ -50,7 +50,6 @@ Evidence is maintained in [workflow discovery](deliverypilot-workflow-discovery.
 | Increment | Work meeting the DoD in a Sprint; client acceptance is a separate recorded fact |
 | Sprint Review / Retrospective | Scrum events that record increment feedback/acceptance and improvement actions |
 | Velocity | Completed estimate per Sprint for one team, used only as a planning and risk input |
-| Kanban Flow | Pull-oriented workflow with explicit work policies and WIP management (project mode deferred to release V2 by decision V1) |
 | Estimate | Expected amount/size of work, with uncertainty |
 | Capacity | Resource time actually available in a planning interval |
 | Forecast | Predicted timing/outcome based on scope, dependencies, data and assumptions |
@@ -168,7 +167,7 @@ Affected requirements and versions, Feature mappings, specifications/AC, tests/e
 | BR-024 | Product backlog can represent initiatives, epics, features, stories, defects, spikes, and technical work. | Agreed direction |
 | BR-025 | Technical/security/DevOps/NFR work may exist independently from user stories. | Agreed direction |
 | BR-026 | Priority, defect severity, MoSCoW scope class, and deadline must be modeled separately. | Agreed direction |
-| BR-027 | MVP projects use Scrum: one team/calendar and at most one active Sprint; future Sprints may be planned. Kanban project mode (no Sprint required) is post-MVP; hybrid and several independently scheduled teams per project are deferred. | User-confirmed: Q8/Q25, narrowed by V1 |
+| BR-027 | Every project uses Scrum, the only delivery framework: one team/calendar and at most one active Sprint; future Sprints may be planned. Several independently scheduled teams per project are deferred. | User-confirmed: Q8/Q25, V1, D7 |
 | BR-028 | A Scrum project can configure Sprint duration within a maximum of one month. | Agreed direction |
 | BR-029 | The Scrum Team retains ownership of Sprint Planning decisions; AI suggestions do not constitute commitments. | Agreed direction |
 | BR-030 | Development complete (DoD), QA verified, client accepted (Sprint Review or UAT) and Released must remain distinguishable concepts. | Agreed direction |
@@ -183,17 +182,17 @@ Affected requirements and versions, Feature mappings, specifications/AC, tests/e
 
 ### Quality and acceptance
 
-Story-level acceptance criteria describe observable outcomes. Draft refinement and estimation are allowed before commitment. W1 places DoR for selected scope before planning and rechecks it before Sprint selection/Kanban pull; the detailed checkpoint interpretation is A2 review guidance. Standalone work has its own rationale and readiness; exceptions require visible authorization (Q23).
+Story-level acceptance criteria describe observable outcomes. Draft refinement and estimation are allowed before commitment. W1 places DoR for selected scope before planning and rechecks it before Sprint selection; the detailed checkpoint interpretation is A2 review guidance. Standalone work has its own rationale and readiness; exceptions require visible authorization (Q23).
 
 Dev/QA work and draft test scenarios cover relevant AC/FR/NFR/rules. Drafted scenarios are not executed tests. DoD, QA, applicable UAT and release retain separate evidence; failed required checks return to correction/reverification, while changed expectations follow change control (Q41/W1; detailed disposition A4). Full test-management and automated deployment suites are deferred, not the distinction between those facts.
 
-Execution-board moves change permitted state or rank, not dates, acceptance or release. Material active-Sprint changes retain the original selection, delta, reason and explicit PM/team decision (Q28/Q30). Kanban WIP rules (Q40) apply when the post-MVP Kanban mode is delivered. Exact thresholds and states remain project/feature design.
+Execution-board moves change permitted state or rank, not dates, acceptance or release. Material active-Sprint changes retain the original selection, delta, reason and explicit PM/team decision (Q28/Q30). Exact thresholds and states remain project/feature design.
 
 ### Scrum events and outsourcing engagement rules
 
 | ID | Cross-feature requirement / rule | Status |
 |---|---|---|
-| BR-046 | A client project belongs to at most one Client Engagement in the vendor's workspace; internal projects need none. The engagement's contract type is recorded and its changes are attributable. | User-confirmed: V3; field details proposed |
+| BR-046 | A client project belongs to at most one Client Engagement in the vendor's workspace; internal projects need none. The engagement's fixed-price agreement reference is recorded and its changes are attributable. | User-confirmed: V3; field details proposed |
 | BR-047 | Each Sprint records its Sprint Goal, original selection, start/end dates, declared capacity and outcome (completed, carried over, removed). Closed Sprint records are not silently rewritten. | Proposed rule |
 | BR-048 | Velocity is computed per team from completed work in closed Sprints using the project's estimation method. It is a planning and signal input only, never a target or an individual measure. | Proposed rule; see BR-034/BR-044 |
 | BR-049 | Sprint Review records per-item client feedback or acceptance by an assigned client decision-maker. Acceptance is bound to the reviewed increment item and does not imply QA, UAT or release. Silence is not acceptance. | User-confirmed: V2; Q11 principle |
@@ -231,7 +230,7 @@ A usable schedule needs scope/priorities, milestone flexibility, calendars, esti
 
 | ID | Cross-feature requirement / rule | Status |
 |---|---|---|
-| BR-052 | The MVP risk-signal catalog includes at least: overdue client approval/decision, client-owned dependency waiting, scope added to an active Sprint without a recorded decision, work added outside the scope baseline without a CR, Sprint Goal at risk (remaining work vs. remaining capacity), velocity deviation from recent history, capacity overcommitment, blocked-work age, high carry-over, and effort/budget burn ahead of plan for the engagement's contract type. Each signal declares inputs, configurable criteria and the evidence it cites. | User-confirmed: V4 (families); thresholds proposed |
+| BR-052 | The MVP risk-signal catalog includes at least: overdue client approval/decision, client-owned dependency waiting, scope added to an active Sprint without a recorded decision, work added outside the scope baseline without a CR, Sprint Goal at risk (remaining work vs. remaining capacity), velocity deviation from recent history, capacity overcommitment, blocked-work age, high carry-over, and effort/budget burn ahead of the fixed-price plan. Each signal declares inputs, configurable criteria and the evidence it cites. | User-confirmed: V4 (families); thresholds proposed |
 | BR-053 | Risk signals run without an AI provider. A provider outage must not stop detection, the risk register or manual reporting. | User-confirmed: V4; BR-040 |
 | BR-054 | A confirmed risk records owner, affected scope (engagement, release, Sprint or work), probability, impact, response strategy (avoid, mitigate, transfer, accept), actions, due dates and history. | Proposed rule |
 | BR-055 | Risk, finding and delivery-health information is internal by default. Sharing with the client is an explicit, attributable action on selected items; client-visible text never exposes internal estimates or notes not explicitly shared. | Proposed rule; BR-004 |
@@ -286,7 +285,7 @@ These are **NFR categories**, not yet numeric SLAs:
 2. **Client access:** External approver sees only the intended shared requirement/package; unrelated artifacts remain inaccessible.
 3. **Approval revision:** Approval of Requirement v1 does not automatically approve v2.
 4. **Requirement traceability:** Requirement links lead to authorized features, stories and verification records without changing the requirement's ownership.
-5. **Scrum delivery:** A Scrum team can plan a Sprint with a Sprint Goal and declared capacity, record material Sprint changes, and close the Sprint with completed/carried-over outcomes. (Kanban flow without Sprint enrollment is a post-MVP scenario.)
+5. **Scrum delivery:** A Scrum team can plan a Sprint with a Sprint Goal and declared capacity, record material Sprint changes, and close the Sprint with completed/carried-over outcomes.
 6. **Multi-project capacity:** A member's capacity is allocated across projects without double counting.
 7. **AI guardrail:** A risk finding can be dismissed or accepted; its suggestion cannot directly rewrite an approved delivery baseline.
 8. **Risk signal to decision:** Scope added to an active Sprint without a recorded decision raises a candidate finding with evidence; the PM confirms it as a risk with owner and response, and the record keeps the original evidence.

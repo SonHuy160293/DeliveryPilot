@@ -10,11 +10,11 @@
 
 > **Documentation reconciliation — 2026-11-03:** A subsequent user-requested audit aligned the core product/requirements/roadmap/context/authoring documents with this report and the selected [Identity design](architecture/modules/identity/README.md). See the [alignment audit](architecture/documentation-alignment-audit.md) for corrections and remaining feature/release decisions. Q1–Q44/W1 retain their original meaning; this note does not approve derived A1–A4 guidance or downstream artifacts.
 
-> **Vision repositioning — 2026-11-06:** The user refocused the product on Scrum delivery for software outsourcing with AI-powered delivery risk management. Decisions V1–V5 in [§19.6](#196-vision-repositioning-decisions) narrow some release allocations below (notably Kanban, Q8/Q40, and per-UR proposal review, Q4/Q9–Q16). Read Kanban-specific passages as post-MVP scope.
+> **Vision repositioning — 2026-11-06:** The user refocused the product on Scrum delivery for software outsourcing with AI-powered delivery risk management. Decisions V1–V5 in [§19.6](#196-vision-repositioning-decisions) narrow some release allocations below (notably per-UR proposal review, Q4/Q9–Q16). Decisions D7–D8 in [§19.7](#197-lifecycle-and-execution-visibility-decisions) make Scrum the only delivery framework and fixed-price the only contract model.
 
 DeliveryPilot manages software delivery from project discovery and agreed requirements through planning, execution, verification, and release. AI assists people by explaining evidence, proposing feasible plans, and identifying potential delivery problems. People retain authority over agreements, assignments, plans, and releases.
 
-The agreed model supports a solo practitioner and a team through the same workspace structure. User needs and candidate Features evolve together before a versioned, pull-request-style requirement proposal connects agreement to specifications, delivery work, and evidence. Scrum is the initial delivery mode; the historical Kanban model is deferred and shares governance concepts with different execution policies.
+The agreed model supports a solo practitioner and a team through the same workspace structure. User needs and candidate Features evolve together before a versioned, pull-request-style requirement proposal connects agreement to specifications, delivery work, and evidence. Scrum is the only delivery framework.
 
 
 ## 1. Scope and authority
@@ -47,7 +47,7 @@ A person or team should be able to:
 4. Propose, discuss, review, accept, and baseline exact requirement versions and agreed mappings.
 5. Refine linked Stories, acceptance criteria, FRs, applicable NFRs, business rules, and test scenarios to explicit readiness.
 6. Plan around real priorities, dependencies, calendars, and declared capacity.
-7. Execute using Scrum or Kanban and see attributable progress and changes.
+7. Execute using Scrum and see attributable progress and changes.
 8. Identify and manage delivery risks, issues, blockers, and controlled changes.
 9. Record verification, applicable client acceptance, and release evidence.
 10. Use AI assistance without surrendering decision authority or exposing other workspaces.
@@ -93,7 +93,7 @@ Example: Alice owns Workspace A and administers its projects. She is also a BA i
 | Reviewer approval | A decision by an authorized reviewer on an exact revision. |
 | Final acceptance | An authorized action making the reviewed revision the current requirement. |
 | Scope baseline | An explicit snapshot of selected versions that form an agreement. |
-| Definition of Ready, DoR | The project's explicit readiness criteria for the selected work, rechecked before Sprint commitment or Kanban pull. |
+| Definition of Ready, DoR | The project's explicit readiness criteria for the selected work, rechecked before Sprint commitment. |
 | Definition of Done, DoD | The project's completion criteria; separate QA, applicable UAT, and release evidence still remain identifiable. |
 | Delivery-plan baseline | An explicit reference plan containing agreed selections, timing, and planning assumptions. |
 | Forecast | An estimate of an outcome based on declared inputs and uncertainty. |
@@ -208,9 +208,8 @@ flowchart TD
     T -->|Ready| U
 
     subgraph EXECUTION["6. EXECUTION, TESTING AND RELEASE"]
-        Z{"Delivery method and work ready to start?"}
+        Z{"Work ready for Sprint Planning?"}
         AA["Scrum: plan sprint and break down US into Dev and QA Tasks"]
-        AB["Kanban: pull ready US under WIP policy; create Dev and QA Tasks"]
         AC["Develop, code review and integrate"]
         AD["QA verifies AC and applicable FR, NFR and business rules"]
         AE{"Definition of Done and QA gates passed?"}
@@ -222,10 +221,8 @@ flowchart TD
         AI["Review completed scope and remaining backlog"]
 
         Z -->|Scrum - ready| AA
-        Z -->|Kanban - ready| AB
         Z -->|Readiness changed| P
         AA --> AC
-        AB --> AC
         AC --> AD --> AE
         AE -->|No - fix within agreement| AC
         AE -->|Yes| AF --> AF1
@@ -274,7 +271,7 @@ flowchart TD
 | 3. Requirement review and agreement | Immutable review evidence, explicit acceptance, and selected scope baseline. | All required internal/client/change decisions and acceptance conditions apply to the exact revision; baseline establishment is a separate action. |
 | 4. Feature and specification refinement | Stories/AC, defined or reused FRs, applicable NFRs/rules, traceability, and draft test scenarios. | DoR is satisfied for the selected work; agreement changes follow change control and the applicable review/baseline process. |
 | 5. Estimation and delivery planning | Team estimates, current capacity/dependencies, reviewed scenario, applied plan, and explicit plan baseline. | Feasibility, input freshness, authority, and any commitment-change approval are satisfied. |
-| 6. Execution, testing and release | Scrum/Kanban work, Dev/QA Tasks, verification outcomes, applicable UAT, release evidence, and problem follow-up. | Recheck readiness at selection/pull, then DoD, QA, applicable UAT, and release gates at their respective boundaries. |
+| 6. Execution, testing and release | Scrum Sprint work, Dev/QA Tasks, verification outcomes, applicable UAT, release evidence, and problem follow-up. | Recheck readiness at Sprint selection, then DoD, QA, applicable UAT, and release gates at their respective boundaries. |
 | 7. Controlled change management | Impact assessment, authorized decision, affected-work disposition, and routes back to the relevant stages. | Approval permits the specified change path; required review, feasibility, and explicit baseline updates still apply. Rejection/deferment retains current baselines. |
 
 ### 3.2 Reading the loops
@@ -351,17 +348,15 @@ A project can start as Draft with a name and short purpose. It progressively cap
 - Stakeholders and their responsibilities.
 - Assumptions and unresolved questions.
 - Constraints and known dependencies.
-- Delivery method.
+- Scrum cadence and Sprint length.
 
 Missing information remains visible. Relevant information must be established before a delivery plan is presented as an agreed commitment. This is a readiness policy rather than a mandatory waterfall phase.
 
-### 5.2 Delivery modes
+### 5.2 Delivery framework
 
-Current release direction: Scrum is the initial mode; Kanban is deferred under V1. The original Q8/Q40 model supports a later Kanban path. Agile is the broader approach, not a third execution mode.
+Scrum is the only delivery framework (D7). Agile is the broader approach; Scrum is how DeliveryPilot executes it.
 
-Each initial Scrum project has one delivery team, one Sprint calendar, and at most one active Sprint. Future Sprints may be planned while the current Sprint runs.
-
-Kanban supports continuous flow without mandatory Sprint enrollment. Hybrid execution and multiple independently scheduled teams inside one project are deferred.
+Each initial Scrum project has one delivery team, one Sprint calendar, and at most one active Sprint. Future Sprints may be planned while the current Sprint runs. Multiple independently scheduled teams inside one project are deferred.
 
 ### 5.3 Planning objects
 
@@ -563,7 +558,7 @@ Stories, Tasks, Bugs, Spikes, and Technical Work are distinct backlog work-item 
 
 Parent/child relationships do not replace blocking dependencies. A task can have no Story parent when its purpose is independently justified.
 
-Dev Tasks and QA Tasks describe the work needed to deliver and verify the selected Story. They may use task categories rather than new entity types; that design remains open. High-level breakdown and test scenarios can be prepared before planning, with detailed Tasks created or refined during Sprint planning or Kanban pull. Testing work and capacity must be considered before commitment even when the final Task breakdown follows later.
+Dev Tasks and QA Tasks describe the work needed to deliver and verify the selected Story. They may use task categories rather than new entity types; that design remains open. High-level breakdown and test scenarios can be prepared before planning, with detailed Tasks created or refined during Sprint Planning. Testing work and capacity must be considered before commitment even when the final Task breakdown follows later.
 
 ### 9.2 Collaboration
 
@@ -578,9 +573,9 @@ Dev Tasks and QA Tasks describe the work needed to deliver and verify the select
 
 Permissions are configurable. PM coordination does not authorize silently replacing team estimates to fit a deadline.
 
-### 9.3 Readiness for commitment or pull
+### 9.3 Readiness for Sprint commitment
 
-Draft work can be discussed, refined, and estimated. W1 places DoR before delivery planning for the selected increment; recheck it before Sprint commitment or Kanban pull because requirements, dependencies, and inputs may have changed. Use an explicit readiness check:
+Draft work can be discussed, refined, and estimated. W1 places DoR before delivery planning for the selected increment; recheck it before Sprint commitment because requirements, dependencies, and inputs may have changed. Use an explicit readiness check:
 
 - Clear outcome and acceptance criteria.
 - Traceability to applicable accepted/baselined requirement versions and relevant Feature contribution, or a recorded authorized exception.
@@ -590,7 +585,7 @@ Draft work can be discussed, refined, and estimated. W1 places DoR before delive
 - Necessary development, QA, and other work.
 - Resolution of any proposed agreement change through the required CR, review/acceptance, and explicit baseline actions.
 
-Known dependencies must be understood; they need not all be completed before planning. Dependencies that prevent starting the selected work remain visible at commitment/pull. Standalone work uses its own purpose and expected outcome rather than an invented UR or Story.
+Known dependencies must be understood; they need not all be completed before planning. Dependencies that prevent starting the selected work remain visible at Sprint commitment. Standalone work uses its own purpose and expected outcome rather than an invented UR or Story.
 
 Readiness is not client approval, a complete delivery plan, or evidence of DoD. Failed readiness within the agreement returns to refinement; an agreement-affecting change follows Section 8.5. Exceptions are visible and authorized. Precise project configuration, exception permissions, and evidence fields remain refinement items.
 
@@ -606,11 +601,11 @@ Effort estimates, calendar duration, available capacity, forecasts, and agreed d
 
 ## 10. Planning and visual boards
 
-Confirmed in Q24 through Q34; W1 places manual/AI scenario planning after specification readiness and before Scrum/Kanban execution.
+Confirmed in Q24 through Q34; W1 places manual/AI scenario planning after specification readiness and before Scrum execution.
 
 For the selected ready scope, prioritize Stories, refine estimates, assess dependencies and declared capacity, and compare draft scenarios. A feasible scenario must also use current inputs. If feasibility fails within the agreement, replan; if specifications are incomplete, return to refinement; if the response changes agreed scope or a commitment, follow change control.
 
-An authorized person applies the reviewed scenario. Establishing a plan baseline is a separate explicit action. An applied plan does not itself prove that a Sprint has been selected or that Kanban work has been pulled: those execution decisions retain their readiness, authority, and method-specific policies.
+An authorized person applies the reviewed scenario. Establishing a plan baseline is a separate explicit action. An applied plan does not itself prove that a Sprint has been selected: Sprint Planning retains its own readiness, authority, and selection policies.
 
 ### 10.1 Capacity inputs
 
@@ -641,22 +636,13 @@ Missing or stale availability remains visible.
 
 Material changes to the Sprint Goal require explicit review. Baseline-affecting changes also follow the applicable Change Request process.
 
-### 10.3 Kanban WIP
+Default workflow columns remain project configuration and feature refinement details.
 
-Kanban limits are configurable and advisory by default.
-
-- Advisory mode warns when exceeded.
-- Explicit enforced mode prevents the relevant move unless an authorized exception is recorded.
-- The active policy is visible.
-- Kanban work does not require Sprint assignment.
-
-Exact limits and default workflow columns remain project configuration and feature refinement details.
-
-### 10.4 Scrum and Kanban execution handoff
+### 10.3 Scrum execution handoff
 
 For Scrum, the team plans the Sprint, confirms its goal and selected ready Stories, and creates or refines Dev and QA Tasks. Future Sprint placement in a scenario is a planning proposal; actual Sprint selection follows the team's decision process and preserves original selection/change history.
 
-For Kanban, the team pulls ready work under the visible WIP policy and creates or refines the necessary Dev and QA Tasks without requiring Sprint enrollment. Both modes proceed through development, code review, integration, and verification against the selected requirement/specification versions.
+Selected work proceeds through development, code review, integration, and verification against the selected requirement/specification versions.
 
 If readiness or planning inputs change before work starts, revisit the affected specification/plan checks. Further task breakdown during execution stays lightweight unless it changes the agreement, a material Sprint selection, or another governed commitment.
 
@@ -839,7 +825,7 @@ flowchart LR
     AV[Calendars, Capacity and Dependencies] --> PS
     PS -->|authorized application| PR[Plan Revision]
     PR -->|explicit establishment| PB[Plan Baseline]
-    WI --> EX[Scrum or Kanban Execution]
+    WI --> EX[Scrum Execution]
     EX --> VE[Verification, UAT and Release Evidence]
     TS -->|verified against relevant versions| VE
     EX --> FI[Evidence-backed Findings]
@@ -900,8 +886,8 @@ These examples translate the decisions into observable behavior. They are inputs
 | Multiple change impacts | An approved change affects specifications, tests, and dates. | Work is routed back for refinement. | All affected areas are reconciled; approval does not bypass test updates, feasibility review, or explicit baseline actions. |
 | Historical implementation | Work implements an accepted UR revision. | A later revision is accepted. | Existing links and commitments remain visible; potentially affected work is flagged for explicit reconciliation. |
 | FR reuse and verification | A Story uses existing behavior and project-wide quality rules. | Specifications are refined for readiness. | Existing FRs are reused, relevant NFR/rules are applied, and test scenarios trace to the expected outcomes without claiming execution evidence. |
-| Readiness recheck | A Story was ready during planning but relevant inputs changed. | The team attempts Sprint selection or Kanban pull. | Readiness is rechecked; unresolved criteria return to refinement or an authorized visible exception, not automatic execution. |
-| Dev and QA preparation | A ready Story is selected under Scrum or pulled under Kanban. | Its detailed Tasks are created or refined. | Necessary Dev/QA work is visible; Kanban requires no Sprint and previously considered QA capacity is not omitted. |
+| Readiness recheck | A Story was ready during planning but relevant inputs changed. | The team attempts Sprint selection. | Readiness is rechecked; unresolved criteria return to refinement or an authorized visible exception, not automatic execution. |
+| Dev and QA preparation | A ready Story is selected at Sprint Planning. | Its detailed Tasks are created or refined. | Necessary Dev/QA work is visible; previously considered QA capacity is not omitted. |
 | Estimate integrity | Stories and child tasks have estimates in explicit units. | Planning totals are calculated. | The same work is not counted twice and no universal points-to-hours conversion is applied. |
 | Capacity privacy | A person participates in two workspaces. | One workspace calculates its plan. | It uses authorized declared capacity without exposing the other workspace's private data. |
 | Execution movement | A permitted participant moves or reorders a board card. | The action succeeds. | State or rank changes as appropriate; dates, release status, and commitments do not change implicitly. |
@@ -911,7 +897,6 @@ These examples translate the decisions into observable behavior. They are inputs
 | Stale proposal | A draft scenario exists and relevant capacity changes. | The PM attempts to apply it. | Current inputs are checked and affected changes require reconciliation/recalculation. |
 | Human finding review | A signal produces a candidate concern. | A reviewer confirms, links, or dismisses it. | Evidence, interpretation, decision, reason where required, and follow-up remain attributable. |
 | Notification relevance | A finding was dismissed and its evidence is unchanged. | Evaluation runs again. | It does not repeatedly notify as a new unchanged problem. |
-| Kanban WIP | A visible WIP policy is configured. | A move exceeds its limit. | Advisory mode warns; enforced mode prevents the move unless an authorized exception is recorded. |
 | Independent delivery evidence | Work is Done while a required QA gate fails. | Release readiness is assessed. | Done does not supply QA, UAT, or release evidence; configured gates determine eligibility. |
 | QA rework | Verification fails an agreed AC or applicable FR/NFR/rule. | The implementation is corrected without changing the agreement. | Relevant review/integration/verification repeat; a routine fix needs no formal scope CR. |
 | UAT disposition | Required UAT is pending or reports a problem. | Release is considered. | Pending approval blocks the normal release path; nonconformance returns to correction, while different agreed behavior follows change control. |
@@ -931,7 +916,7 @@ This mapping is derived navigation. It does not create features, change prioriti
 | FEAT-DP-006 Requirements Management | UR proposals with reviewed Feature mapping, immutable revisions, specification refinement/reuse, discussion, and history. |
 | FEAT-DP-007 Approval Workflow | Required/optional review, client modes, independent gates, and final acceptance. |
 | FEAT-DP-008 Backlog Management | Feature refinement, Stories/AC, flexible work types, Dev/QA Tasks, specification relationships, estimates, and DoR. |
-| FEAT-DP-009 Agile Delivery | Scrum planning versus Kanban pull, readiness rechecks, boards, Sprint changes, DoD, and WIP. |
+| FEAT-DP-009 Scrum Delivery | Sprint Planning, readiness rechecks, boards, Sprint changes and DoD. |
 | FEAT-DP-010 Basic Risk and Issue Tracking | Manual problems, ownership, actions, and history. |
 | FEAT-DP-011 Team Capacity and Estimation | Estimate units, calendars, availability, allocations, and double-count prevention. |
 | FEAT-DP-015 Client Portal | Restricted guests, publication, visible discussions, and scoped review authority. |
@@ -942,12 +927,12 @@ This mapping is derived navigation. It does not create features, change prioriti
 | FEAT-DP-018 Delivery Forecasting | Evidence-backed forecasts, uncertainty, infeasible alternatives, and freshness. |
 | FEAT-DP-012 QA Management | Draft test scenarios, Dev/QA coordination, verification of AC/FR/NFR/rules, failure/rework, and later detailed test management. |
 | FEAT-DP-016 Release Management | Applicable UAT, release gates, authorized contents, delivery evidence, and outcome review. |
-| FEAT-DP-025 Client Engagement Management (V3) | Client organization, contract type, budget/effort, milestones and client PO context for projects. |
+| FEAT-DP-025 Client Engagement Management (V3) | Client organization, fixed-price agreement reference, budget/effort, milestones and client PO context for projects. |
 | FEAT-DP-026 Scrum Events & Ceremonies (V2) | Sprint Review acceptance/feedback (§13) and Retrospective follow-up. |
 | FEAT-DP-027 Delivery Health Dashboard (V4) | Explainable health from §12 signals and reviewed problems, internal and client-shared. |
 | FEAT-DP-028 AI Risk Insights (V4) | §12 AI interpretation of findings and mitigation drafts under human control. |
 
-After the 2026-11-06 repositioning, FEAT-DP-001 is named Delivery Risk Signals, FEAT-DP-009 Scrum Delivery (Kanban material in §10 is post-MVP), FEAT-DP-010 Delivery Risk Register, FEAT-DP-011 Team Capacity & Velocity, and FEAT-DP-018 Sprint & Release Forecasting. See the [roadmap](roadmap.md#2-feature-registry).
+After the 2026-11-06 repositioning, FEAT-DP-001 is named Delivery Risk Signals, FEAT-DP-009 Scrum Delivery, FEAT-DP-010 Delivery Risk Register, FEAT-DP-011 Team Capacity & Velocity, and FEAT-DP-018 Sprint & Release Forecasting. See the [roadmap](roadmap.md#2-feature-registry).
 
 ### 16.2 Suggested refinement sequence
 
@@ -958,7 +943,7 @@ This is a dependency sequence, not an agreed release schedule:
 3. Requirement proposals, revisions, discussions, internal/client gates, acceptance, and scope baselines.
 4. Stories/AC, FR reuse, NFR/rule applicability, test scenarios, traceability, and DoR.
 5. Estimates, dependencies, declared capacity, manual/AI scenarios, feasibility/freshness, application, and plan baselines.
-6. Scrum/Kanban selection, Dev/QA Tasks, execution boards, DoD, verification, applicable UAT, and release evidence.
+6. Sprint selection, Dev/QA Tasks, execution boards, DoD, verification, applicable UAT, and release evidence.
 7. Exercise change control and manual problem handling across those stages, then expand explainable detection and conditional AI planning.
 
 The complete journey should be exercised through vertical examples rather than implemented as isolated feature silos.
@@ -987,7 +972,7 @@ The original workflow revision changed only this report. The subsequent [core do
 | Early discovery and Feature mapping | Earlier journey moved directly from project brief to UR proposal; Q19 allowed optional groupings. | W1 explicitly explores URs and candidate Epics/Features before review and uses Feature mapping through refinement. Epics/a rigid hierarchy remain optional; exact mapping/version representation is proposed follow-up design. |
 | Runtime direct UR-to-Story links | Runtime direction supports separate artifacts and many-to-many traceability. Repository authoring requires FR-to-UR and US-to-FR frontmatter. | The product permits direct UR-to-Story links. Do not assume current templates/validator already encode that product path. Resolve any tooling/governance change separately rather than inventing FRs. |
 | Requirements/review detail | Global rules establish version-bound approval; most detailed feature artifacts are absent. | This report supplies confirmed proposal, revision, discussion, reviewer, and acceptance behavior for subsequent drafts. |
-| Readiness, estimation, and quality | Q23/Q26 permit early draft estimates and selected estimation methods; Q41 separates completion, QA, UAT, and release. | W1 adds a DoR checkpoint before planning, Story Points in the illustrated path, Dev/QA Tasks, and explicit DoD/QA rework. Recheck readiness at selection/pull; keep method choice and evidence distinctions. |
+| Readiness, estimation, and quality | Q23/Q26 permit early draft estimates and selected estimation methods; Q41 separates completion, QA, UAT, and release. | W1 adds a DoR checkpoint before planning, Story Points in the illustrated path, Dev/QA Tasks, and explicit DoD/QA rework. Recheck readiness at Sprint selection; keep estimation-method choice and evidence distinctions. |
 | Controlled change routes | Q22/Q39 require control for material agreement changes regardless of artifact type. | W1 adds explicit decisions and return paths. Proposed clarification covers specification-only and multiple impacts, pending gates, and routine changes without a formal CR for every edit. Detailed approval policy still needs refinement. |
 | Roadmap release assignments | Existing roadmap assigns capacities, forecasting, AI, QA, and releases to particular proposed stages. | The interview confirms the target workflow, not new release assignments. Lightweight outcomes and later expansions still require prioritization. |
 | Architecture/topology | Current backend has independent Identity/Notification/Gateway hosts; target architecture is a proposal. | Workflow decisions do not consolidate hosts, select schemas, or create an accepted architecture decision. |
@@ -1006,7 +991,6 @@ Confirmed deferrals in Q44 and earlier questions remain. W1 and the proposed ali
 - Competing requirement proposals and branch/merge workflows.
 - Approval quorum voting, elaborate chains, and advanced delegation.
 - Several independently scheduled teams inside one project.
-- Hybrid delivery mode.
 - Comprehensive test-management suites.
 - Automated deployment integrations.
 - Statistically calibrated predictive forecasting.
@@ -1029,7 +1013,7 @@ Organization’s subsequent joint review U9–U21 resolves the selected first-re
 - Readiness exception configuration and final baseline-entry eligibility rules.
 - Exact review/acceptance policy for agreed FR/NFR/Story-criteria revisions and their coordination with CRs and scope baselines.
 - Dev/QA Task categorization, DoR/DoD configuration, and test-scenario/evidence granularity.
-- Specific workflow states, transition gates, WIP values, and exception permissions.
+- Specific workflow states, transition gates, and exception permissions.
 - Estimate-method configuration, calendars, allocation granularity, and freshness criteria.
 - Detector thresholds, severity handling, notification channels, and delivery preferences.
 - Specific QA/UAT/release gate policies and evidence formats.
@@ -1056,7 +1040,7 @@ The original report records the following recommendations as explicitly accepted
 | Q5 | Built-in workspace/project role templates plus custom roles and configurable permission assignments within delegation authority. |
 | Q6 | Owner/Admin or delegated Create Project can create; creator initially administers the project and may delegate. |
 | Q7 | Draft project begins with name/purpose and progressively captures objectives, scope, stakeholders, assumptions, constraints, and readiness. |
-| Q8 | Initially Scrum or Kanban per project; hybrid deferred; Kanban does not require Sprints. |
+| Q8 | Each project runs Scrum with Sprints. |
 | Q9 | One active proposal per UR; collaborative authorship/history and protection against silent overwrites; competing branches deferred. |
 | Q10 | Team internal review defaults to independent review; solo direct acceptance is explicitly recorded without pretending independent review occurred. |
 | Q11 | Explicit Feedback Only versus Approval Required client mode, subject to policy; silence/expiry is not approval. |
@@ -1071,7 +1055,7 @@ The original report records the following recommendations as explicitly accepted
 | Q20 | BA defines needs/criteria; delivery specialists contribute work/estimates; PM coordinates; team validates estimates/feasibility; estimate changes are attributable. |
 | Q21 | Work pins implemented requirement revisions; new revisions trigger impact review rather than automatic work/plan edits. |
 | Q22 | Baseline-affecting scope/commitment changes require impact assessment and authorized Change Request decision before applicable final acceptance. |
-| Q23 | Draft refinement/estimation permitted; explicit readiness before Sprint commitment or Kanban pull, with visible authorized exceptions and standalone-work rationale. |
+| Q23 | Draft refinement/estimation permitted; explicit readiness before Sprint commitment, with visible authorized exceptions and standalone-work rationale. |
 | Q24 | Roadmap, milestone, Sprint, and release are distinct; milestones/Sprints can overlap without a forced hierarchy. |
 | Q25 | One delivery team/calendar and at most one active Sprint per initial Scrum project; future Sprints may be planned. |
 | Q26 | Explicit estimate methods/units/history; no universal points-to-hours conversion or parent/child double counting. |
@@ -1088,7 +1072,6 @@ The original report records the following recommendations as explicitly accepted
 | Q37 | Authorized human finding review; confirm/link/dismiss/request information; confirmed problems have owners/actions/history; manual blockers need not wait for AI. |
 | Q38 | Reevaluate relevant changes, deduplicate, retain last-check/history, notify meaningful changes, and respect evidence access; unchanged dismissed findings do not repeatedly notify. |
 | Q39 | Explicit baseline establishment selects exact agreed specification versions; material agreement changes require control regardless of edited artifact type. |
-| Q40 | Kanban WIP advisory by default; optional enforced mode with recorded authorized exceptions and visible policy. |
 | Q41 | Distinct completion, QA, applicable UAT, and release evidence; lightweight initial outcomes; full test/deployment suites deferred. |
 | Q42 | AI may propose selection/sequence/Sprint placement/tentative eligible assignments and alternatives; authorized PM/team process applies; no autonomous commitments or assignments. |
 | Q43 | Complete nine-step journey and stress cases match intent, including solo client gates, optional-review nonresponse, Story criteria changes, QA failure, infeasible AI dates, and workspace privacy. |
@@ -1111,7 +1094,7 @@ These local references are handoff notes, not new requirement IDs or blockers to
 | Reference | Proposed interpretation and impact | Validation step | Suggested decision owner |
 |---|---|---|---|
 | A1 | Reviewed Feature mappings remain reproducible; adding/splitting/merging/removing candidates cannot change historical agreement. | Walk through a Feature split before and after review/baselining and choose snapshot/version semantics. | Product owner/BA, with the architecture owner for representation. |
-| A2 | W1's Story Points illustrate the existing selectable estimation policy; DoR is checked before planning and again before selection/pull. | Exercise a Story-point team, a time-estimating team, and a readiness change between planning and execution. | Product owner, PM, and delivery team. |
+| A2 | W1's Story Points illustrate the existing selectable estimation policy; DoR is checked before planning and again before Sprint selection. | Exercise a Story-point team, a time-estimating team, and a readiness change between planning and execution. | Product owner, PM, and delivery team. |
 | A3 | A specification-only agreement change preserves unchanged UR text while requiring the relevant CR, exact-specification review/acceptance, and baseline update. | Walk through a baselined AC change and assign review/acceptance authority without inventing another UR. | Product owner/BA and authorized change decision-maker. |
 | A4 | Pending approvals, QA/UAT rework, and rejected/deferred changes have explicit dispositions; routine corrections remain lightweight. | Exercise feedback-only nonresponse, a required reviewer delay, failed UAT, and a rejected CR affecting blocked work. | PM, QA, and designated client/change decision-makers. |
 
@@ -1136,9 +1119,9 @@ On 2026-11-06 the user (product owner) explicitly asked to refocus DeliveryPilot
 
 | Ref | Confirmed decision | Supersedes / narrows | Limitation |
 |---|---|---|---|
-| V1 | Scrum is the only delivery mode for MVP. Kanban project mode moves to V2; a Sprint board view inside Scrum remains. | Narrows Q8 (Scrum **or** Kanban) and Q40 (Kanban WIP) to post-MVP scope; Q25 (one team, one active Sprint) unchanged. | Kanban rules stay recorded for later refinement; they are not deleted. |
+| V1 | Scrum is the only delivery mode; a Sprint board view inside Scrum remains. | Confirms Q8; Q25 (one team, one active Sprint) unchanged. | Made permanent by D7. |
 | V2 | Keep version-bound approval, baselines and Change Request integrity. Simplify MVP client governance to (a) client sign-off of a release/Sprint scope baseline and (b) Sprint Review acceptance of the increment. Per-UR proposal review moves to V1. | Narrows release allocation of Q4/Q9–Q16; their behavior rules remain valid where the proposal workflow is later delivered. | Q11 (silence is not approval), Q13 (frozen revisions), Q18/Q22/Q39 (baselines, CR) still apply in MVP. |
-| V3 | Add a minimal **Client Engagement** record in MVP: client organization, contract type (Fixed-price, Time & Materials, Dedicated Team), planned budget/effort, milestones, and client-side Product Owner. Billing/invoicing remain out of scope. | Pulls the engagement part of FEAT-DP-022 forward; no change to Q1–Q6 ownership. | Exact fields, currencies and visibility are feature refinement. |
+| V3 | Add a minimal **Client Engagement** record in MVP: client organization, fixed-price agreement reference, planned budget/effort, milestones, and client-side Product Owner. Billing/invoicing remain out of scope. | Pulls the engagement part of FEAT-DP-022 forward; no change to Q1–Q6 ownership. | Exact fields, currencies and visibility are feature refinement. |
 | V4 | Delivery risk management is the primary differentiator. MVP ships deterministic risk signals plus a human-reviewed risk register; AI explanation and mitigation suggestions follow as MVP+1; forecasting/prediction stays V1/V2 and is gated on representative data. | Re-allocates Q35–Q38 signal/finding behavior from V1 to MVP; Q31–Q34/Q42 AI planning remains V1. | AI guardrails BR-040–BR-045 are unchanged. |
 | V5 | Target segment is stated as **software outsourcing vendors (≈10–200 staff) running Scrum delivery for external clients**. This remains a hypothesis to validate with pilots. | Replaces the generic "agencies and engineering delivery teams" hypothesis. | No customer evidence is claimed. |
 
@@ -1154,6 +1137,8 @@ Recorded 2026-11-07 from the product owner's latest clarification and request to
 | D4 | Initial scope: delivery after contract signing, requirements collaboration, Scrum, client acceptance, risks, traceability, reporting and AI assistance | Presales and contracting remain research/input context rather than initial product workflows. |
 | D5 | Exclude CRM, presales proposal management, payroll, full accounting, source hosting and a proprietary load-testing engine initially | Commercial evidence links remain useful; native invoicing/payment processing stays outside the initial implementation. |
 | D6 | External engineering and test tools can provide evidence | Integration depth and first connectors need prioritization; does not authorize recreating source hosting or test engines. |
+| D7 | Scrum is the only delivery framework; no other execution method is planned now or later (recorded 2026-11-09) | Removes alternative delivery methods from all current documents and the roadmap; Q8 and V1 now read as Scrum-only. |
+| D8 | Fixed-price is the only contract model; other commercial models are outside product scope (recorded 2026-11-09) | Removes "future" contract models from product, requirements and roadmap; research files may still contrast commercial models as industry context. |
 
 Source: Product-owner clarification in this conversation: “preserve the sprint timebox”, “visualize real situation”, “eight stages ... lifecycle and governance stages”, and the supplied product definition/scope. The subsequent “implement the plan” authorizes documentation refactoring. Operational rules not explicitly selected remain proposed in the cross-feature requirements.
 
@@ -1165,6 +1150,6 @@ The next activity is scoped feature refinement using this report's decisions and
 
 The revised journey preserves a traceable chain:
 
-**Project foundation → user needs and candidate Features → versioned requirement review and agreement → Stories, specifications, test scenarios, and readiness → estimation and baselined planning → Scrum/Kanban Dev/QA execution → verification, applicable UAT, release, and outcome review.**
+**Project foundation → user needs and candidate Features → versioned requirement review and agreement → Stories, specifications, test scenarios, and readiness → estimation and baselined planning → Scrum Dev/QA execution → verification, applicable UAT, release, and outcome review.**
 
 **Controlled change management returns affected scope, specifications, tests, and plans to the necessary stages; authorized decisions and explicit baseline updates preserve the agreement history.**

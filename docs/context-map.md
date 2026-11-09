@@ -7,15 +7,15 @@ This is a navigation index, **not** a duplicate Product Blueprint. Load only the
 | Documentation authority, currency and reading paths | [Documentation index](README.md) |
 | Current Identity tables and migration evidence | [Current mapped schema](architecture/modules/identity/current-schema.md); source-verified, not deployed-state evidence |
 | Why this product and for whom? | [Product definition and customers](product.md) |
-| Lifecycle stages, gates and original-versus-actual Sprint execution | [SDLC workflow](sdlc-workflow.md); current direction D1–D6 |
+| Lifecycle stages, gates and original-versus-actual Sprint execution | [SDLC workflow](sdlc-workflow.md); current direction D1–D8 |
 | Research evidence, pains and proposed capabilities | [Research analysis](research/analysis/README.md); hypotheses, not approved contracts |
 | What belongs in MVP? | [Product MVP](product.md) and [Roadmap](roadmap.md) |
 | Feature registry, priorities and sequencing | [Roadmap](roadmap.md) |
 | Cross-feature business rules and artifact approvals | [Requirements](requirements.md) |
 | Global NFR identifiers and security expectations | [Requirements](requirements.md) |
 | Confirmed end-to-end workflow and its provenance | [Workflow discovery](deliverypilot-workflow-discovery.md), Q1–Q44 and W1; derived clarifications A1–A4 remain proposals |
-| Current product focus and prior decision history | [D1–D6](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) supersede risk-first positioning and seven-stage summaries; earlier Q/W/V decisions otherwise retain their recorded scope |
-| Client engagement, contract type and client PO | [Requirements glossary and BR-046](requirements.md#2-domain-glossary); FEAT-DP-025 in the [roadmap](roadmap.md) |
+| Current product focus and prior decision history | [D1–D8](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) supersede risk-first positioning and seven-stage summaries; earlier Q/W/V decisions otherwise retain their recorded scope |
+| Client engagement, fixed-price agreement and client PO | [Requirements glossary and BR-046](requirements.md#2-domain-glossary); FEAT-DP-025 in the [roadmap](roadmap.md) |
 | Scrum events, velocity and Sprint rules | [Requirements §6](requirements.md#6-backlog-agile-delivery-and-quality) (BR-027, BR-046–BR-051) |
 | Delivery risk signals, register, health and AI insights | [Requirements §8](requirements.md#8-risk-issue-blocker-and-ai-guardrails) (BR-039–BR-057), [workflow §12](deliverypilot-workflow-discovery.md#12-risks-issues-blockers-and-ai-findings), [target risk architecture](architecture.md#9-delivery-risk-intelligence-architecture) |
 | Current backend structure and hosting | [Current backend architecture](../ARCHITECTURE.md), verified against source, tests and deployment configuration |

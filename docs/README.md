@@ -7,7 +7,7 @@
 
 | Reader / question | Read in order | Authority and currency |
 |---|---|---|
-| Product direction and boundaries | [Product](product.md) → [SDLC workflow](sdlc-workflow.md) → [Roadmap](roadmap.md) | D1–D6 establish post-contract fixed-price direction and eight overlapping stages. Roadmap release allocations remain proposals. |
+| Product direction and boundaries | [Product](product.md) → [SDLC workflow](sdlc-workflow.md) → [Roadmap](roadmap.md) | D1–D8 establish post-contract, fixed-price-only, Scrum-only direction and eight overlapping stages. Roadmap release allocations remain proposals. |
 | Business policy and delivery decisions | [Requirements](requirements.md) → relevant feature contracts | Explicitly labelled user choices versus proposals; approved artifacts require version-specific evidence. |
 | Why a decision changed | [Discovery decision record](deliverypilot-workflow-discovery.md#19-discovery-decision-record) → [alignment audit](architecture/documentation-alignment-audit.md) | Dated provenance; earlier alternatives apply only where not superseded. |
 | Current backend and deployment | [Backend architecture](../ARCHITECTURE.md) → [deployment guide](Deploy.md) → current source/contracts | Independently hosted components. Deployment instructions do not establish the state of an environment. |

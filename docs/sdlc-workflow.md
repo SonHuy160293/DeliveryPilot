@@ -2,7 +2,7 @@
 
 > Status: Current product-direction reference; detailed operating rules and examples are proposed unless explicitly attributed.
 > Updated: 2026-11-07.
-> Direction: [D1–D6](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions).
+> Direction: [D1–D8](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions). Scrum is the only delivery framework; fixed-price is the only contract model.
 > Owners: Product Owner and delivery lead. Shared rules: [Requirements](requirements.md). Implementation sequence: [Roadmap](roadmap.md).
 
 ## 1. Scope and how to read the lifecycle
@@ -224,7 +224,7 @@ Review examples: a blocked Sprint closes on time; a revised story needs the sele
 
 ## Sources and provenance
 
-- [D1–D6 user decisions](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions), recorded 2026-11-07. They establish product direction; the detailed design above remains proposed.
+- [D1–D8 user decisions](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions), recorded 2026-11-07 (D7–D8 on 2026-11-09). They establish product direction; the detailed design above remains proposed.
 - [Cross-feature requirements](requirements.md), especially BR-013, BR-018–021, BR-027–038 and BR-058–065.
 - [Original SDLC research](research/README.md) and [analysis](research/analysis/README.md): evidence and hypotheses, including the distinction between framework rules and commercial arrangements.
 - [Scrum Guide](https://scrumguides.org/scrum-guide.html), November 2020, checked 2026-11-07: timeboxed Scrum and its accountabilities.

@@ -2,7 +2,7 @@
 
 This guide explains how a client and software vendor can run iterative delivery while keeping scope, acceptance, payment, and risk decisions explicit. It is written for project managers, Product Owners, delivery leads, and engagement managers who need a usable operating approach from pre-sales to maintenance.
 
-**Research date:** 2026-11-07. **Evidence status:** Research-supported guidance and clearly identified practitioner proposals. The user approved the research scope in this conversation; the findings are research inputs, not approved DeliveryPilot requirements or evidence of implemented product capabilities.
+**Research date:** 2026-11-07. **Evidence status:** Research-supported guidance and clearly identified practitioner proposals. The user approved the research scope in this conversation; the findings are research inputs, not approved DeliveryPilot requirements or evidence of implemented product capabilities. Product scope is Scrum-only and fixed-price-only ([D7–D8](../deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions)); comparisons with other commercial models below are industry context only.
 
 ## Reading order
 

@@ -2,14 +2,14 @@
 
 > **Version:** 2.1 (lifecycle and execution visibility reconciled 2026-11-07)
 >
-> **Status:** Current product direction under D1–D6, reviewed 2026-11-08. Compatible earlier Q/W/V and selected Identity choices retain their recorded scope. Detailed approval and customer validation remain separate.
+> **Status:** Current product direction under D1–D8, reviewed 2026-11-08; D7–D8 (Scrum-only, fixed-price-only) added 2026-11-09. Compatible earlier Q/W/V and selected Identity choices retain their recorded scope. Detailed approval and customer validation remain separate.
 >
 > **Product type:** Multi-tenant B2B SaaS  
 > **Primary market hypothesis:** Software outsourcing vendors running Scrum delivery for external clients (V5, not yet validated)  
 > **Document owner:** Product Owner  
 > **Related documents:** [Requirements](requirements.md) | [Workflow discovery](deliverypilot-workflow-discovery.md) | [Architecture workspace](architecture/README.md) | [Roadmap](roadmap.md)
 
-[Decisions D1–D6](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) establish the current eight-stage, post-contract product direction. They supersede the risk-first positioning and seven-stage summary where those conflict; earlier Q/W/V decisions otherwise retain their scope. Detailed artifact approval, customer validation and implementation remain separate. The [SDLC workflow](sdlc-workflow.md) owns stage gates and execution visibility; [Identity decisions](architecture/modules/identity/design-decisions.md) retain their access/design authority.
+[Decisions D1–D8](deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions) establish the current eight-stage, post-contract product direction: Scrum is the only delivery framework and fixed-price the only contract model. They supersede the risk-first positioning and seven-stage summary where those conflict; earlier Q/W/V decisions otherwise retain their scope. Detailed artifact approval, customer validation and implementation remain separate. The [SDLC workflow](sdlc-workflow.md) owns stage gates and execution visibility; [Identity decisions](architecture/modules/identity/design-decisions.md) retain their access/design authority.
 
 ## 1. Product definition
 
@@ -23,7 +23,7 @@ DeliveryPilot helps teams understand what was agreed, what is being delivered, w
 
 DeliveryPilot should answer:
 
-- What did we agree to deliver to this client, under which contract type, and what has changed since?
+- What did we agree to deliver to this client, under which fixed-price agreement, and what has changed since?
 - Is the current Sprint Goal on track? Is the release or milestone on track?
 - Which risks threaten delivery right now, what evidence supports them, and who owns the response?
 - Is scope creeping, is velocity drifting, is budget or effort burning faster than planned?
@@ -44,7 +44,7 @@ The initial product addresses fixed-price outsourcing after contract signing. Re
 Teams can configure existing trackers and service tools to cover parts of this workflow. Our hypothesis is that connecting agreements, execution and client decisions with less reconciliation work provides value. Differentiation to validate with pilots:
 
 1. **Explainable delivery risk management**: deterministic risk signals, a human-reviewed risk register, and AI explanation and mitigation suggestions.
-2. **Outsourcing-native Scrum:** engagements, contract type, client Product Owner and Sprint Review acceptance are first-class.
+2. **Outsourcing-native Scrum:** engagements, fixed-price agreements, client Product Owner and Sprint Review acceptance are first-class.
 3. **Commitment integrity:** version-bound scope baselines and Change Requests prevent silent scope changes.
 4. **Scoped client transparency:** clients see the shared delivery health, scope and decisions intended for them, and nothing else.
 
@@ -59,7 +59,7 @@ The same workspace model supports a solo freelancer and a vendor team (Q1/Q10); 
 | Persona | Side | Main jobs to be done |
 |---|---|---|
 | Executive / CTO | Vendor | See engagement portfolio health and the delivery risks needing attention |
-| Account / Engagement Manager | Vendor | Own the client relationship, contract type, budget and escalations |
+| Account / Engagement Manager | Vendor | Own the client relationship, fixed-price agreement, budget and escalations |
 | Delivery Manager | Vendor | Coordinate commitments, shared people and cross-engagement risk |
 | Project Manager | Vendor | Maintain releases, milestones, dependencies, risks and client communication |
 | Product Owner (vendor proxy) | Vendor | Refine and order work within explicit delegation; does not automatically inherit client acceptance or commercial authority |
@@ -79,12 +79,12 @@ A job title is **not** an authorization role. Organization membership, project p
 - **Workspace** is the user-facing term for **Organization**; **tenant** is its ownership and isolation boundary. The vendor owns the workspace.
 - Registration establishes a global User identity. Creating a workspace is a separate action; the creator becomes its initial Owner. Multiple Owners are allowed, with last-owner protection.
 - A **Client Organization** is an external business relationship recorded by the vendor. It is not a co-owner of vendor data and gains no access implicitly.
-- A **Client Engagement** (V3) records the commercial delivery context for one client: signed agreement reference, fixed price, agreed scope, assumptions, budget/effort, milestones, acceptance/payment conditions and the client-side Product Owner. Time & Materials and Dedicated Team are retained future concepts. Native invoicing, ledger and payment processing are outside the initial implementation; external financial evidence can be referenced.
+- A **Client Engagement** (V3) records the commercial delivery context for one client: signed agreement reference, fixed price, agreed scope, assumptions, budget/effort, milestones, acceptance/payment conditions and the client-side Product Owner. Fixed-price is the only supported contract model (D8). Native invoicing, ledger and payment processing are outside the initial implementation; external financial evidence can be referenced.
 - One engagement can contain one or more **projects**. Each MVP project has exactly one owning tenant and belongs to at most one engagement. Internal (non-client) projects are allowed without an engagement.
 - A global User can hold memberships in multiple organizations and participate in multiple projects. Permissions, availability and assignments remain scoped: one employer cannot inspect another employer’s projects or workload. Cross-organization availability sharing needs explicit consent and policy.
 - Workspace membership does not grant project access. Client stakeholders participate as restricted guests with resource-scoped access through the Client Portal. Visibility, required-reviewer assignment and approval permission are separate facts.
 - A **product** is the evolving software outcome; a **project** is a bounded delivery initiative. The MVP may keep the Product Goal within the project.
-- MVP projects use **Scrum** (V1): one delivery team and calendar, at most one active Sprint, and future Sprints that may be planned. Kanban project mode, hybrid delivery and multiple independently scheduled teams per project are deferred.
+- Every project uses **Scrum** (D7), the only delivery framework: one delivery team and calendar, at most one active Sprint, and future Sprints that may be planned. Multiple independently scheduled teams per project are deferred.
 
 **Example:** Vendor A runs a fixed-price ERP engagement for Client B. Client B's Product Owner accepts increments at Sprint Review and sees the shared release health. They cannot see Vendor A's internal estimates, the risk notes marked internal, or other clients' engagements.
 
@@ -111,8 +111,8 @@ Done (DoD), QA verified, client accepted, released, warranty complete and commer
 
 | Concept | Meaning / boundary |
 |---|---|
-| Client Engagement | Commercial delivery context with a client: contract type, planned budget/effort, milestones, client PO |
-| Contract type | Fixed-price in the initial product; T&M and Dedicated Team are future concepts, not initial supported workflows |
+| Client Engagement | Commercial delivery context with a client: fixed-price agreement, planned budget/effort, milestones, client PO |
+| Contract model | Fixed-price only (D8) |
 | Product Goal / Sprint Goal | Long-term objective / commitment for one Sprint |
 | Product Backlog / Sprint Backlog / Increment | Scrum artifacts; requirements remain separate linked artifacts |
 | Requirement (UR/FR/NFR) and business rule | Need, behavior, quality constraint, policy; version-bound when agreed |
@@ -133,7 +133,7 @@ The canonical cross-feature constraints are in [requirements.md](requirements.md
 
 ### Journey A - Engagement to Sprint
 
-1. A vendor Owner creates the workspace; an authorized user records the Client Engagement (contract type, budget/effort, milestones, client PO) and creates the Scrum project.
+1. A vendor Owner creates the workspace; an authorized user records the Client Engagement (fixed-price agreement, budget/effort, milestones, client PO) and creates the Scrum project.
 2. The team builds the Product Backlog: Epics/Features/Stories with acceptance criteria and linked requirements where useful.
 3. The client PO signs off the release or Sprint scope baseline for the exact versions selected (V2). Silence is not approval.
 4. At Sprint Planning the team sets a Sprint Goal, checks declared capacity against velocity history and readiness, and selects the Sprint Backlog.
@@ -143,7 +143,7 @@ The canonical cross-feature constraints are in [requirements.md](requirements.md
 
 1. The client or the team proposes a change to baselined scope or a commitment.
 2. The proposed content stays separate from the current agreement.
-3. The team assesses the impact on backlog, effort, Sprint/release dates, budget burn (by contract type) and risk.
+3. The team assesses the impact on backlog, effort, Sprint/release dates, fixed-price budget/effort burn and risk.
 4. Authorized decision-makers approve, reject or defer. Approval does not itself apply a new plan or baseline.
 5. Explicit reconciliation updates the backlog and baseline. Routine edits within the agreement stay lightweight.
 
@@ -180,7 +180,7 @@ The canonical cross-feature constraints are in [requirements.md](requirements.md
 
 **Proposed subsequent increments:** AI risk/report assistance; detailed requirement review; QA/UAT/release; forecast scenarios; API collaboration; warranty and closure; deeper integrations and planning assistance. The [roadmap](roadmap.md) records feature allocation and gaps. Automated connector coverage is selected with pilot teams; the product accepts referenced evidence before every connector exists.
 
-**Outside the initial implementation:** CRM, presales proposals, payroll, full accounting, source-code hosting and a proprietary load-testing engine. Native invoices/payments remain external. Kanban mode, multiple independent teams per project, cross-tenant co-ownership, custom workflow builders and portfolio planning remain deferred under earlier decisions. No autonomous AI commitments or employee ranking.
+**Outside the initial implementation:** CRM, presales proposals, payroll, full accounting, source-code hosting and a proprietary load-testing engine. Native invoices/payments remain external. Multiple independent teams per project, cross-tenant co-ownership, custom workflow builders and portfolio planning remain deferred under earlier decisions. No autonomous AI commitments or employee ranking.
 
 ## 9. AI and risk-management principles
 
@@ -205,7 +205,7 @@ Candidate product measures:
 - Delivery: Sprint Goal hit rate, committed-vs-completed variance, carry-over rate, milestone predictability, blocked-work age.
 - Scope: scope-creep ratio (work added without a CR), CR turnaround, baseline change count.
 - Client: sign-off lead time, Sprint Review acceptance rate, client portal engagement.
-- Commercial (by contract type): effort/budget burn versus plan.
+- Commercial (fixed-price): effort/budget burn versus plan.
 - Adoption: activated workspaces, active engagements, pilot-to-paid conversion; AI cost per analysis.
 
 Define precise measurement methods before treating these as targets. Metrics must not rank individuals by story points, hours or velocity.
@@ -213,7 +213,7 @@ Define precise measurement methods before treating these as targets. Metrics mus
 ## 11. Product principles
 
 1. **Delivery continuity.** Connect agreements, execution, acceptance and closure; surface threats early with evidence.
-2. **Scrum-native, outsourcing-aware.** Model Scrum events and artifacts alongside engagements, contract types and client roles.
+2. **Scrum-native, outsourcing-aware.** Model Scrum events and artifacts alongside engagements, fixed-price agreements and client roles.
 3. **Protect the agreement.** Version-bound baselines and Change Requests; no silent scope changes.
 4. **Human decision, AI assistance.** No autonomous change to commitments, assignments or client communication.
 5. **Security by design.** Tenant isolation and scoped client access are foundational.
@@ -230,7 +230,6 @@ These need customer evidence and/or formal acceptance:
 - Minimum client-facing visibility: which health, risk and scope information vendors are willing to share.
 - Which monetary and effort fields pilots need, which are vendor-private, and which may be shared with clients.
 - Whether Sprint-level or release-level scope sign-off fits pilot contracts.
-- Whether Kanban demand (maintenance and support engagements) justifies earlier delivery than V2.
 - Data residency, regulatory constraints, AI-provider restrictions and first engineering/test integrations. Native billing is excluded initially; finance evidence depth remains to validate.
 - MVP team, infrastructure budget and target dates.
 

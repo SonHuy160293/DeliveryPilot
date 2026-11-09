@@ -21,7 +21,7 @@ The original core audit did not resume the incomplete model/mapping task, create
 |---|---|---|
 | Core navigation pointed only to the target architecture and omitted workflow/module evidence. | Context map and authoring owners versus new architecture workspace. | Added an architecture index and separate routes for current runtime, target alternatives, selected module design and discovery. |
 | Workspace terminology, solo use and guest access were incomplete. | Q1–Q3/Q6; Identity glossary. | Product/global glossary now distinguish Workspace/Organization/tenant, global User, membership, project participation and platform authority. Creation is separate from registration; guests do not require general membership. |
-| Product allowed hybrid while discovery deferred it. | Q8/Q25/Q44. | Initial Scrum/Kanban and one-team/one-active-Sprint limits are explicit; hybrid and multiple independent teams remain deferred. |
+| Product and discovery described delivery-mode scope differently. | Q8/Q25/Q44, D7. | Scrum-only and one-team/one-active-Sprint limits are explicit; multiple independent teams remain deferred. |
 | Generic organization questions lagged selected access decisions. | OWN-01, MEM-01/02, AUTHZ-01–06, INV-01/02, DATA-01/03. | Summarized selections with provenance in global requirements; linked detailed policy to the module log. Duration/resend/sponsor questions were open in the original core audit; later U10 resolves them. Transfer, nomination lifecycle, recovery and revocation boundaries remain open. |
 | Broad Identity wording could imply ownership of project/approval authority. | SCOPE-01–04; Q2/Q3. | Selected Identity contains Authentication, Organization Management and protected Platform Access. Project participation, resource grants and business decisions stay outside; no Project/Requirements merger is inferred. |
 | Separate-context historical analysis and generic schema recommendations could override the selected Identity database. | Original reports' reconciliation notices; SCOPE-01. | Architecture routing and target-proposal caveats identify which ownership recommendation is superseded. Current independent hosts remain unchanged. |
@@ -229,7 +229,7 @@ Status: Applied documentation corrections, not requirement approval or applicati
 |---|---|---|
 | C01 Organization implementation described as unmapped/in progress | High | Identity overview, User Initialization summary and roadmap now point to the implemented bounded backend and recorded acceptance. Backend versus frontend/Project/deployed state remains explicit. Resolved. |
 | C02 Nine-table physical proposal presented as current schema | High | Added current-schema.md with fourteen shared-schema mapped tables/columns and migration/configuration links. Original ERD/dictionary retained as historical proposal with replacement links; PlatformRoleAssignment remains unmapped. Resolved for inventory; future platform design remains deferred. |
-| C03 Contract glossary implies three initial contract models | High | Product/requirements now identify fixed-price initial scope and T&M/Dedicated Team as future concepts; budget questions narrowed to fixed-price pilot disclosure. Resolved. |
+| C03 Contract glossary implies three initial contract models | High | Product/requirements now identify fixed-price as the only contract model (D8); budget questions narrowed to fixed-price pilot disclosure. Resolved. |
 | C04 Target architecture trails D1–D6 and implies infrastructure replacement | Medium | Added execution/API/warranty/closure coverage and qualified topology-specific advice. Current outbox/broker/Gateway preserved; consolidation and future module placement remain explicit unresolved architecture decisions. |
 | C05 Roadmap integration and AI report allocations differ | Medium | V1 pilot evidence adapters versus V2 broader coverage now consistent; 028 registry includes proposed later report drafts. Existing release proposals/IDs retained. Resolved. |
 | C06 Logout scope called open after current-session decision | Medium | UR now cites resolved D-006 scope. Draft FR/US clarify guarded Organization write commit ordering from task 018; refresh/logout HTTP races remain genuinely unresolved. No status/approval change. |
@@ -250,3 +250,17 @@ Status: Applied documentation corrections, not requirement approval or applicati
 - Whitespace: git diff --check passes. Mermaid definitions were reviewed as text and fenced structure checked; no Mermaid renderer was available/run, so rendered diagram validation remains a limitation. No application tests were rerun for these documentation-only corrections.
 
 Remaining validation/decision owners: documentation maintainer for rendered Mermaid review; feature owners for the open policies above; authentication feature owner for draft refresh/logout HTTP contract planning. No unresolved high-priority document conflict remains in the reviewed correction set.
+
+## Scrum-only and fixed-price-only scope — 2026-11-09
+
+The user decided that DeliveryPilot focuses only on Agile Scrum and fixed-price outsourcing, and asked for non-Scrum delivery modes to be deleted from all documents rather than marked as deferred. Recorded as [D7–D8](../deliverypilot-workflow-discovery.md#197-lifecycle-and-execution-visibility-decisions).
+
+| Area | Change applied |
+|---|---|
+| Decision record | D7 (Scrum is the only delivery framework) and D8 (fixed-price is the only contract model) added; Q8, Q23 and V1 reworded as Scrum-only; the Q-row about the removed mode's WIP policy deleted. |
+| Workflow discovery | Removed non-Scrum delivery modes from the intro, glossary, execution diagram, §5.2, §9.3, §10 (former WIP section deleted; §10.3 is now Scrum execution handoff), scenario seeds, feature mapping, §18.1 and the handoff chain. |
+| Product, requirements, roadmap | Scrum-only BR-027 and product model; deleted the removed mode's glossary row, roadmap V2/Phase 08 items and open hypothesis; "contract type" wording replaced by fixed-price agreement; future contract models removed. |
+| Architecture and identity analysis | Signal thresholds configurable per project; identity Project root and permission matrix describe Scrum policy only. |
+| Navigation | Root and docs README, context map, SDLC workflow and research README reference D1–D8. |
+
+**Not changed:** Research comparisons of commercial models (industry context), FEAT-DP-002/003 artifacts, task statuses, approval references, source code, tests and migrations.

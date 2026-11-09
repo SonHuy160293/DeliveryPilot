@@ -18,7 +18,7 @@ Deliver a secure, traceable fixed-price outsourcing journey from signed agreemen
 - **MVP:** Engagement-to-Sprint-Review workflow on Scrum with scope baselines, lightweight change control, rules-based delivery risk signals, a reviewed risk register, original-versus-actual execution visibility, evidence links and scoped client visibility.
 - **MVP+1 (late MVP increment):** AI risk insights: explanations, related evidence and mitigation suggestions under the guardrails.
 - **V1 (proposed depth):** Per-UR proposal review, QA/UAT and release, API collaboration, hypercare/warranty/closure, Sprint/release forecasting and AI planning. This is where the complete eight-stage product journey becomes available.
-- **V2:** Kanban project mode, cross-engagement resources, portfolio analytics, broader integration automation, advanced/predictive AI, commercial and enterprise capabilities, when validated.
+- **V2:** Cross-engagement resources, portfolio analytics, broader integration automation, advanced/predictive AI, commercial and enterprise capabilities, when validated.
 
 These are **scope intentions**, not calendar commitments. P0/P1/P2 indicate roadmap priority, not incident severity. Feature-file `release` values remain `MVP|V1|V2`; MVP+1 items use `MVP` with priority `P1`.
 
@@ -52,14 +52,14 @@ The IDs below remain stable even if names or priorities change. Create feature-s
 | FEAT-DP-022 | Commercial Management | V2 / P2 | Future commercial extensions if validated; initial agreement/budget/milestone evidence belongs to 025; native invoicing/accounting excluded initially |
 | FEAT-DP-023 | Cross-project Resource Planning | V2 / P2 | Cross-engagement capacity and staffing conflicts |
 | FEAT-DP-024 | Advanced Governance | V2 / P2 | Enterprise approval/workflow and compliance options |
-| FEAT-DP-025 | Client Engagement Management | MVP / P0 | Client organization, contract type, planned budget/effort, milestones, client PO (V3) |
+| FEAT-DP-025 | Client Engagement Management | MVP / P0 | Client organization, fixed-price agreement reference, planned budget/effort, milestones, client PO (V3) |
 | FEAT-DP-026 | Scrum Events & Ceremonies | MVP / P0 | Sprint Review (client feedback/acceptance per item) and Retrospective action records |
 | FEAT-DP-027 | Delivery Health Dashboard | MVP / P1 | Explainable Sprint/release/engagement health, weekly/Sprint reports and internal/client-shared views |
 | FEAT-DP-028 | AI Risk Insights | MVP / P1 | MVP+1: AI explanations, evidence and mitigation drafts; subsequent report-drafting depth proposed, under human review |
 | FEAT-DP-029 | API Contract & Integration Evidence | V1 / P1 proposed | Revisioned specifications, build/environment availability, consumer integration, test provenance and report export; execution delegated to external tools |
 | FEAT-DP-030 | Warranty, Handover & Closure | V1 / P1 proposed | Coverage obligations, defect triage, hypercare exit, handover checklist and distinct acceptance/commercial closure evidence |
 
-**Kanban:** Kanban project mode (Q8/Q40 behavior) is deferred to V2 by decision V1. It is not assigned a new ID yet; register one when it enters discovery rather than reusing FEAT-DP-009.
+**Scope boundary (D7–D8):** Scrum is the only delivery framework and fixed-price the only contract model. No roadmap item adds other delivery methods or contract models.
 
 **2026-11-01 renumbering:** User Initialization was inserted as FEAT-DP-002 at the user's request. Previous features FEAT-DP-002 through FEAT-DP-023 moved to FEAT-DP-003 through FEAT-DP-024, including Organization artifact IDs, filenames and references. These IDs remain stable after that explicit renumbering. The 2026-11-06 repositioning renamed FEAT-DP-001/009/010/011/018 without renumbering.
 
@@ -73,7 +73,7 @@ The [workflow-to-feature mapping](deliverypilot-workflow-discovery.md#161-existi
 
 | Target-workflow need | Registry allocation | Remaining release decision / gate |
 |---|---|---|
-| Workspace, engagement and project access | FEAT-DP-002/003/004/025 in MVP | Engagement fields per contract type; project-to-engagement rules; guest admission. |
+| Workspace, engagement and project access | FEAT-DP-002/003/004/025 in MVP | Fixed-price engagement fields; project-to-engagement rules; guest admission. |
 | Backlog, requirements links, scope sign-off, traceability | FEAT-DP-006/007/008/015/017 in MVP | Sprint-level vs. release-level sign-off; per-UR review stays V1 (V2 decision). |
 | Sprint capacity, velocity and planning | FEAT-DP-009/011 in MVP; forecasting FEAT-DP-018 in V1 | Minimum capacity inputs; no forecast claims without history. |
 | Material changes to baselines/commitments | FEAT-DP-019 (lightweight) in MVP | Minimum CR fields and decision authority for pilots. |
@@ -82,7 +82,7 @@ The [workflow-to-feature mapping](deliverypilot-workflow-discovery.md#161-existi
 | Delivery risk signals, register, health | FEAT-DP-001/010/027 in MVP | Initial signal set and thresholds (BR-052); client-sharing defaults. |
 | AI risk explanation and mitigation | FEAT-DP-028 MVP+1; FEAT-DP-013/021 later | NFR-013 evaluation and cost budget before pilot exposure. |
 
-Hybrid mode, multiple independently scheduled teams per project, proposal branching, advanced approval chains/quorum, comprehensive test suites and automated deployment integrations remain deferred (workflow §18).
+Multiple independently scheduled teams per project, proposal branching, advanced approval chains/quorum, comprehensive test suites and automated deployment integrations remain deferred (workflow §18).
 
 ### Eight-stage coverage and capability boundaries
 
@@ -110,7 +110,7 @@ A vertical slice includes user-visible behavior, permissions, persistent records
 |---|---|---|---|
 | VS-00 | User registers, logs in and logs out | 002 | Registration, authenticated access and logout scenarios pass |
 | VS-01 | Registered user creates a vendor workspace with its initial Owner and manages members | 003 | Atomic workspace/Owner establishment; isolation and membership scenarios pass |
-| VS-02 | Authorized user records a Client Engagement and creates a Scrum project under it, inviting the client PO as a scoped guest | 025, 004, 015 | Contract type recorded; guest sees only that engagement's shared resources |
+| VS-02 | Authorized user records a Client Engagement and creates a Scrum project under it, inviting the client PO as a scoped guest | 025, 004, 015 | Fixed-price agreement recorded; guest sees only that engagement's shared resources |
 | VS-03 | Team builds and orders the Product Backlog with acceptance criteria and requirement links; client PO signs off a scope baseline | 008, 006, 007, 017 | Sign-off binds to exact versions; later edits stay unapproved; baseline is explicit |
 | VS-04 | Team plans a Sprint and compares its preserved original plan with actual execution, capacity and blockers | 009, 011, 010 | Fixed original dates; unfinished work and later completion remain visible; no duplicate delivered points; board moves do not imply acceptance |
 | VS-05 | Rules-based risk signals raise candidate findings; PM confirms risks with owner and response | 001, 010 | Signals cite evidence; dismiss/confirm attributable; works without AI provider |
@@ -135,7 +135,7 @@ These phases organize building DeliveryPilot. They are not the eight customer-pr
 | 05 - MVP pilot and hardening | E2E tests, backups, security, performance, onboarding | Real pilot engagement actively used with measured feedback |
 | 06 - AI risk insights | Authorized retrieval, structured explanations, mitigation drafts, evaluation | Findings measurable, permission-scoped and human-controlled; cost within budget |
 | 07 - Lifecycle completion and planning | Forecasting, QA/UAT, release, API evidence, warranty/closure, per-UR review | PM compares original/actual/forecast; client follows one release through UAT, warranty and closure |
-| 08 - Expansion | Kanban mode, portfolio, broader connector coverage, predictive AI, commercial extensions | Features justified by validated customer demand |
+| 08 - Expansion | Portfolio, broader connector coverage, predictive AI, commercial extensions | Features justified by validated customer demand |
 
 ### Phase 00 - Product validation
 
@@ -157,7 +157,7 @@ These phases organize building DeliveryPilot. They are not the eight customer-pr
 
 ### Phase 02 - Engagement and backlog
 
-- Record client engagements and contract types; create Scrum projects under them.
+- Record client engagements and their fixed-price agreements; create Scrum projects under them.
 - Support the backlog taxonomy, acceptance criteria and requirement links.
 - Support exact-version client sign-off and explicit scope baselines.
 
@@ -173,7 +173,7 @@ These phases organize building DeliveryPilot. They are not the eight customer-pr
 
 ### Phase 04 - Delivery risk management
 
-- Start with the BR-052 signal families and configurable thresholds per contract type.
+- Start with the BR-052 signal families and configurable thresholds per project.
 - Provide the risk register, finding review, CR linkage and delivery health views.
 - Share selected health and risk items with the client explicitly.
 
@@ -204,7 +204,7 @@ These phases organize building DeliveryPilot. They are not the eight customer-pr
 
 ### Phase 08 - Expansion
 
-- Expand to Kanban mode, portfolio, resource planning and broader connector coverage according to adoption evidence; pilot-selected evidence adapters are already V1 candidates.
+- Expand to portfolio, resource planning and broader connector coverage according to adoption evidence; pilot-selected evidence adapters are already V1 candidates.
 - Evaluate probabilistic predictions only when historical data supports calibration.
 
 **Gate:** Every expansion initiative is linked to a measurable customer outcome.
@@ -244,7 +244,7 @@ Do not assume Scrum must use two-week Sprints; choose cadence with the delivery 
 - [ ] Organization A cannot access Organization B's resources (including background processing, risk signals and attachments).
 - [ ] A user can hold organization memberships with independently scoped permissions.
 - [ ] Workspace creation is separate from registration and establishes its initial Owner.
-- [ ] A Client Engagement with contract type can be recorded, and a Scrum project created under it.
+- [ ] A Client Engagement with its fixed-price agreement can be recorded, and a Scrum project created under it.
 - [ ] A client PO guest sees only their engagement's shared scope, reviews, health and risks.
 - [ ] Client sign-off of baseline v1 does not approve v2; baseline establishment is explicit.
 - [ ] A team can plan, execute, review and close a Sprint with a Sprint Goal and declared capacity.
