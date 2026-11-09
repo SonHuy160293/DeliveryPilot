@@ -51,6 +51,7 @@ HTTP surface (all routes under `api/v1/`):
 | `OrganizationInvitationsController` | `GET`, `POST organizations/{id}/invitations`, `GET …/{invitationId}`, `POST …/{invitationId}/resend\|reissue\|cancel` | Bearer |
 | `InvitationResponsesController` | `POST organization-invitations/{invitationId}/preview\|accept\|decline` (proof in body) | Bearer |
 | `UsersController` | `GET integrations/users/{userId}` | Integration API key |
+| `AuthorityController` | `POST integrations/authority/session-checks`, `POST integrations/authority/organization-checks` (internal session and workspace authority checks for other hosts; a denial is a 200 `denied` decision with no detail) | Integration API key |
 | `InvitationDeliveryEligibilityController` | `GET integrations/organization-invitation-deliveries/{deliveryMessageId}/eligibility` | Invitation dispatch key |
 
 ## Gateway exposure
@@ -72,8 +73,10 @@ Integration endpoints, including invitation delivery eligibility and Users integ
 - Every protected request checks, uncached, that the session exists, is not revoked and belongs to an active account (`IAuthenticatedContextValidator`), and fails closed.
 - Login sets the refresh token as a `Secure`, `HttpOnly`, `SameSite=Strict` cookie (`dp_refresh_token`). Only a SHA-256 verifier is stored. Rotation and revocation lock the session row (`AuthSessionService`).
 - Organization authority is recomputed from the database on every request by `OrganizationAuthorizationService`; tenant, role and permission claims are ignored. Stores always filter by `OrganizationId`.
+- Workspace permission codes are code-defined in `OrganizationCapabilityCatalog`. Each grant row is pinned to the catalog policy version it was granted under (currently 2) and interpreted only by that version's frozen classification; unknown versions fail closed. Version 2 adds the delivery entry points `organization.engagements.create`, `organization.engagements.read-all` and `organization.projects.create` (held by built-in Owner/Admin, delegable to custom roles); they gate entry actions for the planned Projects module ([ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) and grant no project access.
+- Other hosts obtain session validity and workspace authority only through the internal `AuthorityController` checks, never Identity's database. No other host consumes them yet.
 - Workspace security mutations serialize inside the command transaction through `OrganizationMutationGuard`, using the lock order documented on that class (workspace → users → session → memberships). This protects Owner continuity and revocation races.
-- Any future host that needs bearer validation or organization authority must use a reviewed cross-host contract (open decision). It must never reference Identity's database.
+- Any future host that needs bearer validation or organization authority must use a reviewed cross-host contract and never reference Identity's database. [ADR-001](docs/architecture/adr-001-delivery-module-placement.md) D-02 selects shared-key bearer validation plus the `AuthorityController` checks for the planned Projects host only. Its key distribution is a deployment task and is not implemented.
 
 ## Dependency direction
 
@@ -124,4 +127,4 @@ Implementation conventions are owned by the root [agent guidance](AGENTS.md) and
 
 ---
 
-Last verified against source: 2026-11-05, commit `54d6425`.
+Last verified against source: 2026-11-05, commit `54d6425`. Authority checks and catalog policy v2 (TASK-DP-003-019/020) verified against the working tree on 2026-11-09.

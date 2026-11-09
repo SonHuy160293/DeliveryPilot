@@ -31,6 +31,9 @@ The table is generated from canonical TASK metadata at planning time; the Task f
 | [TASK-DP-003-016](tasks/TASK-DP-003-016.md) | Honor persisted built-in role permission versions | done | TASK-DP-003-002, TASK-DP-003-004 | general agent |
 | [TASK-DP-003-017](tasks/TASK-DP-003-017.md) | Pin permission classification to grant policy version | done | TASK-DP-003-016 | general agent |
 | [TASK-DP-003-018](tasks/TASK-DP-003-018.md) | Serialize workspace mutation and session revocation | done | TASK-DP-003-004 | general agent |
+| [TASK-DP-003-019](tasks/TASK-DP-003-019.md) | Expose internal session and workspace authority checks for other hosts (ADR-001) | done | none | add-cqrs-api-feature |
+| [TASK-DP-003-020](tasks/TASK-DP-003-020.md) | Register workspace delivery entry-point capability codes (ADR-001) | done | TASK-DP-003-019 | general agent |
+| [TASK-DP-003-021](tasks/TASK-DP-003-021.md) | Publish Identity access-change events for resource-owning modules (ADR-001) | blocked: consumer design | TASK-DP-003-019 | general agent |
 
 Execution order: 002 first; then 003/004; 016 after 002/004, 017 after 016, and 018 after 004; 001/005/013 as their dependencies finish; 006 after 003/004/016/017/018 and a fresh readiness review; 007 then 008 then 009 then 010; 015 after 006/007/009; 011 after its foundations, then 012; 014 last after 015. Task 006 does not expose retirement; task 015 supplies the complete guarded retirement endpoint after invitation persistence and issuance exist. Branches may overlap only when dependencies permit; coordinate shared DbContext/snapshot/DI/controller/test edits rather than claiming file-level independence. Blocked tasks contain concrete plans but are not executable until dependencies are done and a fresh review changes their status to pending. The executor cannot silently flip a blocked task.
 

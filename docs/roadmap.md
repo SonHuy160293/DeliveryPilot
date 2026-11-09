@@ -65,7 +65,7 @@ The IDs below remain stable even if names or priorities change. Create feature-s
 
 **Active feature contracts:** [FEAT-DP-002 - User Initialization](features/FEAT-DP-002-user-initialization/feature.md) and [FEAT-DP-003 - Organization & Membership](features/FEAT-DP-003-organization/feature.md). The repositioning does not change their scope or status. Other feature files are intentionally not generated as empty placeholders.
 
-Feature IDs identify product capabilities, not code modules or databases. FEAT-DP-002 and FEAT-DP-003 fit the selected combined [Identity module](architecture/modules/identity/README.md). Engagement, Project, Requirements/Approval, Scrum Delivery and Risk remain outside Identity; their module placement needs explicit architecture decisions.
+Feature IDs identify product capabilities, not code modules or databases. FEAT-DP-002 and FEAT-DP-003 fit the selected combined [Identity module](architecture/modules/identity/README.md). Engagement, Project, Requirements/Approval, Scrum Delivery and Risk remain outside Identity; [ADR-001](architecture/adr-001-delivery-module-placement.md) (accepted 2026-11-09) places 025/004/006/007/008/009/011/017/019 in a planned Projects module and 001/010/027 in a planned Risk module. Neither module is implemented yet.
 
 The [workflow-to-feature mapping](deliverypilot-workflow-discovery.md#161-existing-feature-registry-mapping) routes confirmed behavior to these IDs. Registration/login/session foundations and the bounded Organization backend are implemented in the checkout; frontend and Project/guest-resource handoffs remain separate. See the [module implementation note](architecture/modules/identity/README.md#verified-implementation-baseline).
 

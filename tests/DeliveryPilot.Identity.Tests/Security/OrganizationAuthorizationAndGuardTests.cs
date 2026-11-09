@@ -66,7 +66,7 @@ public sealed class OrganizationAuthorizationAndGuardTests
         Assert.True(OrganizationCapabilityCatalog.IsReservedBuiltInRoleCodeOrName("member"));
         Assert.False(OrganizationCapabilityCatalog.IsReservedBuiltInRoleCodeOrName("audit-reader"));
 
-        Assert.Equal(10, OrganizationCapabilityCatalog.DelegablePermissionCodes.Count);
+        Assert.Equal(13, OrganizationCapabilityCatalog.DelegablePermissionCodes.Count);
         Assert.DoesNotContain(OrganizationCapabilityCatalog.OwnershipManage, OrganizationCapabilityCatalog.DelegablePermissionCodes);
         Assert.False(OrganizationCapabilityCatalog.IsDelegablePermission(OrganizationCapabilityCatalog.OwnershipManage));
         Assert.False(OrganizationCapabilityCatalog.IsDelegablePermission("cinema.branch.manage"));

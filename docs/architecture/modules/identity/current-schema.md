@@ -18,6 +18,7 @@ Organization migrations add foundation, audit, creation replay, pinned permissio
 | [20261104051215_PinOrganizationPermissionCatalogPolicy](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261104051215_PinOrganizationPermissionCatalogPolicy.cs) | Pin Organization Permission Catalog Policy |
 | [20261104071441_AddOrganizationInvitations](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261104071441_AddOrganizationInvitations.cs) | Add Organization Invitations |
 | [20261105074956_AddOrganizationOwnershipNominations](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261105074956_AddOrganizationOwnershipNominations.cs) | Add Organization Ownership Nominations |
+| [20261109074711_UpgradeBuiltInRolesToCatalogPolicyV2](../../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Infrastructure/Persistence/Migrations/20261109074711_UpgradeBuiltInRolesToCatalogPolicyV2.cs) | Data-only: grant catalog policy v2 delivery entry-point codes to existing built-in Owner/Admin roles, advance their permission-set version and record system audit events (TASK-DP-003-020); no schema change |
 
 ## Current relationships
 

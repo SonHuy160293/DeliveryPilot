@@ -124,6 +124,8 @@ public sealed partial class GatewayHttpTests
     [Theory]
     [InlineData("/identity/api/v1/integrations/organization-invitation-deliveries/019a0000-0000-7000-8000-000000000001/eligibility")]
     [InlineData("/identity/api/v1/integrations/users/019a0000-0000-7000-8000-000000000001")]
+    [InlineData("/identity/api/v1/integrations/authority/session-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/organization-checks")]
     [InlineData("/identity/api/v1/organizations/019a0000-0000-7000-8000-000000000001/unknown")]
     public async Task PrivateAndUnknownOrganizationPathsRemainUnpublished(string path)
     {

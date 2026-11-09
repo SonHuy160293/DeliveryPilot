@@ -243,6 +243,112 @@ public sealed class OrganizationAuthorizationService(
         return false;
     }
 
+    public async Task<bool> IsSessionActiveAsync(
+        Guid userId,
+        Guid sessionId,
+        CancellationToken cancellationToken = default)
+    {
+        if (userId == Guid.Empty || sessionId == Guid.Empty)
+        {
+            return false;
+        }
+
+        try
+        {
+            // Same predicate as AuthenticatedContextValidator: uncached, owned session, not revoked, active account.
+            return await dbContext.AuthSessions
+                .AsNoTracking()
+                .AnyAsync(
+                    session => session.Id == sessionId
+                        && session.UserId == userId
+                        && session.RevokedAt == null
+                        && dbContext.Users.Any(user => user.Id == session.UserId && user.Status == AuthSessionService.ActiveUserStatus),
+                    cancellationToken);
+        }
+        catch (Exception ex) when (IsStoreUnavailable(ex, cancellationToken))
+        {
+            throw CreateAuthorityUnavailable();
+        }
+    }
+
+    public async Task<OrganizationMemberSecurityContext?> EvaluateActorAsync(
+        Guid organizationId,
+        Guid userId,
+        Guid? sessionId,
+        string? requiredPermissionCode,
+        CancellationToken cancellationToken = default)
+    {
+        if (organizationId == Guid.Empty || userId == Guid.Empty || sessionId == Guid.Empty)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (sessionId.HasValue)
+            {
+                bool activeSession = await dbContext.AuthSessions
+                    .AsNoTracking()
+                    .AnyAsync(
+                        session => session.Id == sessionId.Value
+                            && session.UserId == userId
+                            && session.RevokedAt == null,
+                        cancellationToken);
+                if (!activeSession)
+                {
+                    return null;
+                }
+            }
+
+            User? user = await dbContext.Users
+                .AsNoTracking()
+                .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            if (user is null || !string.Equals(user.Status, AuthSessionService.ActiveUserStatus, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            Organization? organization = await dbContext.Organizations
+                .AsNoTracking()
+                .SingleOrDefaultAsync(org => org.Id == organizationId && org.Status == "active", cancellationToken);
+            if (organization is null)
+            {
+                return null;
+            }
+
+            OrganizationMembership? membership = await dbContext.OrganizationMemberships
+                .AsNoTracking()
+                .SingleOrDefaultAsync(
+                    m => m.OrganizationId == organizationId
+                        && m.UserId == userId
+                        && m.Status == "active",
+                    cancellationToken);
+            if (membership is null)
+            {
+                return null;
+            }
+
+            DateTimeOffset now = _timeProvider.GetUtcNow();
+            OrganizationMemberSecurityContext context = await BuildMemberSecurityContextAsync(
+                organization,
+                membership,
+                user.Status,
+                now,
+                cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(requiredPermissionCode) && !context.HasPermission(requiredPermissionCode))
+            {
+                return null;
+            }
+
+            return context;
+        }
+        catch (Exception ex) when (IsStoreUnavailable(ex, cancellationToken))
+        {
+            throw CreateAuthorityUnavailable();
+        }
+    }
+
     internal static OrganizationRoleBrief MapRoleBrief(OrganizationRole role)
         => new(role.Id, role.Code, role.Name, role.Origin, role.Version, role.PermissionSetVersion);
 
@@ -296,75 +402,14 @@ public sealed class OrganizationAuthorizationService(
         string? requiredPermissionCode,
         CancellationToken cancellationToken)
     {
-        if (organizationId == Guid.Empty)
-        {
-            throw OrganizationMutationScope.CreateAccessDenied();
-        }
+        OrganizationMemberSecurityContext? context = await EvaluateActorAsync(
+            organizationId,
+            userId,
+            sessionId,
+            requiredPermissionCode,
+            cancellationToken);
 
-        try
-        {
-            if (sessionId.HasValue)
-            {
-                bool activeSession = await dbContext.AuthSessions
-                    .AsNoTracking()
-                    .AnyAsync(
-                        session => session.Id == sessionId.Value
-                            && session.UserId == userId
-                            && session.RevokedAt == null,
-                        cancellationToken);
-                if (!activeSession)
-                {
-                    throw OrganizationMutationScope.CreateAccessDenied();
-                }
-            }
-
-            User? user = await dbContext.Users
-                .AsNoTracking()
-                .SingleOrDefaultAsync(u => u.Id == userId, cancellationToken);
-            if (user is null || !string.Equals(user.Status, AuthSessionService.ActiveUserStatus, StringComparison.Ordinal))
-            {
-                throw OrganizationMutationScope.CreateAccessDenied();
-            }
-
-            Organization? organization = await dbContext.Organizations
-                .AsNoTracking()
-                .SingleOrDefaultAsync(org => org.Id == organizationId && org.Status == "active", cancellationToken);
-            if (organization is null)
-            {
-                throw OrganizationMutationScope.CreateAccessDenied();
-            }
-
-            OrganizationMembership? membership = await dbContext.OrganizationMemberships
-                .AsNoTracking()
-                .SingleOrDefaultAsync(
-                    m => m.OrganizationId == organizationId
-                        && m.UserId == userId
-                        && m.Status == "active",
-                    cancellationToken);
-            if (membership is null)
-            {
-                throw OrganizationMutationScope.CreateAccessDenied();
-            }
-
-            DateTimeOffset now = _timeProvider.GetUtcNow();
-            OrganizationMemberSecurityContext context = await BuildMemberSecurityContextAsync(
-                organization,
-                membership,
-                user.Status,
-                now,
-                cancellationToken);
-
-            if (!string.IsNullOrWhiteSpace(requiredPermissionCode) && !context.HasPermission(requiredPermissionCode))
-            {
-                throw OrganizationMutationScope.CreateAccessDenied();
-            }
-
-            return context;
-        }
-        catch (Exception ex) when (IsStoreUnavailable(ex, cancellationToken))
-        {
-            throw CreateAuthorityUnavailable();
-        }
+        return context ?? throw OrganizationMutationScope.CreateAccessDenied();
     }
 
     private async Task<OrganizationMemberSecurityContext> BuildMemberSecurityContextAsync(

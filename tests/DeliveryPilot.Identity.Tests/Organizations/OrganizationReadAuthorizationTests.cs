@@ -102,6 +102,8 @@ public sealed class OrganizationReadAuthorizationTests
         public Task<OrganizationMemberSecurityContext> AuthorizeRoleCatalogReadAsync(Guid organizationId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<OrganizationMemberSecurityContext> ReauthorizeJobActorAsync(Guid organizationId, Guid actorUserId, string? requiredPermissionCode = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<OrganizationMemberSecurityContext?> LoadMemberSecurityContextAsync(Guid organizationId, Guid membershipId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<bool> IsSessionActiveAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<OrganizationMemberSecurityContext?> EvaluateActorAsync(Guid organizationId, Guid userId, Guid? sessionId, string? requiredPermissionCode, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public bool CanAccessProjectResource(OrganizationMemberSecurityContext memberContext, Guid projectId) => false;
     }
 }

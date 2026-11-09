@@ -19,8 +19,8 @@ public static class OrganizationCapabilityCatalog
 {
     public const string SystemOrigin = "system";
     public const string CustomOrigin = "custom";
-    public const int CurrentTemplateVersion = 1;
-    public const int CurrentCatalogPolicyVersion = 1;
+    public const int CurrentTemplateVersion = 2;
+    public const int CurrentCatalogPolicyVersion = 2;
 
     public const string OwnerRoleCode = "owner";
     public const string AdminRoleCode = "admin";
@@ -42,6 +42,12 @@ public static class OrganizationCapabilityCatalog
     public const string AuditRead = "organization.audit.read";
     public const string OwnershipManage = "organization.ownership.manage";
 
+    // Catalog policy version 2 (TASK-DP-003-020, ADR-001 D-03): workspace-level entry points for the planned
+    // Projects module. They authorize only the entry action, never project content (FR-DP-003-007).
+    public const string EngagementsCreate = "organization.engagements.create";
+    public const string EngagementsReadAll = "organization.engagements.read-all";
+    public const string ProjectsCreate = "organization.projects.create";
+
     private static readonly string[] OrderedDelegablePermissionCodes =
     [
         MembersRead,
@@ -54,6 +60,9 @@ public static class OrganizationCapabilityCatalog
         RolesManage,
         RolesAssign,
         AuditRead,
+        EngagementsCreate,
+        EngagementsReadAll,
+        ProjectsCreate,
     ];
 
     private static readonly string[] OrderedAllPermissionCodes =
@@ -82,6 +91,19 @@ public static class OrganizationCapabilityCatalog
     };
 
     private static readonly HashSet<string> Version1KnownPermissionSet = new(Version1DelegablePermissionSet, StringComparer.Ordinal)
+    {
+        "organization.ownership.manage",
+    };
+
+    // Version 2 is frozen like version 1: version 1 codes plus the delivery entry points.
+    private static readonly HashSet<string> Version2DelegablePermissionSet = new(Version1DelegablePermissionSet, StringComparer.Ordinal)
+    {
+        "organization.engagements.create",
+        "organization.engagements.read-all",
+        "organization.projects.create",
+    };
+
+    private static readonly HashSet<string> Version2KnownPermissionSet = new(Version2DelegablePermissionSet, StringComparer.Ordinal)
     {
         "organization.ownership.manage",
     };
@@ -216,10 +238,7 @@ public static class OrganizationCapabilityCatalog
         {
             if (permission.OrganizationId == role.OrganizationId
                 && permission.RoleId == role.Id
-                && permission.CatalogPolicyVersion == 1
-                && (IsSystemOwnerRole(role)
-                    ? Version1KnownPermissionSet.Contains(permission.PermissionCode) && IsKnownPermission(permission.PermissionCode)
-                    : Version1DelegablePermissionSet.Contains(permission.PermissionCode) && IsDelegablePermission(permission.PermissionCode)))
+                && IsClassifiedGrant(role, permission))
             {
                 effective.Add(permission.PermissionCode);
             }
@@ -273,5 +292,28 @@ public static class OrganizationCapabilityCatalog
             isSystemAdmin,
             permissions,
             scopedRoles);
+    }
+
+    // A row is effective only under the frozen classification of the policy version it was granted with;
+    // unknown versions fail closed. The current catalog must also still recognize the code.
+    private static bool IsClassifiedGrant(OrganizationRole role, OrganizationRolePermission permission)
+    {
+        string code = permission.PermissionCode;
+        bool isOwner = IsSystemOwnerRole(role);
+        (HashSet<string> Known, HashSet<string> Delegable)? classification = permission.CatalogPolicyVersion switch
+        {
+            1 => (Version1KnownPermissionSet, Version1DelegablePermissionSet),
+            2 => (Version2KnownPermissionSet, Version2DelegablePermissionSet),
+            _ => null,
+        };
+
+        if (classification is null)
+        {
+            return false;
+        }
+
+        return isOwner
+            ? classification.Value.Known.Contains(code) && IsKnownPermission(code)
+            : classification.Value.Delegable.Contains(code) && IsDelegablePermission(code);
     }
 }

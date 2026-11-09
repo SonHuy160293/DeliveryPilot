@@ -37,16 +37,113 @@ public sealed class UserMigrationTests
         context.ChangeTracker.Clear();
         List<OrganizationRolePermission> rows = await context.OrganizationRolePermissions
             .Where(row => row.RoleId == seed.OwnerRole.Id).ToListAsync();
-        Assert.Equal(2, rows.Count);
-        Assert.All(rows, row => Assert.Equal(1, row.CatalogPolicyVersion));
-        Assert.True(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.OwnerRole, rows)
-            .SetEquals([OrganizationCapabilityCatalog.AuditRead]));
+
+        // The pinned baseline rows stay at version 1; the later catalog policy v2 upgrade adds only its three codes.
+        List<OrganizationRolePermission> baseline = rows.Where(row => row.CatalogPolicyVersion == 1).ToList();
+        Assert.Equal(2, baseline.Count);
+        Assert.Equal(
+            [OrganizationCapabilityCatalog.EngagementsCreate, OrganizationCapabilityCatalog.EngagementsReadAll, OrganizationCapabilityCatalog.ProjectsCreate],
+            rows.Where(row => row.CatalogPolicyVersion == 2).Select(row => row.PermissionCode).Order(StringComparer.Ordinal));
+        Assert.True(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.OwnerRole, rows).SetEquals(
+        [
+            OrganizationCapabilityCatalog.AuditRead,
+            OrganizationCapabilityCatalog.EngagementsCreate,
+            OrganizationCapabilityCatalog.EngagementsReadAll,
+            OrganizationCapabilityCatalog.ProjectsCreate,
+        ]));
 
         await migrator.MigrateAsync("20261104025115_AddOrganizationCreationAttempts");
         int preserved = await context.Database.SqlQueryRaw<int>("""
             SELECT count(*)::int AS "Value" FROM shared."OrganizationRolePermissions"
             """).SingleAsync();
         Assert.Equal(2, preserved);
+    }
+
+    [PostgreSqlFact]
+    public async Task CatalogPolicyV2UpgradeGrantsBuiltInOwnerAndAdminOnceAndRollsBack()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await using var context = database.Context();
+        string[] migrations = context.Database.GetMigrations().ToArray();
+        string upgrade = migrations.Single(migration => migration.EndsWith("_UpgradeBuiltInRolesToCatalogPolicyV2", StringComparison.Ordinal));
+        string previous = migrations[Array.IndexOf(migrations, upgrade) - 1];
+        var migrator = context.GetService<IMigrator>();
+        await migrator.MigrateAsync(previous);
+
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var user = User.Create($"catalog-v2-{Guid.NewGuid():N}@example.test", "Catalog Owner", status: "active");
+        var organization = Organization.Create("Catalog v2 workspace", user.Id, now);
+        OrganizationBuiltInRoleSeed seed = OrganizationCapabilityCatalog.CreateBuiltInRoles(organization.Id, now);
+        var custom = OrganizationRole.Create(organization.Id, "custom-reader", "Custom reader", "custom", null, user.Id, now);
+        context.Users.Add(user);
+        context.Organizations.Add(organization);
+        context.OrganizationRoles.AddRange(seed.Roles);
+        context.OrganizationRoles.Add(custom);
+        context.OrganizationRolePermissions.AddRange(seed.Permissions);
+        context.OrganizationRolePermissions.Add(OrganizationRolePermission.Create(organization.Id, custom.Id, OrganizationCapabilityCatalog.MembersRead));
+        await context.SaveChangesAsync();
+
+        // Recreate the pre-upgrade state of an organization created under catalog policy version 1.
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            DELETE FROM shared."OrganizationRolePermissions"
+            WHERE "OrganizationId" = {organization.Id}
+              AND "PermissionCode" IN ({OrganizationCapabilityCatalog.EngagementsCreate}, {OrganizationCapabilityCatalog.EngagementsReadAll}, {OrganizationCapabilityCatalog.ProjectsCreate})
+            """);
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE shared."OrganizationRolePermissions" SET "CatalogPolicyVersion" = 1 WHERE "OrganizationId" = {organization.Id}
+            """);
+        await context.Database.ExecuteSqlInterpolatedAsync($"""
+            UPDATE shared."OrganizationRoles" SET "TemplateVersion" = 1 WHERE "OrganizationId" = {organization.Id} AND "Origin" = 'system'
+            """);
+        context.ChangeTracker.Clear();
+
+        await migrator.MigrateAsync(upgrade);
+        context.ChangeTracker.Clear();
+        List<OrganizationRole> roles = await context.OrganizationRoles.AsNoTracking().Where(role => role.OrganizationId == organization.Id).ToListAsync();
+        List<OrganizationRolePermission> permissions = await context.OrganizationRolePermissions.AsNoTracking().Where(row => row.OrganizationId == organization.Id).ToListAsync();
+        string[] newCodes = [OrganizationCapabilityCatalog.EngagementsCreate, OrganizationCapabilityCatalog.EngagementsReadAll, OrganizationCapabilityCatalog.ProjectsCreate];
+
+        foreach (Guid roleId in new[] { seed.OwnerRole.Id, seed.AdminRole.Id })
+        {
+            OrganizationRole upgraded = roles.Single(role => role.Id == roleId);
+            Assert.Equal(2, upgraded.Version);
+            Assert.Equal(2, upgraded.PermissionSetVersion);
+            Assert.Equal(2, upgraded.TemplateVersion);
+            Assert.Equal(newCodes, permissions.Where(row => row.RoleId == roleId && row.CatalogPolicyVersion == 2).Select(row => row.PermissionCode).Order(StringComparer.Ordinal));
+            Assert.True(newCodes.All(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(upgraded, permissions).Contains));
+        }
+
+        OrganizationRole member = roles.Single(role => role.Id == seed.MemberRole.Id);
+        Assert.Equal(1, member.PermissionSetVersion);
+        Assert.Equal(1, member.TemplateVersion);
+        OrganizationRole untouchedCustom = roles.Single(role => role.Id == custom.Id);
+        Assert.Equal(1, untouchedCustom.PermissionSetVersion);
+        Assert.DoesNotContain(permissions, row => row.RoleId == custom.Id && newCodes.Contains(row.PermissionCode));
+
+        List<IdentityAuditEvent> audit = await context.IdentityAuditEvents.AsNoTracking().Where(item => item.OrganizationId == organization.Id).ToListAsync();
+        Assert.Equal(2, audit.Count);
+        Assert.All(audit, item =>
+        {
+            Assert.Equal("system", item.ActorKind);
+            Assert.Null(item.ActorUserId);
+            Assert.Equal("catalog-policy-v2-upgrade", item.ActorReference);
+            Assert.Equal(2, item.AggregateVersion);
+            _ = DeliveryPilot.Identity.Domain.Auditing.IdentityAuditSchemaCatalog.ValidateAndCanonicalizeDetails(item.AggregateType, item.EventType, item.DetailsSchemaVersion, item.Details);
+        });
+
+        await migrator.MigrateAsync(previous);
+        context.ChangeTracker.Clear();
+        OrganizationRole rolledBackOwner = await context.OrganizationRoles.AsNoTracking().SingleAsync(role => role.Id == seed.OwnerRole.Id);
+        Assert.Equal(1, rolledBackOwner.PermissionSetVersion);
+        Assert.Equal(1, rolledBackOwner.TemplateVersion);
+        Assert.Equal(3, rolledBackOwner.Version);
+        Assert.False(await context.OrganizationRolePermissions.AnyAsync(row => row.OrganizationId == organization.Id && newCodes.Contains(row.PermissionCode)));
+        Assert.False(await context.IdentityAuditEvents.AnyAsync(item => item.OrganizationId == organization.Id));
+
+        await context.Database.MigrateAsync();
+        context.ChangeTracker.Clear();
+        Assert.Equal(2, (await context.OrganizationRoles.AsNoTracking().SingleAsync(role => role.Id == seed.AdminRole.Id)).PermissionSetVersion);
+        Assert.Equal(2, await context.IdentityAuditEvents.CountAsync(item => item.OrganizationId == organization.Id));
     }
 
     [PostgreSqlFact]

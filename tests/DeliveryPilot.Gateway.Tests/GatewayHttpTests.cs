@@ -52,6 +52,8 @@ public sealed partial class GatewayHttpTests
     [Theory]
     [InlineData("/identity/api/v1/integrations/users/123")]
     [InlineData("/identity/api/v1/integrations/organization-invitation-deliveries/01900000-0000-7000-8000-000000000001/eligibility")]
+    [InlineData("/identity/api/v1/integrations/authority/session-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/organization-checks")]
     [InlineData("/identity/swagger/index.html")]
     [InlineData("/notification/health/ready")]
     [InlineData("/api/v1/proxy-test")]

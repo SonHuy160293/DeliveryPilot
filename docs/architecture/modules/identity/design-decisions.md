@@ -153,4 +153,9 @@ Existing [UserIntegrationDto](../../../../src/Contracts/DeliveryPilot.Identity.C
 | Minimal identity projection | Authorized lookup by stable ID → existing permitted display/status fields. | Identity; do not expose email/credential/session material broadly. |
 | Access-change propagation | Committed source event identity, aggregate version, affected scope/subject and change kind. | Identity outbox; consumers deduplicate, preserve history and reject stale state overwrites. |
 
+**Implementation note, 2026-11-09:** this note records an implementation; it does not change policy.
+- "Account/session eligibility" and "Organization eligibility" are implemented as the internal `AuthorityController` checks ([TASK-DP-003-019](../../../features/FEAT-DP-003-organization/tasks/TASK-DP-003-019.md)).
+- Catalog policy version 2 adds the workspace delivery entry codes under DATA-03's code-defined catalog ([TASK-DP-003-020](../../../features/FEAT-DP-003-organization/tasks/TASK-DP-003-020.md)).
+- "Access-change propagation" remains unimplemented ([TASK-DP-003-021](../../../features/FEAT-DP-003-organization/tasks/TASK-DP-003-021.md)).
+
 Combining Authentication and Organization removes an inter-module dependency between them. It does not make calls to Project, Notification, or future Delivery databases atomic. Event propagation supports projections and reconciliation; it is not the sole access-revocation authority.

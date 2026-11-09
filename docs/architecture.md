@@ -253,7 +253,7 @@ Initial operating requirements to validate:
 4. Which attachments must be accessible across tenant boundaries, and with what revocation rules?
 5. What are the concrete workload, backup, data residency, and AI data-processing targets?
 6. Which release evidence and external source-control integrations are required for the pilot?
-7. Where do Engagement & Client and Delivery Risk Intelligence live relative to the current independently hosted modules (new module, worker host, or shared host)?
+7. Where do Engagement & Client and Delivery Risk Intelligence live relative to the current independently hosted modules (new module, worker host, or shared host)? **Decided by [ADR-001](architecture/adr-001-delivery-module-placement.md) (accepted 2026-11-09):** a Projects module and a separate Risk module, both independently hosted.
 8. Which events and read contracts must Scrum Delivery, Capacity, Approval and Engagement publish for the signal engine?
 
 **Status rule:** This architecture is a recommended design direction. Do not describe any module, infrastructure component, or integration as implemented until source and deployment evidence confirms it.
