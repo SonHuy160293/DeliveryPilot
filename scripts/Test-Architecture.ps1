@@ -37,6 +37,22 @@ foreach ($project in $projects) {
         if (-not $allowed) { throw "Forbidden dependency: $name -> $dependency" }
     }
 }
+# ADR-001 D-02: Projects validates Identity-issued tokens but must never be able to issue them.
+$projectsRoot = Join-Path $root 'src/Modules/DeliveryPilot.Projects'
+if (Test-Path -LiteralPath $projectsRoot) {
+    foreach ($project in @(Get-ChildItem $projectsRoot -Recurse -Filter *.csproj)) {
+        [xml]$xml = Get-Content -LiteralPath $project.FullName -Raw
+        foreach ($package in $xml.SelectNodes('//PackageReference')) {
+            if ($package.Include -eq 'System.IdentityModel.Tokens.Jwt') {
+                throw "Forbidden token-issuing package in $($project.BaseName): $($package.Include)"
+            }
+        }
+    }
+    $issuing = Get-ChildItem $projectsRoot -Recurse -Filter *.cs |
+        Where-Object { $_.FullName -notmatch '[\\/](bin|obj)[\\/]' } |
+        Select-String -Pattern 'JwtSecurityTokenHandler|JsonWebTokenHandler|SecurityTokenDescriptor|JwtAccessTokenIssuer' -List
+    if ($issuing) { throw "Forbidden token-issuing code in Projects: $($issuing[0].Path)" }
+}
 function Visit($node, $ancestors) {
     if ($node -in $ancestors) { throw "Dependency cycle: $node" }
     foreach ($child in $graph[$node]) { Visit $child (@($ancestors) + $node) }

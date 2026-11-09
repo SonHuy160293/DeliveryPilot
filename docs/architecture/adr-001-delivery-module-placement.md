@@ -200,7 +200,7 @@ DeliveryPilot.<M>.Contracts -> BuildingBlocks only when needed
 
 1. **Identity integration contract tasks** (D-02/D-03/D-04), planned 2026-11-09: [TASK-DP-003-019](../features/FEAT-DP-003-organization/tasks/TASK-DP-003-019.md) internal session/authority checks (done 2026-11-09), [TASK-DP-003-020](../features/FEAT-DP-003-organization/tasks/TASK-DP-003-020.md) workspace entry-point codes `organization.engagements.create`, `organization.engagements.read-all`, `organization.projects.create` (done 2026-11-09), [TASK-DP-003-021](../features/FEAT-DP-003-organization/tasks/TASK-DP-003-021.md) access-change events (blocked until a consumer exists).
 2. **Projects module design workspace** under `docs/architecture/modules/projects/` (README, glossary, design decisions, ERD per context).
-3. **Projects scaffolding + deployment task** covering the Projects column of §5.
+3. **Projects scaffolding + deployment task** covering the Projects column of §5. Code skeleton landed 2026-11-09 without a separate TASK file, at the user's choice: six module projects, `DeliveryPilot.Projects.Contracts`, `tests/DeliveryPilot.Projects.Tests`, the Identity session/authority adapter, a reliability-only initial migration, and a D-02 token-issuing guard in `scripts/Test-Architecture.ps1`. Deployment wiring is still pending.
 4. **Feature contracts** in order: FEAT-DP-025 and 004 (VS-02, including the D-09 link flow), 008 + 006/007/017 (VS-03), 009/011 (VS-04), 019 (VS-06), 026 (VS-07).
 5. **D-02 gate decision** (asymmetric signing or introspection), then **Risk module design workspace and scaffolding**, then FEAT-DP-001/010/027 contracts with the initial Projects event catalog (D-10).
 

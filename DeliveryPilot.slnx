@@ -4,6 +4,7 @@
     <Project Path="tests/DeliveryPilot.Notification.Tests/DeliveryPilot.Notification.Tests.csproj" />
     <Project Path="tests/DeliveryPilot.Identity.Tests/DeliveryPilot.Identity.Tests.csproj" />
     <Project Path="tests/DeliveryPilot.AspNetCore.HttpClient.Tests/DeliveryPilot.AspNetCore.HttpClient.Tests.csproj" />
+    <Project Path="tests/DeliveryPilot.Projects.Tests/DeliveryPilot.Projects.Tests.csproj" />
   </Folder>
   <Folder Name="/src/" />
   <Folder Name="/src/Gateway/">
@@ -12,6 +13,7 @@
   <Folder Name="/src/Contracts/">
     <Project Path="src/Contracts/DeliveryPilot.Notification.Contracts/DeliveryPilot.Notification.Contracts.csproj" />
     <Project Path="src/Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj" />
+    <Project Path="src/Contracts/DeliveryPilot.Projects.Contracts/DeliveryPilot.Projects.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/DeliveryPilot.Messaging/DeliveryPilot.Messaging.csproj" />
@@ -37,5 +39,13 @@
     <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj" />
     <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj" />
     <Project Path="src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/DeliveryPilot.Projects/">
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Domain/DeliveryPilot.Projects.Domain.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Application/DeliveryPilot.Projects.Application.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Infrastructure/DeliveryPilot.Projects.Infrastructure.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API/DeliveryPilot.Projects.API.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker/DeliveryPilot.Projects.Worker.csproj" />
+    <Project Path="src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.MigrationRunner/DeliveryPilot.Projects.MigrationRunner.csproj" />
   </Folder>
 </Solution>

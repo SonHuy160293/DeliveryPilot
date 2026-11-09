@@ -6,6 +6,7 @@ The root `AGENTS.md` also applies to this directory. This file owns module codin
 
 - `DeliveryPilot.Identity/` owns authentication (users, password credentials, sessions and JWT issuance), Organization Management (workspaces, memberships, roles, invitations) and Identity audit events. Its worker runs the outbox relay and the delivery receipt and status consumers.
 - `DeliveryPilot.Notification/` owns notification delivery, templates, provider outcomes and suppression. It delivers messages staged by other modules and does not verify accounts.
+- `DeliveryPilot.Projects/` will own Engagement, Project, Backlog, Sprint/Capacity and Requirements/Approval ([ADR-001](../../docs/architecture/adr-001-delivery-module-placement.md)). Today it is a skeleton: health probes, the Identity session/authority adapter and outbox plumbing only. Keep each internal context in its own `Features/<Context>/` area and its own database schema. Workspace entry points use `IWorkspaceAuthority`, uncached for commands. Project-level roles and guest grants are evaluated inside Projects. Projects must never issue tokens.
 
 Integrate across modules through Contracts or Application-owned abstractions, never through another module's Domain or Infrastructure. Register new projects in `DeliveryPilot.slnx`, and update architecture checks when introducing a new project kind or boundary.
 

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../DeliveryPilot.Projects.Application/DeliveryPilot.Projects.Application.csproj" />
+    <ProjectReference Include="../DeliveryPilot.Projects.Domain/DeliveryPilot.Projects.Domain.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.AspNetCore/DeliveryPilot.AspNetCore.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.EntityFrameworkCore/DeliveryPilot.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/DeliveryPilot.Messaging/DeliveryPilot.Messaging.csproj" />
+    <ProjectReference Include="../../../Contracts/DeliveryPilot.Identity.Contracts/DeliveryPilot.Identity.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

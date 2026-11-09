@@ -25,6 +25,7 @@ flowchart LR
 
 - **Identity worker** (`IdentityMessagingExtensions`): `OutboxRelay`, `IdentityOutboxMaintenanceWorker`, `EmailDeliveryRecordedConsumer` and `InvitationDeliveryStatusConsumer`.
 - **Notification** owns email intake, delivery, provider outcomes and suppression. It delivers verification and organization-invitation emails; it does not verify accounts. Registration does not create verification tokens.
+- **Projects** (`src/Modules/DeliveryPilot.Projects`, [ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) is a **code skeleton only**, not deployed and not behind the Gateway. Its API exposes health probes only. Bearer tokens are validated locally (shared HS256 `Jwt` settings) and every session is confirmed through Identity's internal `session-checks` endpoint (`IdentitySessionValidator`); `IWorkspaceAuthority` wraps `organization-checks` and fails closed. `ProjectsDbContext` (database `DeliveryPilotProjects`) has only the `reliability` outbox/inbox tables. The worker runs `OutboxRelay` with no events registered. There are no domain entities, use cases or business endpoints yet.
 
 ## Identity module
 
@@ -121,6 +122,7 @@ Runtime facts at the last verification. The linked artifact owns each item.
 - Custom role retirement: [TASK-DP-003-015](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-015.md).
 - Rate limiting, lockout and email verification for the auth endpoints: deferred by [FR-DP-002-004](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-004.md) and [FR-DP-002-001](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-001.md).
 - Migration for `NotificationInboxDbContext`.
+- Projects deployment (Docker stages, compose, database bootstrap and grants, secrets, env files, scripts, Gateway `projects` cluster) and every Projects feature: ADR-001 §5 and §6.
 
 ## Changes and verification
 
