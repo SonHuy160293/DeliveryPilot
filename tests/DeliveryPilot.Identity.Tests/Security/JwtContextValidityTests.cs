@@ -679,6 +679,27 @@ public sealed class JwtContextValidityTests
             }
         }
 
+        public Task<bool> RevokeByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!RefreshTokenCodec.TryParse(refreshToken, out Guid sessionId, out byte[] verifier))
+            {
+                return Task.FromResult(false);
+            }
+
+            lock (_sync)
+            {
+                if (!_sessions.TryGetValue(sessionId, out AuthSession? session)
+                    || !RefreshTokenCodec.VerifierMatches(session.RefreshTokenVerifier, verifier))
+                {
+                    return Task.FromResult(false);
+                }
+
+                session.Revoke(timeProvider.GetUtcNow());
+                return Task.FromResult(true);
+            }
+        }
+
         public Task<bool> IsActiveAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();

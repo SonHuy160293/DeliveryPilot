@@ -42,7 +42,7 @@ HTTP surface (all routes under `api/v1/`):
 
 | Controller | Routes | Authentication |
 |---|---|---|
-| `AuthController` | `POST auth/register`, `POST auth/login` | Anonymous |
+| `AuthController` | `POST auth/register`, `POST auth/login`, `POST auth/refresh` (refresh cookie), `POST auth/logout` (optional bearer and/or refresh cookie; always 204) | Anonymous |
 | `OrganizationsController` | `POST organizations` (requires `Idempotency-Key`) | Bearer |
 | `MeOrganizationsController` | `GET me/organizations` | Bearer |
 | `OrganizationMembersController` | `GET organizations/{id}/members`, `…/members/me`, `…/members/{membershipId}`, `POST …/members/{membershipId}/roles/{roleId}/grant\|revoke` | Bearer |
@@ -61,6 +61,8 @@ The Gateway ([`proxy.json`](src/Gateway/DeliveryPilot.Gateway/proxy.json)) publi
 - `POST /notification/api/v1/webhooks/email/resend` (the raw signed request is verified before processing)
 - `POST /identity/api/v1/auth/register`
 - `POST /identity/api/v1/auth/login`
+- `POST /identity/api/v1/auth/refresh`
+- `POST /identity/api/v1/auth/logout`
 
 The allowlist also publishes 30 Organization method/path pairs under `/identity/api/v1`: workspace creation/personal listing, permissions, role definitions/retirement, member reads and guarded role/membership actions, manager and recipient invitations, ownership nominations and permitted audit history. Exact routes and methods are defined in `proxy.json` and checked by the Gateway route tests. These routes remove only `/identity`, use GUID-constrained identifiers, a 30-second timeout and a 16,384-byte body ceiling. Private responses, including Gateway-generated errors, are no-store. The configured CORS policy permits GET/POST/PUT and the Idempotency-Key request header; Identity remains responsible for current bearer/session and workspace authorization. [TASK-DP-003-014](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-014.md) records verification and external handoffs.
 
@@ -112,7 +114,6 @@ The entry points under `scripts/` orchestrate local and server deployments. The 
 
 Runtime facts at the last verification. The linked artifact owns each item.
 
-- Refresh and logout HTTP endpoints (`AuthSessionService.RefreshAsync` and `RevokeAsync` exist but have no route): [FR-DP-002-006](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-006.md); no task yet.
 - Membership removal and suspension: [TASK-DP-003-011](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-011.md).
 - Additional-Owner nomination: [TASK-DP-003-012](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-012.md).
 - Audit history query: [TASK-DP-003-013](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-013.md).

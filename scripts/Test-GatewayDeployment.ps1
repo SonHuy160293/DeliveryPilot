@@ -62,8 +62,10 @@ try {
     Assert-True ((Http-Status '/health/live') -eq 200 -and (Http-Status '/health/ready') -eq 200) 'Gateway health failed.'
     Assert-True ((Http-Status '/identity/api/v1/auth/register' 'POST') -eq 400) 'Registration route did not reach Identity.'
     Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST') -eq 400) 'Login route did not reach Identity.'
+    Assert-True ((Http-Status '/identity/api/v1/auth/refresh' 'POST') -eq 401) 'Refresh route did not reach Identity.'
+    Assert-True ((Http-Status '/identity/api/v1/auth/logout' 'POST') -eq 204) 'Logout route did not reach Identity.'
     $routeModel = Get-Content -LiteralPath (Join-Path $repoRoot 'src/Gateway/DeliveryPilot.Gateway/proxy.json') -Raw | ConvertFrom-Json
-    $organizationRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Name -notin @('identity-register','identity-login','notification-resend') })
+    $organizationRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Name -notin @('identity-register','identity-login','identity-refresh','identity-logout','notification-resend') })
     Assert-True ($organizationRoutes.Count -eq 30) 'Organization allowlist changed without acceptance review.'
     foreach ($entry in $organizationRoutes) {
         $path = [regex]::Replace($entry.Value.Match.Path, '\{\w+:guid\}', '019a0000-0000-7000-8000-000000000001')

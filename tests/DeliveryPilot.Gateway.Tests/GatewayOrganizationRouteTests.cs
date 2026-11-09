@@ -105,9 +105,9 @@ public sealed partial class GatewayHttpTests
     {
         string path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../src/Gateway/DeliveryPilot.Gateway/proxy.json"));
         JsonObject routes = JsonNode.Parse(await File.ReadAllTextAsync(path))!["ReverseProxy"] !["Routes"] !.AsObject();
-        Assert.Equal(33, routes.Count);
+        Assert.Equal(35, routes.Count);
         var expected = OrganizationRoutes().Select(item => item[0] + " /identity/api/v1" + item[1]).ToHashSet(StringComparer.Ordinal);
-        var actual = routes.Where(item => item.Key is not("identity-register" or "identity-login" or "notification-resend")).Select(item =>
+        var actual = routes.Where(item => item.Key is not("identity-register" or "identity-login" or "identity-refresh" or "identity-logout" or "notification-resend")).Select(item =>
         {
             JsonNode route = item.Value!;
             Assert.Equal("identity", route["ClusterId"] !.GetValue<string>());

@@ -35,7 +35,7 @@ public sealed class AuthSessionService(
         await dbContext.AuthSessions.AddAsync(session, cancellationToken);
 
         (string accessToken, DateTimeOffset accessExpiresAt) = accessTokenIssuer.Issue(userId, sessionId, now);
-        return new IssuedAuthSession(sessionId, accessToken, accessExpiresAt, refreshToken, session.RefreshExpiresAt);
+        return new IssuedAuthSession(sessionId, accessToken, accessExpiresAt, refreshToken, session.RefreshExpiresAt) { UserId = userId };
     }
 
     public async Task<IssuedAuthSession?> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ public sealed class AuthSessionService(
         (string nextRefreshToken, byte[] nextVerifier) = RefreshTokenCodec.Create(session.Id);
         session.RotateRefreshToken(nextVerifier, now);
         (string accessToken, DateTimeOffset accessExpiresAt) = accessTokenIssuer.Issue(session.UserId, session.Id, now);
-        return new IssuedAuthSession(session.Id, accessToken, accessExpiresAt, nextRefreshToken, session.RefreshExpiresAt);
+        return new IssuedAuthSession(session.Id, accessToken, accessExpiresAt, nextRefreshToken, session.RefreshExpiresAt) { UserId = session.UserId };
     }
 
     public async Task<bool> RevokeAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken)
@@ -73,6 +73,24 @@ public sealed class AuthSessionService(
 
         AuthSession? session = await LockSessionAsync(sessionId, cancellationToken);
         if (session is null || session.UserId != userId)
+        {
+            return false;
+        }
+
+        session.Revoke(timeProvider.GetUtcNow());
+        return true;
+    }
+
+    public async Task<bool> RevokeByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+    {
+        EnsureCommandTransaction();
+        if (!RefreshTokenCodec.TryParse(refreshToken, out Guid sessionId, out byte[] presentedVerifier))
+        {
+            return false;
+        }
+
+        AuthSession? session = await LockSessionAsync(sessionId, cancellationToken);
+        if (session is null || !RefreshTokenCodec.VerifierMatches(session.RefreshTokenVerifier, presentedVerifier))
         {
             return false;
         }

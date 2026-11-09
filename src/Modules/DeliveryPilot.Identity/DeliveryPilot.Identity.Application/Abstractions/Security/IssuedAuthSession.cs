@@ -12,6 +12,9 @@ public sealed record IssuedAuthSession(
     string RefreshToken,
     DateTimeOffset RefreshTokenExpiresAt)
 {
+    /// <summary>Gets the subject of the session, set by the issuing service.</summary>
+    public Guid UserId { get; init; }
+
     public override string ToString()
-        => $"{nameof(IssuedAuthSession)} {{ SessionId = {SessionId}, AccessTokenExpiresAt = {AccessTokenExpiresAt:O}, RefreshTokenExpiresAt = {RefreshTokenExpiresAt:O} }}";
+        => $"{nameof(IssuedAuthSession)} {{ SessionId = {SessionId}, UserId = {UserId}, AccessTokenExpiresAt = {AccessTokenExpiresAt:O}, RefreshTokenExpiresAt = {RefreshTokenExpiresAt:O} }}";
 }

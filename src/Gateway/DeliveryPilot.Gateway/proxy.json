@@ -70,6 +70,52 @@
           }
         ]
       },
+      "identity-refresh": {
+        "ClusterId": "identity",
+        "Match": {
+          "Path": "/identity/api/v1/auth/refresh",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 1024,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ]
+      },
+      "identity-logout": {
+        "ClusterId": "identity",
+        "Match": {
+          "Path": "/identity/api/v1/auth/logout",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 1024,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/identity"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ]
+      },
       "identity-organization-create": {
         "ClusterId": "identity",
         "Match": {

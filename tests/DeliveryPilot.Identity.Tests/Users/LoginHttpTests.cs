@@ -640,6 +640,27 @@ public sealed class LoginHttpTests
             }
         }
 
+        public Task<bool> RevokeByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!RefreshTokenCodec.TryParse(refreshToken, out Guid sessionId, out byte[] verifier))
+            {
+                return Task.FromResult(false);
+            }
+
+            lock (_sync)
+            {
+                if (!_committedSessions.TryGetValue(sessionId, out AuthSession? session)
+                    || !CryptographicOperations.FixedTimeEquals(session.RefreshTokenVerifier, verifier))
+                {
+                    return Task.FromResult(false);
+                }
+
+                session.Revoke(timeProvider.GetUtcNow());
+                return Task.FromResult(true);
+            }
+        }
+
         public Task<bool> IsActiveAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();

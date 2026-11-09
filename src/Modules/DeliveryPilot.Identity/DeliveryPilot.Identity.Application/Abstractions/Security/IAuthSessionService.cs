@@ -26,4 +26,10 @@ public interface IAuthSessionService
     /// Other sessions of the same user are unaffected.
     /// </summary>
     Task<bool> RevokeAsync(Guid userId, Guid sessionId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Revokes the session whose current refresh token is presented. Returns false when the token is
+    /// malformed, unknown or no longer the session's current token. Revocation is idempotent.
+    /// </summary>
+    Task<bool> RevokeByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
 }

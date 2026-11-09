@@ -30,6 +30,8 @@ public sealed partial class GatewayHttpTests
     [InlineData(TestRoute, "/api/v1/proxy-test")]
     [InlineData("/identity/api/v1/auth/register", "/api/v1/auth/register")]
     [InlineData("/identity/api/v1/auth/login", "/api/v1/auth/login")]
+    [InlineData("/identity/api/v1/auth/refresh", "/api/v1/auth/refresh")]
+    [InlineData("/identity/api/v1/auth/logout", "/api/v1/auth/logout")]
     [InlineData(Webhook, "/api/v1/webhooks/email/resend")]
     public async Task RoutesPreserveRequestBytesHeadersAndQuery(string publicPath, string internalPath)
     {
@@ -69,6 +71,8 @@ public sealed partial class GatewayHttpTests
     [Theory]
     [InlineData(TestRoute)]
     [InlineData("/identity/api/v1/auth/login")]
+    [InlineData("/identity/api/v1/auth/refresh")]
+    [InlineData("/identity/api/v1/auth/logout")]
     public async Task WrongMethodReturns405(string path)
     {
         await using var rig = await Rig.StartAsync();
@@ -253,6 +257,8 @@ public sealed partial class GatewayHttpTests
     [InlineData("/identity/api/v1/auth/register", 16385, true)]
     [InlineData("/identity/api/v1/auth/login", 16385, false)]
     [InlineData("/identity/api/v1/auth/login", 16385, true)]
+    [InlineData("/identity/api/v1/auth/refresh", 1025, false)]
+    [InlineData("/identity/api/v1/auth/logout", 1025, true)]
     [InlineData(TestRoute, 16385, false)]
     [InlineData(TestRoute, 16385, true)]
     [InlineData(Webhook, 65537, false)]
