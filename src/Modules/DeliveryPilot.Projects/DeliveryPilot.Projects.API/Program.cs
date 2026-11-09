@@ -5,10 +5,14 @@ using DeliveryPilot.AspNetCore.Filters;
 using DeliveryPilot.AspNetCore.Middleware;
 using DeliveryPilot.AspNetCore.Options;
 using DeliveryPilot.Observability;
+using DeliveryPilot.Projects.API.Configuration;
 using DeliveryPilot.Projects.API.Health;
+using DeliveryPilot.Projects.API.Middleware;
+using DeliveryPilot.Projects.API.Security;
 using DeliveryPilot.Projects.Application.DependencyInjection;
 using DeliveryPilot.Projects.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
 
@@ -20,7 +24,8 @@ try
 {
     Log.Information("Starting DeliveryPilot.Projects API");
 
-    var builder = WebApplication.CreateBuilder(args);
+    WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+    builder.Configuration.AddProjectsSecretFiles();
 
     builder.AddConfiguredSerilog();
     builder.AddDeliveryPilotObservability();
@@ -39,6 +44,8 @@ try
     // ADR-001 D-02: validate Identity-issued HS256 tokens locally; IdentitySessionValidator then
     // confirms the session with Identity on every request. Projects never issues tokens.
     builder.Services.AddConfiguredAuthentication(builder.Configuration, builder.Environment);
+    builder.Services.AddScoped<ProjectsJwtBearerEvents>();
+    builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options => options.EventsType = typeof(ProjectsJwtBearerEvents));
     builder.Services.AddConfiguredAuthorization();
     builder.Services.AddTrustedForwarding(builder.Configuration);
     builder.Services.AddConfiguredApiVersioning();
@@ -49,7 +56,7 @@ try
 
     builder.Services.AddConfiguredSwagger();
 
-    var app = builder.Build();
+    WebApplication app = builder.Build();
 
     Log.Information(
         "DeliveryPilot.Projects API configured for {Environment} and listening on {Urls}",
@@ -58,7 +65,21 @@ try
 
     app.UseForwardedHeaders();
     app.UseCorrelationId();
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.OnStarting(() =>
+            {
+                context.Response.Headers.CacheControl = "no-store";
+                return Task.CompletedTask;
+            });
+        }
+
+        await next(context);
+    });
     app.UseGlobalExceptionHandling();
+    app.UseMiddleware<RequestBodyLimitMiddleware>();
     app.UseApiStatusCodeEnvelope();
     app.UseSerilogRequestLogging();
 

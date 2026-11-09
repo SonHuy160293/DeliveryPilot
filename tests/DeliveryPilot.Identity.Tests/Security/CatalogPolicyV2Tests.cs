@@ -22,7 +22,7 @@ public sealed class CatalogPolicyV2Tests
         OrganizationBuiltInRoleSeed seed = OrganizationCapabilityCatalog.CreateBuiltInRoles(organizationId, DateTimeOffset.UtcNow);
 
         Assert.All(seed.Roles, role => Assert.Equal(OrganizationCapabilityCatalog.CurrentTemplateVersion, role.TemplateVersion));
-        Assert.All(seed.Permissions, row => Assert.Equal(2, row.CatalogPolicyVersion));
+        Assert.All(seed.Permissions, row => Assert.Equal(OrganizationCapabilityCatalog.CurrentCatalogPolicyVersion, row.CatalogPolicyVersion));
         IReadOnlySet<string> owner = OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.OwnerRole, seed.Permissions);
         IReadOnlySet<string> admin = OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.AdminRole, seed.Permissions);
         IReadOnlySet<string> member = OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.MemberRole, seed.Permissions);
@@ -61,7 +61,9 @@ public sealed class CatalogPolicyV2Tests
 
         Assert.True(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.AdminRole, [legacy, upgraded])
             .SetEquals([OrganizationCapabilityCatalog.MembersRead, OrganizationCapabilityCatalog.EngagementsReadAll]));
-        Assert.Empty(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.AdminRole, [WithPolicyVersion(upgraded, 3)]));
+        Assert.True(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.AdminRole, [WithPolicyVersion(upgraded, 2)])
+            .SetEquals([OrganizationCapabilityCatalog.EngagementsReadAll]));
+        Assert.Empty(OrganizationCapabilityCatalog.GetEffectiveRolePermissions(seed.AdminRole, [WithPolicyVersion(upgraded, 4)]));
     }
 
     private static OrganizationRolePermission WithPolicyVersion(OrganizationRolePermission row, int version)

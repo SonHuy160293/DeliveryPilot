@@ -6,7 +6,7 @@
 - Stable source links: `us_refs`, `fr_refs`, `nfr_refs`; `depends_on` contains Task IDs. Re-read referenced files and actual project rules.
 - `implementation_skill` is an optional **routing hint**, not authorization. If missing, choose implementation workflow from user intent and verified task type; if mismatched, stop and report.
 - `codebase_verified` records planning-time inspection, not current truth. Executor performs fresh inspection.
-- `status: pending` is eligible for preflight; `blocked`/`cancelled` are not. `in_progress` may be resumed only by an authorized actor and after rechecking context (`check-task --resume` when supported).
+- `status: pending` is eligible for `start-task` (which runs the preflight); `blocked`/`cancelled` are not. `in_progress` may be resumed only by an authorized actor and after rechecking context (`check-task --resume`). Status after that changes only through `submit-task`, `return-task` and `complete-task`.
 - Check-task automation cannot prove client approval, correct content, or current runtime behavior. Confirm those semantically.
 
 ## Readiness checklist

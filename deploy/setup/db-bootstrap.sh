@@ -4,6 +4,7 @@ module="${1:?Module required}"
 case "$module" in
   identity) database=DeliveryPilotIdentity; roles='identity_migrator identity_api identity_worker' ;;
   notification) database=DeliveryPilotNotification; roles='notification_migrator notification_runtime' ;;
+  projects) database=DeliveryPilotProjects; roles='projects_migrator projects_api projects_worker' ;;
   *) exit 2 ;;
 esac
 export PGPASSWORD="$(cat "/source/$module/admin-password.secret")"

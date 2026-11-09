@@ -36,6 +36,19 @@ elif [[ "$module" == identity ]]; then
     value="$(tr -d '\r\n' < "$file")"
     printf '%s' "$value" > "$file"
   done
+elif [[ "$module" == projects ]]; then
+  copy_secret /source/projects/admin-password.secret /staged/database/admin-password 999
+  copy_secret /source/projects/migrator-password.secret /staged/migration/database-password
+  copy_secret /source/projects/api-password.secret /staged/api/database-password
+  copy_secret /source/projects/worker-password.secret /staged/worker/database-password
+  copy_secret /source/platform/projects-broker-password.secret /staged/worker/broker-password
+  copy_secret /source/identity/jwt-key.secret /staged/api/config/Jwt__SecretKey
+  copy_secret /source/identity/integration-key.secret /staged/api/config/Integrations__Identity__ApiKey
+  copy_secret /source/projects/integration-key.secret /staged/api/config/IntegrationApi__ApiKeys__0
+  for file in /staged/api/config/Jwt__SecretKey /staged/api/config/Integrations__Identity__ApiKey /staged/api/config/IntegrationApi__ApiKeys__0; do
+    value="$(tr -d '\r\n' < "$file")"
+    printf '%s' "$value" > "$file"
+  done
 elif [[ "$module" == notification ]]; then
   copy_secret /source/notification/admin-password.secret /staged/database/admin-password 999
   copy_secret /source/notification/migrator-password.secret /staged/migration/database-password

@@ -54,8 +54,13 @@ try {
     Run-Cli @('up')
     Check-Http ('http://127.0.0.1:' + $values.DELIVERYPILOT_IDENTITY_API_PORT + '/health/ready')
     Check-Http ('http://127.0.0.1:' + $values.DELIVERYPILOT_NOTIFICATION_API_PORT + '/health/ready')
+    Check-Http ('http://127.0.0.1:' + $values.DELIVERYPILOT_PROJECTS_API_PORT + '/health/ready')
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'Test-GatewayDeployment.ps1') -Config $Config
     Assert-True ($LASTEXITCODE -eq 0) 'Gateway deployment, outage, and production forwarding checks failed.'
+    $projectsAcceptanceArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'Test-ProjectsDeployment.ps1'),'-Config',$Config)
+    if ($SkipFailureInjection) { $projectsAcceptanceArgs += '-SkipFailureInjection' }
+    & powershell @projectsAcceptanceArgs
+    Assert-True ($LASTEXITCODE -eq 0) 'Projects deployed creation, permissions, secrets, and lifecycle checks failed.'
     [Environment]::SetEnvironmentVariable('DELIVERYPILOT_DEPLOYMENT_TEST_CONFIG', $Config, 'Process')
     & dotnet test (Join-Path $repoRoot 'tests/DeliveryPilot.Notification.Tests/DeliveryPilot.Notification.Tests.csproj') --no-restore --filter FullyQualifiedName~DeploymentSmokeTests -m:1 -nr:false --verbosity quiet
     Assert-True ($LASTEXITCODE -eq 0) 'Deployed delivery/receipt/deduplication or role-isolation checks failed.'
@@ -105,7 +110,7 @@ try {
     }
 
     if (-not $SkipHostMode) {
-        foreach ($name in @('identity-api','identity-worker','identity-migrationrunner','notification-api','notification-worker','notification-migrationrunner')) {
+        foreach ($name in @('identity-api','identity-worker','identity-migrationrunner','notification-api','notification-worker','notification-migrationrunner','projects-api','projects-worker','projects-migrationrunner')) {
             $path = Join-Path ([Environment]::GetFolderPath('ApplicationData')) ('Microsoft/UserSecrets/deliverypilot-' + $name + '/secrets.json')
             $secretStores[$path] = if (Test-Path -LiteralPath $path) { [IO.File]::ReadAllBytes($path) } else { $null }
         }
@@ -135,10 +140,37 @@ try {
         }
         Run-Cli @('up','-Module','identity')
         Write-Output 'PASS: IDE settings use host endpoints and the real HTTP host becomes ready.'
+
+        Run-Cli @('down','-Module','projects')
+        Run-Cli @('up','-Module','projects','-Mode','host')
+        $apiProject = Join-Path $repoRoot 'src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API'
+        & dotnet build (Join-Path $apiProject 'DeliveryPilot.Projects.API.csproj') --no-restore -m:1 -nr:false --verbosity quiet *> $log
+        Assert-True ($LASTEXITCODE -eq 0) 'Projects host-mode application build failed.'
+        $oldAsp = [Environment]::GetEnvironmentVariable('ASPNETCORE_ENVIRONMENT','Process')
+        $oldDotnet = [Environment]::GetEnvironmentVariable('DOTNET_ENVIRONMENT','Process')
+        try {
+            [Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT','Development','Process')
+            [Environment]::SetEnvironmentVariable('DOTNET_ENVIRONMENT','Development','Process')
+            $dll = Join-Path $apiProject 'bin/Debug/net10.0/DeliveryPilot.Projects.API.dll'
+            $hostProcess = Start-Process -FilePath dotnet -ArgumentList ('"' + $dll + '"') -WorkingDirectory $apiProject -PassThru -WindowStyle Hidden -RedirectStandardOutput ($log + '.projects-host.out') -RedirectStandardError ($log + '.projects-host.err')
+            $ready = $false
+            for ($attempt = 0; $attempt -lt 60; $attempt++) {
+                if ($hostProcess.HasExited) { throw 'Projects host-mode HTTP process stopped before readiness; inspect the private verification logs.' }
+                try { Check-Http ('http://127.0.0.1:' + $values.DELIVERYPILOT_PROJECTS_API_PORT + '/health/ready'); $ready = $true; break } catch { Start-Sleep -Milliseconds 500 }
+            }
+            Assert-True $ready 'Projects host-mode HTTP readiness timed out.'
+        } finally {
+            if ($hostProcess -and -not $hostProcess.HasExited) { Stop-Process -Id $hostProcess.Id }
+            $hostProcess = $null
+            [Environment]::SetEnvironmentVariable('ASPNETCORE_ENVIRONMENT',$oldAsp,'Process')
+            [Environment]::SetEnvironmentVariable('DOTNET_ENVIRONMENT',$oldDotnet,'Process')
+        }
+        Run-Cli @('up','-Module','projects')
+        Write-Output 'PASS: Projects IDE settings use host endpoints and the real HTTP host becomes ready.'
     }
     Run-Cli @('down')
     $remaining = @()
-    foreach ($project in @('platform','identity','notification','gateway','telemetry')) {
+    foreach ($project in @('platform','identity','notification','projects','gateway','telemetry')) {
         $remaining += @(& docker ps --all --filter ('label=com.docker.compose.project=' + $stack + '-' + $project) --format '{{.Names}}')
         Assert-True ($LASTEXITCODE -eq 0) 'Cannot inspect verification project containers.'
     }

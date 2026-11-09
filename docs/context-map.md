@@ -21,13 +21,14 @@ This is a navigation index, **not** a duplicate Product Blueprint. Load only the
 | Current backend structure and hosting | [Current backend architecture](../ARCHITECTURE.md), verified against source, tests and deployment configuration |
 | Target topology and technology alternatives | [Target architecture proposal](architecture.md); does not replace the current hosts |
 | Where Engagement, Project, Backlog, Sprint/Capacity, Requirements/Approval and Risk code lives | [ADR-001](architecture/adr-001-delivery-module-placement.md), accepted 2026-11-09: Projects module + Risk module; placement decision only, not implementation evidence |
-| Selected module ownership, ERD and outstanding design decisions | [Architecture workspace](architecture/README.md); currently [Identity & Organization](architecture/modules/identity/README.md) |
+| Selected module ownership, ERD and outstanding design decisions | [Architecture workspace](architecture/README.md); [Identity & Organization](architecture/modules/identity/README.md) and [Projects](architecture/modules/projects/README.md) (engagement and project contexts) |
 | Tenant ownership and resource authorization | [Requirements](requirements.md#3-identity-ownership-and-collaboration), [Identity decisions](architecture/modules/identity/design-decisions.md), and the owning feature's resource policy |
 | Workspace / Organization and scoped access terminology | [Global glossary](requirements.md#2-domain-glossary) and [Identity glossary](architecture/modules/identity/GLOSSARY.md) |
 | Documentation conflicts, corrections and remaining handoffs | [Alignment audit](architecture/documentation-alignment-audit.md) |
 | Exact feature business scope and candidate decisions | `features/FEAT-DP-XXX-<slug>/feature.md` |
 | Detailed requirement, story or task | Resolve the artifact ID under the relevant `ur/`, `fr/`, `us/` or `tasks/` |
 | Canonical format | [Templates](templates/) and [Authoring policy](authoring.md) |
+| What must be decided before a TASK is created (ADR, module design/ERD, prerequisites, foundation) | [Pre-task workflow](task-readiness-workflow.md), gates G0–G6 |
 | Current source behavior | Actual source, tests, OpenAPI and migrations (not prose assumptions) |
 | Implementing a ready backend CQRS/API Task | [CQRS implementation skill](../.agents/skills/add-cqrs-api-feature/SKILL.md); task ID and linked source requirements |
 | Implementing a scoped domain model and EF mapping | [Entity skill](../.agents/skills/create-ef-entity/SKILL.md), selected module dictionary, current mappings and explicit implementation scope |

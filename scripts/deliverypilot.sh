@@ -15,11 +15,11 @@ while (($#)); do
 done
 fail() { printf '%s\n' "$*" >&2; exit 1; }
 [[ $action =~ ^(init|check|up|down|status|logs)$ ]] || fail 'Action must be init, check, up, down, status, or logs.'
-[[ $environment =~ ^(local|server)$ && $module =~ ^(all|identity|notification|gateway)$ && $mode =~ ^(docker|host)$ ]] || fail 'Invalid environment, module, or mode.'
+[[ $environment =~ ^(local|server)$ && $module =~ ^(all|identity|notification|projects|gateway)$ && $mode =~ ^(docker|host)$ ]] || fail 'Invalid environment, module, or mode.'
 [[ $environment != server || $mode != host ]] || fail 'Server uses prebuilt Docker images; host mode is local only.'
 [[ -n $config ]] || config="$repo_root/deploy/env/$environment.env"
 [[ $config = /* ]] || config="$repo_root/$config"
-modules=(identity notification)
+modules=(identity notification projects)
 [[ $module = all ]] || modules=("$module")
 [[ $module != gateway ]] || modules=()
 gateway=false
@@ -48,6 +48,11 @@ load_settings() {
   export DELIVERYPILOT_SECRETS_DIR DELIVERYPILOT_OBSERVABILITY_ENABLED=$telemetry
   export DELIVERYPILOT_HTTP_SUBNET=${DELIVERYPILOT_HTTP_SUBNET:-172.31.250.0/24} DELIVERYPILOT_GATEWAY_IP=${DELIVERYPILOT_GATEWAY_IP:-172.31.250.10} DELIVERYPILOT_GATEWAY_PORT=${DELIVERYPILOT_GATEWAY_PORT:-19090}
   if [[ $environment = local ]]; then
+    export DELIVERYPILOT_PROJECTS_API_IMAGE=${DELIVERYPILOT_PROJECTS_API_IMAGE:-deliverypilot-projects-api:local}
+    export DELIVERYPILOT_PROJECTS_WORKER_IMAGE=${DELIVERYPILOT_PROJECTS_WORKER_IMAGE:-deliverypilot-projects-worker:local}
+    export DELIVERYPILOT_PROJECTS_MIGRATION_IMAGE=${DELIVERYPILOT_PROJECTS_MIGRATION_IMAGE:-deliverypilot-projects-migration:local}
+    export DELIVERYPILOT_PROJECTS_API_PORT=${DELIVERYPILOT_PROJECTS_API_PORT:-19093}
+    export DELIVERYPILOT_PROJECTS_POSTGRES_PORT=${DELIVERYPILOT_PROJECTS_POSTGRES_PORT:-25433}
     export DELIVERYPILOT_GATEWAY_IMAGE=${DELIVERYPILOT_GATEWAY_IMAGE:-deliverypilot-gateway:local} DELIVERYPILOT_GATEWAY_PUBLIC_HOST=${DELIVERYPILOT_GATEWAY_PUBLIC_HOST:-localhost} DELIVERYPILOT_INGRESS_PROXY_IP=${DELIVERYPILOT_INGRESS_PROXY_IP:-172.31.250.1}
   fi
   [[ $environment != local || ${DELIVERYPILOT_ENVIRONMENT:-} = Development ]] || fail 'Local configuration must use Development.'
@@ -97,6 +102,9 @@ check_secrets() {
     if [[ $name = identity ]]; then
       for stem in admin-password migrator-password api-password worker-password jwt-key integration-key invitation-dispatch-key; do required+=("identity/$stem.secret"); done
       required+=("notification/keys/$active_key.public.pem")
+    elif [[ $name = projects ]]; then
+      for stem in admin-password migrator-password api-password worker-password integration-key; do required+=("projects/$stem.secret"); done
+      required+=(identity/jwt-key.secret identity/integration-key.secret)
     else
       for stem in admin-password migrator-password runtime-password; do required+=("notification/$stem.secret"); done
       required+=("identity/invitation-dispatch-key.secret")
@@ -110,7 +118,7 @@ check_secrets() {
     grep -q '[^[:space:]]' "$DELIVERYPILOT_SECRETS_DIR/$relative" || fail "Secret contains no value: $relative"
     if grep -qE 'CHANGE_ME|REPLACE_WITH' "$DELIVERYPILOT_SECRETS_DIR/$relative"; then fail "Secret remains a placeholder: $relative"; fi
     [[ $(stat -c %a "$DELIVERYPILOT_SECRETS_DIR/$relative") = *0 ]] || fail "Secret grants access to other users: $relative. Restrict access before continuing."
-    if [[ $relative =~ ^(identity|notification)/(admin|migrator|api|worker|runtime)-password.secret$ ]]; then
+    if [[ $relative =~ ^(identity|notification|projects)/(admin|migrator|api|worker|runtime)-password.secret$ ]]; then
       [[ $(cat "$DELIVERYPILOT_SECRETS_DIR/$relative") =~ ^[0-9a-fA-F]{64}$ ]] || fail "Database password must be 32 random bytes encoded as hex: $relative"
     fi
     if [[ $relative = identity/jwt-key.secret ]]; then
@@ -126,7 +134,7 @@ check_configuration() {
   for key in "${!settings[@]}"; do
     if [[ $gateway != true && $key =~ ^DELIVERYPILOT_(GATEWAY_IMAGE|GATEWAY_PUBLIC_HOST|INGRESS_PROXY_IP)$ ]]; then continue; fi
     if [[ ${#modules[@]} -eq 0 && $key =~ ^DELIVERYPILOT_(MESSAGING|JWT|EMAIL)_ ]]; then continue; fi
-    if [[ $key =~ ^DELIVERYPILOT_(IDENTITY|NOTIFICATION)_(API|WORKER|MIGRATION)_IMAGE$ ]]; then
+    if [[ $key =~ ^DELIVERYPILOT_(IDENTITY|NOTIFICATION|PROJECTS)_(API|WORKER|MIGRATION)_IMAGE$ ]]; then
       local image_module=${BASH_REMATCH[1],,}
       [[ " ${modules[*]} " = *" $image_module "* ]] || continue
     fi

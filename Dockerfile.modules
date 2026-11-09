@@ -25,12 +25,22 @@ COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Domain/De
 COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Infrastructure/DeliveryPilot.Notification.Infrastructure.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Infrastructure/
 COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/
 COPY src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/
+COPY src/Contracts/DeliveryPilot.Projects.Contracts/DeliveryPilot.Projects.Contracts.csproj src/Contracts/DeliveryPilot.Projects.Contracts/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API/DeliveryPilot.Projects.API.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Application/DeliveryPilot.Projects.Application.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Application/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Domain/DeliveryPilot.Projects.Domain.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Domain/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Infrastructure/DeliveryPilot.Projects.Infrastructure.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Infrastructure/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.MigrationRunner/DeliveryPilot.Projects.MigrationRunner.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.MigrationRunner/
+COPY src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker/DeliveryPilot.Projects.Worker.csproj src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker/
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/DeliveryPilot.Identity.API.csproj --disable-parallel
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker/DeliveryPilot.Identity.Worker.csproj --disable-parallel
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.MigrationRunner/DeliveryPilot.Identity.MigrationRunner.csproj --disable-parallel
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API/DeliveryPilot.Notification.API.csproj --disable-parallel
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker/DeliveryPilot.Notification.Worker.csproj --disable-parallel
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API/DeliveryPilot.Projects.API.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker/DeliveryPilot.Projects.Worker.csproj --disable-parallel
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet restore src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.MigrationRunner/DeliveryPilot.Projects.MigrationRunner.csproj --disable-parallel
 FROM restore AS source
 COPY src/ src/
 
@@ -54,6 +64,15 @@ RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotne
 
 FROM source AS notification-migration-build
 RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.MigrationRunner/DeliveryPilot.Notification.MigrationRunner.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS projects-api-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API/DeliveryPilot.Projects.API.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS projects-worker-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker/DeliveryPilot.Projects.Worker.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
+
+FROM source AS projects-migration-build
+RUN --mount=type=cache,id=deliverypilot-nuget,target=/root/.nuget/packages dotnet publish src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.MigrationRunner/DeliveryPilot.Projects.MigrationRunner.csproj -c Release -o /out --no-restore -m:1 -nr:false /p:UseAppHost=false /p:UseSharedCompilation=false
 
 FROM ${DOTNET_RUNTIME_IMAGE} AS runtime
 WORKDIR /app
@@ -90,3 +109,15 @@ ENTRYPOINT ["dotnet", "DeliveryPilot.Notification.Worker.dll"]
 FROM runtime AS notification-migration
 COPY --from=notification-migration-build /out .
 ENTRYPOINT ["dotnet", "DeliveryPilot.Notification.MigrationRunner.dll"]
+
+FROM runtime AS projects-api
+COPY --from=projects-api-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Projects.API.dll"]
+
+FROM runtime AS projects-worker
+COPY --from=projects-worker-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Projects.Worker.dll"]
+
+FROM runtime AS projects-migration
+COPY --from=projects-migration-build /out .
+ENTRYPOINT ["dotnet", "DeliveryPilot.Projects.MigrationRunner.dll"]

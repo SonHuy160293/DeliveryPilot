@@ -1,7 +1,6 @@
 using DeliveryPilot.EntityFrameworkCore.Reliability;
 using DeliveryPilot.Messaging.Outbox;
 using DeliveryPilot.Observability;
-using DeliveryPilot.Projects.Application.DependencyInjection;
 using DeliveryPilot.Projects.Infrastructure.DependencyInjection;
 using DeliveryPilot.Projects.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +19,7 @@ try
     builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
 
     // The worker never receives the JWT signing key (ADR-001 D-02).
-    builder.Services.AddApplication().AddPersistence(builder.Configuration).AddUnitOfWork();
+    builder.Services.AddPersistence(builder.Configuration).AddUnitOfWork();
     if (isOps)
     {
         using var controlHost = builder.Build();

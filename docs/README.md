@@ -15,7 +15,7 @@
 | Organization API integration | [Gateway contract](features/FEAT-DP-003-organization/gateway-api-contract.md) → [frontend playbook](features/FEAT-DP-003-organization/frontend-integration.md) → [backend acceptance](features/FEAT-DP-003-organization/backend-acceptance.md) | Existing wire contract and dated verification. Frontend/Project handoffs are explicitly separate. |
 | Future architecture | [Architecture workspace](architecture/README.md) → [target alternatives](architecture.md) | Selected Identity ownership is distinct from unselected hosting/module proposals. |
 | Research and customer validation | [Industry research](research/README.md) → [product analysis](research/analysis/README.md) | Evidence and hypotheses. Presales research and example figures do not expand initial product scope. |
-| Authoring and task execution | [Context map](context-map.md) → [authoring policy](authoring.md) → [templates](templates/) | Stable IDs, forward traceability, readiness and approval rules. Task execution requires fresh source/readiness review. |
+| Authoring and task execution | [Context map](context-map.md) → [authoring policy](authoring.md) → [pre-task workflow](task-readiness-workflow.md) → [templates](templates/) | Stable IDs, forward traceability, readiness and approval rules; gates G0–G6 that must pass before a TASK is planned. Task execution requires fresh source/readiness review. |
 
 ## Inventory and document classes
 

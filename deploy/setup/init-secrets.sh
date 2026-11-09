@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 077
-mkdir -p /source/platform /source/identity /source/notification/keys
+mkdir -p /source/platform /source/identity /source/notification/keys /source/projects
 new_hex() { if [[ ! -e "$1" ]]; then openssl rand -hex 32 | tr -d '\n' > "$1"; fi; }
 new_base64() { if [[ ! -e "$1" ]]; then openssl rand -base64 32 | tr -d '\n' > "$1"; fi; }
-for name in broker-admin-password identity-broker-password notification-broker-password grafana-admin-password; do new_hex "/source/platform/$name.secret"; done
+for name in broker-admin-password identity-broker-password notification-broker-password projects-broker-password grafana-admin-password; do new_hex "/source/platform/$name.secret"; done
 for name in admin-password migrator-password api-password worker-password; do new_hex "/source/identity/$name.secret"; done
 for name in jwt-key integration-key invitation-dispatch-key; do new_base64 "/source/identity/$name.secret"; done
 for name in admin-password migrator-password runtime-password; do new_hex "/source/notification/$name.secret"; done
+for name in admin-password migrator-password api-password worker-password; do new_hex "/source/projects/$name.secret"; done
+new_base64 /source/projects/integration-key.secret
 keys=/source/notification/keys
 if [[ ! -e "$keys/local-v1.private.pem" && ! -e "$keys/local-v1.public.pem" ]]; then
   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$keys/local-v1.private.pem" 2>/dev/null

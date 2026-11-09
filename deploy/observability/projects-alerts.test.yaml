@@ -1,0 +1,46 @@
+rule_files:
+  - projects-alerts.yaml
+evaluation_interval: 1m
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'deliverypilot_outbox_oldest_pending_age_seconds{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '301+0x5'
+      - series: 'deliverypilot_outbox_dead_letters{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '1+0x5'
+      - series: 'deliverypilot_outbox_worker_heartbeat_age_seconds{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '61+0x5'
+      - series: 'deliverypilot_outbox_oldest_pending_age_seconds{service_name="DeliveryPilot.Notification.Worker"}'
+        values: '999+0x5'
+      - series: 'deliverypilot_outbox_dead_letters{service_name="DeliveryPilot.Identity.Worker"}'
+        values: '99+0x5'
+      - series: 'deliverypilot_outbox_worker_heartbeat_age_seconds{service_name="DeliveryPilot.Identity.Worker"}'
+        values: '999+0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ProjectsOutboxStalled
+        exp_alerts:
+          - exp_labels: {service_name: DeliveryPilot.Projects.Worker, severity: warning}
+            exp_annotations: {summary: "Committed Projects events are waiting for publication"}
+      - eval_time: 3m
+        alertname: ProjectsOutboxDeadLetters
+        exp_alerts:
+          - exp_labels: {service_name: DeliveryPilot.Projects.Worker, severity: critical}
+            exp_annotations: {summary: "Projects outbox requires operator investigation"}
+      - eval_time: 3m
+        alertname: ProjectsWorkerHeartbeatStale
+        exp_alerts:
+          - exp_labels: {service_name: DeliveryPilot.Projects.Worker, severity: critical}
+            exp_annotations: {summary: "Projects worker is not completing outbox scans"}
+  - interval: 1m
+    input_series:
+      - series: 'deliverypilot_outbox_oldest_pending_age_seconds{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '300+0x5'
+      - series: 'deliverypilot_outbox_dead_letters{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '0+0x5'
+      - series: 'deliverypilot_outbox_worker_heartbeat_age_seconds{service_name="DeliveryPilot.Projects.Worker"}'
+        values: '60+0x5'
+    alert_rule_test:
+      - {eval_time: 3m, alertname: ProjectsOutboxStalled, exp_alerts: []}
+      - {eval_time: 3m, alertname: ProjectsOutboxDeadLetters, exp_alerts: []}
+      - {eval_time: 3m, alertname: ProjectsWorkerHeartbeatStale, exp_alerts: []}

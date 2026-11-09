@@ -23,6 +23,24 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA notification, relia
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA notification, reliability TO notification_runtime;
 REVOKE UPDATE, DELETE ON notification."EmailOperations", reliability."OutboxOperations" FROM notification_runtime;
 SQL
+elif [[ "$module" == projects ]]; then
+  psql -X -q -v ON_ERROR_STOP=1 -d DeliveryPilotProjects <<'SQL' >/dev/null
+GRANT USAGE ON SCHEMA reliability TO projects_api, projects_worker;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA reliability TO projects_api, projects_worker;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA reliability TO projects_api, projects_worker;
+REVOKE UPDATE, DELETE ON reliability."OutboxOperations" FROM projects_api, projects_worker;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'engagement') THEN
+    GRANT USAGE ON SCHEMA engagement TO projects_api;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA engagement TO projects_api;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA engagement TO projects_api;
+    IF to_regclass('engagement."EngagementEvents"') IS NOT NULL THEN
+      REVOKE UPDATE, DELETE ON engagement."EngagementEvents" FROM projects_api;
+    END IF;
+  END IF;
+END $$;
+SQL
 else exit 2
 fi
 printf '%s\n' 'Runtime grants refreshed after migrations.'

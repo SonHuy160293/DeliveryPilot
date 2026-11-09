@@ -1,0 +1,169 @@
+x-job: &job
+  image: ${DELIVERYPILOT_SETUP_IMAGE:?Set DELIVERYPILOT_SETUP_IMAGE}
+  restart: "no"
+  logging: &logging
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+x-runtime: &runtime
+  restart: unless-stopped
+  stop_grace_period: 45s
+  init: true
+  read_only: true
+  tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  logging: *logging
+  mem_limit: 512m
+services:
+  secret-stage:
+    <<: *job
+    command: [stage-secrets, projects]
+    volumes:
+      - type: bind
+        source: ${DELIVERYPILOT_SECRETS_DIR:?Set DELIVERYPILOT_SECRETS_DIR}
+        target: /source
+        read_only: true
+        bind: {create_host_path: false}
+      - database-secrets:/staged/database
+      - migration-secrets:/staged/migration
+      - api-secrets:/staged/api
+      - worker-secrets:/staged/worker
+  postgres:
+    image: ${DELIVERYPILOT_POSTGRES_IMAGE:?Set DELIVERYPILOT_POSTGRES_IMAGE}
+    environment:
+      POSTGRES_USER: projects_admin
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/admin-password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command: [postgres, -c, fsync=on, -c, full_page_writes=on, -c, synchronous_commit=on]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - database-secrets:/run/secrets:ro
+    networks: [backend]
+    depends_on: {secret-stage: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U projects_admin -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 10s
+    restart: unless-stopped
+    stop_grace_period: 45s
+    logging: *logging
+    mem_limit: 768m
+  db-bootstrap:
+    <<: *job
+    command: [db-bootstrap, projects]
+    volumes:
+      - type: bind
+        source: ${DELIVERYPILOT_SECRETS_DIR}
+        target: /source
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [backend]
+    depends_on: {postgres: {condition: service_healthy}}
+  migration:
+    image: ${DELIVERYPILOT_PROJECTS_MIGRATION_IMAGE:?Set migration image}
+    environment:
+      DOTNET_ENVIRONMENT: ${DELIVERYPILOT_ENVIRONMENT:-Production}
+      ConnectionStrings__ApplicationDb: Host=postgres;Database=DeliveryPilotProjects;Username=projects_migrator;Include Error Detail=false
+      Database__PasswordFile: /run/secrets/database-password
+      Observability__Enabled: "false"
+    volumes: ["migration-secrets:/run/secrets:ro"]
+    networks: [backend]
+    depends_on: {db-bootstrap: {condition: service_completed_successfully}}
+    restart: "no"
+    logging: *logging
+    mem_limit: 512m
+  db-grants:
+    <<: *job
+    command: [db-grants, projects]
+    volumes:
+      - type: bind
+        source: ${DELIVERYPILOT_SECRETS_DIR}
+        target: /source
+        read_only: true
+        bind: {create_host_path: false}
+    networks: [backend]
+    depends_on: {migration: {condition: service_completed_successfully}}
+  api:
+    <<: *runtime
+    image: ${DELIVERYPILOT_PROJECTS_API_IMAGE:?Set DELIVERYPILOT_PROJECTS_API_IMAGE}
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${DELIVERYPILOT_ENVIRONMENT:-Production}
+      DOTNET_ENVIRONMENT: ${DELIVERYPILOT_ENVIRONMENT:-Production}
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ConnectionStrings__ApplicationDb: Host=postgres;Database=DeliveryPilotProjects;Username=projects_api;Include Error Detail=false
+      Database__PasswordFile: /run/secrets/database-password
+      Jwt__Issuer: ${DELIVERYPILOT_JWT_ISSUER:-DeliveryPilot.Identity}
+      Integrations__Identity__BaseUrl: ${DELIVERYPILOT_PROJECTS_IDENTITY_BASE_URL:-http://identity-api:8080/}
+      Integrations__Identity__ApiKeyHeaderName: X-Integration-Key
+      Jwt__Audience: ${DELIVERYPILOT_JWT_AUDIENCE:-DeliveryPilot}
+      ForwardedHeaders__KnownProxies__0: ${DELIVERYPILOT_GATEWAY_IP:?Set DELIVERYPILOT_GATEWAY_IP}
+      Cors__AllowedOrigins__0: ${DELIVERYPILOT_FRONTEND_ORIGIN:?Set DELIVERYPILOT_FRONTEND_ORIGIN}
+      Cors__AllowedMethods__0: POST
+      Cors__AllowedMethods__1: GET
+      Cors__AllowedMethods__2: PUT
+      Cors__AllowedHeaders__0: Content-Type
+      Cors__AllowedHeaders__1: Authorization
+      Cors__AllowedHeaders__2: Idempotency-Key
+      Serilog__Using__0: Serilog.Sinks.Console
+      Serilog__WriteTo__0__Name: Console
+      Observability__Enabled: ${DELIVERYPILOT_OBSERVABILITY_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: DeliveryPilot.Projects.API
+    volumes: ["api-secrets:/run/secrets:ro"]
+    networks:
+      backend: {}
+      messaging: {}
+      http:
+        aliases: [projects-api]
+    depends_on:
+      db-grants: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, --max-time, "5", http://localhost:8080/health/ready]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 15s
+  worker:
+    <<: *runtime
+    image: ${DELIVERYPILOT_PROJECTS_WORKER_IMAGE:?Set DELIVERYPILOT_PROJECTS_WORKER_IMAGE}
+    environment:
+      DOTNET_ENVIRONMENT: ${DELIVERYPILOT_ENVIRONMENT:-Production}
+      ConnectionStrings__ApplicationDb: Host=postgres;Database=DeliveryPilotProjects;Username=projects_worker;Include Error Detail=false
+      Database__PasswordFile: /run/secrets/database-password
+      Messaging__Host: ${DELIVERYPILOT_MESSAGING_HOST:?Set DELIVERYPILOT_MESSAGING_HOST}
+      Messaging__Port: ${DELIVERYPILOT_MESSAGING_PORT:-5671}
+      Messaging__VirtualHost: ${DELIVERYPILOT_MESSAGING_VIRTUAL_HOST:-deliverypilot}
+      Messaging__Username: projects
+      Messaging__PasswordFile: /run/secrets/broker-password
+      Messaging__Development: ${DELIVERYPILOT_MESSAGING_DEVELOPMENT:-false}
+      Messaging__UseTls: ${DELIVERYPILOT_MESSAGING_USE_TLS:-true}
+      Messaging__QuorumSize: ${DELIVERYPILOT_MESSAGING_QUORUM_SIZE:-3}
+      Observability__Enabled: ${DELIVERYPILOT_OBSERVABILITY_ENABLED:-false}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: DeliveryPilot.Projects.Worker
+    volumes: ["worker-secrets:/run/secrets:ro"]
+    networks: [backend, messaging]
+    depends_on: {db-grants: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, /opt/deliverypilot/worker-health.sh]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+networks:
+  http:
+    external: true
+    name: ${DELIVERYPILOT_STACK:?Set DELIVERYPILOT_STACK}-http
+  backend: {}
+  messaging:
+    external: true
+    name: ${DELIVERYPILOT_STACK:?Set DELIVERYPILOT_STACK}-messaging
+volumes:
+  postgres-data: {}
+  database-secrets: {}
+  migration-secrets: {}
+  api-secrets: {}
+  worker-secrets: {}

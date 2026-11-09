@@ -1,6 +1,11 @@
 using DeliveryPilot.AspNetCore.HttpClient.DependencyInjection;
 using DeliveryPilot.EntityFrameworkCore.Interceptors;
 using DeliveryPilot.Projects.Application.Abstractions.Authority;
+using DeliveryPilot.Projects.Application.Features.Engagements.Commands.CreateEngagement;
+using DeliveryPilot.Projects.Application.Features.Engagements.Commands.IssueEngagementLinkCode;
+using DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
+using DeliveryPilot.Projects.Application.Features.Engagements.Queries;
+using DeliveryPilot.Projects.Application.Features.Engagements.ClientLinks;
 using DeliveryPilot.Projects.Infrastructure.Identity;
 using DeliveryPilot.Projects.Infrastructure.Persistence;
 using DeliveryPilot.SharedKernel.Abstractions.Persistence;
@@ -32,6 +37,11 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<ProjectsDbContext>((serviceProvider, options) =>
             options.UseNpgsql(connectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
+        services.AddScoped<IEngagementCreationStore, EngagementCreationStore>();
+        services.AddScoped<IEngagementMutationStore, EngagementMutationStore>();
+        services.AddScoped<IEngagementReadStore, EngagementReadStore>();
+        services.AddScoped<IClientLinkStore, ClientLinkStore>();
+        services.AddSingleton<IEngagementLinkCodeGenerator, EngagementLinkCodeGenerator>();
 
         return services;
     }

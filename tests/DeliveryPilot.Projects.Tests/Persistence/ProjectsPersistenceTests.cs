@@ -5,20 +5,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryPilot.Projects.Tests.Persistence;
 
+[Collection("Projects PostgreSQL")]
 public sealed class ProjectsPersistenceTests
 {
     [Fact]
-    public void ModelHasOnlyReliabilityTablesAndAnInitialMigration()
+    public void ModelHasEngagementAndReliabilityTablesAndBothMigrations()
     {
         using ProjectsDbContext context = new ProjectsDbContextFactory().CreateDbContext([]);
 
         string[] schemas = context.Model.GetEntityTypes()
             .Select(entity => entity.GetSchema() ?? "(default)")
             .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(["reliability"], schemas);
+        Assert.Equal(["engagement", "reliability"], schemas);
         Assert.Contains(context.Database.GetMigrations(), id => id.EndsWith("_InitialReliability", StringComparison.Ordinal));
+        Assert.Contains(context.Database.GetMigrations(), id => id.EndsWith("_AddEngagementPersistence", StringComparison.Ordinal));
     }
 
     [PostgreSqlFact]

@@ -93,3 +93,16 @@ $script:DockerCalls = @()
 Check-Prerequisites
 Assert-True (@($script:DockerCalls | Where-Object { $_[0] -eq 'buildx' }).Count -eq 0) 'Status should work even when the optional build cache is unavailable.'
 Write-Output 'PASS: configured builders are checked before builds without blocking status.'
+
+$script:FailBuilder = $false
+$script:DockerExitCode = 0
+$settings.Remove('DELIVERYPILOT_BUILD_BUILDER')
+$Environment = 'local'
+Compose 'projects' @('build','migration','api','worker')
+Assert-Arguments $script:DockerCalls[-1] @('compose','--env-file',$Config,'--project-name','deliverypilot-verify-cli-projects','-f',(Join-Path $repoRoot 'deploy/compose/projects/compose.yaml'),'-f',(Join-Path $repoRoot 'deploy/compose/projects/compose.local.yaml'),'build','migration','api','worker')
+$Environment = 'server'
+Compose 'projects' @('pull','api','worker')
+Assert-Arguments $script:DockerCalls[-1] @('compose','--env-file',$Config,'--project-name','deliverypilot-verify-cli-projects','-f',(Join-Path $repoRoot 'deploy/compose/projects/compose.yaml'),'pull','api','worker')
+$script:DockerExitCode = 23
+Assert-Failure { Compose 'projects' @('run','--rm','migration','PRIVATE_ARGUMENT_SENTINEL') } 'Docker Compose projects run (migration) failed (exit 23)'
+Write-Output 'PASS: Projects local/server routing and sanitized migration failures.'

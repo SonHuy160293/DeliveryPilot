@@ -8,5 +8,6 @@ public static class WorkspacePermissions
 {
     public const string EngagementsCreate = "organization.engagements.create";
     public const string EngagementsReadAll = "organization.engagements.read-all";
+    public const string EngagementsManage = "organization.engagements.manage";
     public const string ProjectsCreate = "organization.projects.create";
 }

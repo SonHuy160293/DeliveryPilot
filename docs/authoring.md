@@ -47,7 +47,8 @@ Approved business requirements define intended behavior, accepted architecture d
 - `ready` is an internal requirements-quality state, not client approval. `approved` requires an actual decision and nonempty `approval_ref` pointing to verifiable evidence; Git commits and AI confidence do not count.
 - Approval is version-specific in product runtime; source-controlled planning drafts must not impersonate runtime approval decisions.
 - Task planning from draft requirements is allowed as **provisional exploration**, but status must be `blocked` even if a preliminary source inspection occurred. `codebase_verified: true` is only evidence of earlier code inspection; it is **not** an approval or freshness guarantee.
-- Before task-first coding, run `python tools/docs.py check-task --id TASK-DP-XXX-NNN` (or `--resume` for an authorized in-progress continuation); the executor must also inspect current code, satisfy the actual approval policy and ensure blocking decisions are resolved. A validator's green result is only structural readiness.
+- Before task-first coding, run `python tools/docs.py start-task --id TASK-DP-XXX-NNN`. It runs `check-task`, requires the task's "Unresolved decisions" to start with "None" or "No ", sets `in_progress` and records `started_at` and `base_commit`. Use `check-task --resume` for an authorized continuation of an `in_progress` task. The executor must also inspect current code, satisfy the actual approval policy and ensure blocking decisions are resolved. A validator's green result is only structural readiness.
+- Task status moves only through the lifecycle commands: `start-task` → `verify-task` (records `Verify-Module.ps1` evidence) → `submit-task` (`in_review`; needs fresh, non-failing evidence, or a recorded `--accept-skips`/`--no-verify` reason) → review → `complete-task` (`done`; every acceptance box checked) or `return-task`. `blocked` and `cancelled` remain planner edits. None of these commands changes UR/FR/US status or approval evidence.
 - Changing an approved contract requires a new version/revision and impact analysis; never silently overwrite approval evidence.
 
 ## Repository artifacts versus product runtime
@@ -68,7 +69,7 @@ Runtime field/state representation remains feature design work. Keep existing te
 
 1. New feature: register in roadmap or explicitly propose registration; locate existing functionality and overlapping contracts.
 2. Generate one or many UR/FR/US drafts in a single run; present gaps and review questions without claiming approval.
-3. Gate UR→FR: needs and sources clear enough. Gate FR→US: observable behavior and key boundaries testable. Gate US→Task: linked FRs and AC testable, policy satisfied, architecture relevant.
+3. Gate UR→FR: needs and sources clear enough. Gate FR→US: observable behavior and key boundaries testable. Gate US→Task: linked FRs and AC testable, policy satisfied, architecture relevant; the architecture, module-design, prerequisite and foundation gates are defined in the [pre-task workflow](task-readiness-workflow.md).
 4. Task planning inspects live code; if unavailable, output clearly provisional tasks without invented paths or exact contracts.
 5. On change, find downstream dependents via IDs and propose diffs; do not overwrite reviewed material or regenerate everything indiscriminately. Reconcile summaries and context links, record the exact Q/W/design-decision provenance, and leave unresolved choices visible.
 6. Run `python tools/docs.py validate` and affected-feature coverage; check relative links and relevant diagrams. Run applicable implementation/tooling tests when those change. Distinguish pre-existing validator failures from new errors; passing structure does not establish business approval.

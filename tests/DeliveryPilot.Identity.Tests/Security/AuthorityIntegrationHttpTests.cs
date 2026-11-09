@@ -94,6 +94,9 @@ public sealed class AuthorityIntegrationHttpTests
             Assert.Contains(
                 allowed.GetProperty("effectivePermissions").EnumerateArray().Select(item => item.GetString()),
                 code => code == OrganizationCapabilityCatalog.MembersRead);
+            Assert.Contains(
+                allowed.GetProperty("effectivePermissions").EnumerateArray().Select(item => item.GetString()),
+                code => code == OrganizationCapabilityCatalog.EngagementsManage);
             Assert.False(allowed.TryGetProperty("primaryEmail", out _));
 
             // Queued-work reauthorization without a session and with a held permission.

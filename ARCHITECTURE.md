@@ -21,11 +21,16 @@ flowchart LR
     NotificationAPI --> NotificationDB[(Notification PostgreSQL)]
     NotificationWorker --> NotificationDB
     NotificationWorker --> Provider[Email provider]
+    LocalClient[Local client] --> ProjectsAPI[Projects API]
+    ProjectsAPI --> ProjectsDB[(Projects PostgreSQL)]
+    ProjectsAPI --> IdentityAPI
+    ProjectsWorker[Projects worker] --> ProjectsDB
+    ProjectsWorker <--> Broker
 ```
 
 - **Identity worker** (`IdentityMessagingExtensions`): `OutboxRelay`, `IdentityOutboxMaintenanceWorker`, `EmailDeliveryRecordedConsumer` and `InvitationDeliveryStatusConsumer`.
 - **Notification** owns email intake, delivery, provider outcomes and suppression. It delivers verification and organization-invitation emails; it does not verify accounts. Registration does not create verification tokens.
-- **Projects** (`src/Modules/DeliveryPilot.Projects`, [ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) is a **code skeleton only**, not deployed and not behind the Gateway. Its API exposes health probes only. Bearer tokens are validated locally (shared HS256 `Jwt` settings) and every session is confirmed through Identity's internal `session-checks` endpoint (`IdentitySessionValidator`); `IWorkspaceAuthority` wraps `organization-checks` and fails closed. `ProjectsDbContext` (database `DeliveryPilotProjects`) has only the `reliability` outbox/inbox tables. The worker runs `OutboxRelay` with no events registered. There are no domain entities, use cases or business endpoints yet.
+- **Projects** (`src/Modules/DeliveryPilot.Projects`, [ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) implements `POST /api/v1/organizations/{organizationId}/engagements`, with Identity-authorized creation, duplicate-reference warnings, one append-only creation event and atomic receipts in `reliability.IdempotencyRecords`. Authorized retries return the original creation snapshot. Bearer tokens are validated locally (shared HS256 `Jwt` settings) and every session is confirmed through Identity's internal `session-checks`; workspace authority is rechecked uncached after advisory-lock waits. An unavailable Identity session check returns 503; a revoked session returns 401. `ProjectsDbContext` maps the existing reliability tables and six engagement tables from migration `20261110035531_AddEngagementPersistence`. Child composite foreign keys enforce vendor ownership; Identity IDs stay scalar references. The worker runs `OutboxRelay` with no business messages registered. Docker/host deployment wiring is provided by TASK-DP-025-012; local ports are 19093 (API) and 25433 (PostgreSQL). Server APIs remain internal; Gateway publication belongs to task 013. Contract value and effort, milestones, and close/reopen now have manage-authorized mutation routes; each uses a tenant-scoped parent row lock, an authority recheck and an atomic attributed event. Tasks 005/006 are implemented; task 008 awaits project integration verification. Full-detail list, detail and history reads enforce tenant-scoped Identity authority without returning link-code verifiers. Project-participant summaries remain with TASK-DP-025-011, and project-related closure behavior remains with FEAT-DP-004.
 
 ## Identity module
 
@@ -76,10 +81,10 @@ Integration endpoints, including invitation delivery eligibility and Users integ
 - Every protected request checks, uncached, that the session exists, is not revoked and belongs to an active account (`IAuthenticatedContextValidator`), and fails closed.
 - Login sets the refresh token as a `Secure`, `HttpOnly`, `SameSite=Strict` cookie (`dp_refresh_token`). Only a SHA-256 verifier is stored. Rotation and revocation lock the session row (`AuthSessionService`).
 - Organization authority is recomputed from the database on every request by `OrganizationAuthorizationService`; tenant, role and permission claims are ignored. Stores always filter by `OrganizationId`.
-- Workspace permission codes are code-defined in `OrganizationCapabilityCatalog`. Each grant row is pinned to the catalog policy version it was granted under (currently 2) and interpreted only by that version's frozen classification; unknown versions fail closed. Version 2 adds the delivery entry points `organization.engagements.create`, `organization.engagements.read-all` and `organization.projects.create` (held by built-in Owner/Admin, delegable to custom roles); they gate entry actions for the planned Projects module ([ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) and grant no project access.
+- Workspace permission codes are code-defined in `OrganizationCapabilityCatalog`. Each grant row is pinned to the catalog policy version it was granted under (currently 3) and interpreted only by that version's frozen classification; unknown versions fail closed. Version 2 adds the delivery entry points `organization.engagements.create`, `organization.engagements.read-all` and `organization.projects.create` (held by built-in Owner/Admin, delegable to custom roles); they gate entry actions for the Projects module ([ADR-001](docs/architecture/adr-001-delivery-module-placement.md)) and grant no project access. Version 3 adds `organization.engagements.manage` (same holders and delegability) for engagement edit, close/reopen and client-link authority ([TASK-DP-003-022](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-022.md)).
 - Other hosts obtain session validity and workspace authority only through the internal `AuthorityController` checks, never Identity's database. No other host consumes them yet.
 - Workspace security mutations serialize inside the command transaction through `OrganizationMutationGuard`, using the lock order documented on that class (workspace → users → session → memberships). This protects Owner continuity and revocation races.
-- Any future host that needs bearer validation or organization authority must use a reviewed cross-host contract and never reference Identity's database. [ADR-001](docs/architecture/adr-001-delivery-module-placement.md) D-02 selects shared-key bearer validation plus the `AuthorityController` checks for the planned Projects host only. Its key distribution is a deployment task and is not implemented.
+- Any future host that needs bearer validation or organization authority must use a reviewed cross-host contract and never reference Identity's database. [ADR-001](docs/architecture/adr-001-delivery-module-placement.md) D-02 selects shared-key bearer validation plus the `AuthorityController` checks for the Projects host only. TASK-DP-025-012 stages the canonical key to its API and keeps it out of its worker and migration runner.
 
 ## Dependency direction
 
@@ -122,7 +127,7 @@ Runtime facts at the last verification. The linked artifact owns each item.
 - Custom role retirement: [TASK-DP-003-015](docs/features/FEAT-DP-003-organization/tasks/TASK-DP-003-015.md).
 - Rate limiting, lockout and email verification for the auth endpoints: deferred by [FR-DP-002-004](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-004.md) and [FR-DP-002-001](docs/features/FEAT-DP-002-user-initialization/fr/FR-DP-002-001.md).
 - Migration for `NotificationInboxDbContext`.
-- Projects deployment (Docker stages, compose, database bootstrap and grants, secrets, env files, scripts, Gateway `projects` cluster) and every Projects feature: ADR-001 §5 and §6.
+- Projects Gateway publication (TASK-DP-025-013), remaining engagement maintenance operations, project-participant reads and the remaining delivery contexts. Projects creation and deployment wiring are tracked by TASK-DP-025-002/012; they do not deliver all of FEAT-DP-025 or FEAT-DP-004.
 
 ## Changes and verification
 

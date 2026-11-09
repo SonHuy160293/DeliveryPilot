@@ -296,6 +296,490 @@ namespace DeliveryPilot.Projects.Infrastructure.Persistence.Migrations
 
                     b.ToTable("OutboxOperations", "reliability");
                 });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgreementReference")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly>("AgreementSignedOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ClientCountryCode")
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("ClientDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientLegalName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ClientLinkedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClientLinkedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ContractAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ContractCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DocumentUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("EngagementName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("PlannedEffortPersonDays")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagements");
+
+                    b.HasAlternateKey("OrganizationId", "Id")
+                        .HasName("AkEngagementsOrganizationIdId");
+
+                    b.HasIndex("ClientOrganizationId")
+                        .HasDatabaseName("IxEngagementsClientOrganization")
+                        .HasFilter("\"ClientOrganizationId\" IS NOT NULL");
+
+                    b.HasIndex("OrganizationId", "Status", "CreatedAt", "Id")
+                        .HasDatabaseName("IxEngagementsOrganizationStatusCreatedId");
+
+                    b.ToTable("Engagements", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementsAgreementReference", "char_length(btrim(\"AgreementReference\")) BETWEEN 1 AND 100 AND \"AgreementReference\" = btrim(\"AgreementReference\")");
+
+                            t.HasCheckConstraint("CkEngagementsAmount", "\"ContractAmount\" IS NULL OR (\"ContractAmount\" >= 0 AND \"ContractAmount\" < 'Infinity'::numeric AND \"ContractAmount\" = trunc(\"ContractAmount\", 2))");
+
+                            t.HasCheckConstraint("CkEngagementsAmountCurrency", "\"ContractAmount\" IS NULL OR \"ContractCurrency\" IS NOT NULL");
+
+                            t.HasCheckConstraint("CkEngagementsClientDisplayName", "char_length(btrim(\"ClientDisplayName\")) BETWEEN 1 AND 200 AND \"ClientDisplayName\" = btrim(\"ClientDisplayName\")");
+
+                            t.HasCheckConstraint("CkEngagementsClientLink", "(\"ClientOrganizationId\" IS NULL AND \"ClientLinkedAt\" IS NULL AND \"ClientLinkedByUserId\" IS NULL) OR (\"ClientOrganizationId\" IS NOT NULL AND \"ClientLinkedAt\" IS NOT NULL AND \"ClientLinkedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkEngagementsClientOrganization", "\"ClientOrganizationId\" IS NULL OR \"ClientOrganizationId\" <> \"OrganizationId\"");
+
+                            t.HasCheckConstraint("CkEngagementsClosure", "(\"Status\" = 'Active' AND \"ClosedAt\" IS NULL AND \"ClosedByUserId\" IS NULL) OR (\"Status\" = 'Closed' AND \"ClosedAt\" IS NOT NULL AND \"ClosedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkEngagementsCountry", "\"ClientCountryCode\" IS NULL OR \"ClientCountryCode\" ~ '^[A-Z]{2}$'");
+
+                            t.HasCheckConstraint("CkEngagementsCurrency", "\"ContractCurrency\" IS NULL OR \"ContractCurrency\" ~ '^[A-Z]{3}$'");
+
+                            t.HasCheckConstraint("CkEngagementsEffort", "\"PlannedEffortPersonDays\" IS NULL OR (\"PlannedEffortPersonDays\" >= 0 AND \"PlannedEffortPersonDays\" < 'Infinity'::numeric AND \"PlannedEffortPersonDays\" = trunc(\"PlannedEffortPersonDays\", 1))");
+
+                            t.HasCheckConstraint("CkEngagementsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementsIds", "\"OrganizationId\" <> '00000000-0000-0000-0000-000000000000' AND \"CreatedByUserId\" <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CkEngagementsStatus", "\"Status\" IN ('Active', 'Closed')");
+
+                            t.HasCheckConstraint("CkEngagementsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementContact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactRole")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RemovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RemovedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagementContacts");
+
+                    b.HasAlternateKey("OrganizationId", "EngagementId", "Id")
+                        .HasName("AkEngagementContactsOrganizationEngagementId");
+
+                    b.HasIndex("OrganizationId", "EngagementId")
+                        .IsUnique()
+                        .HasDatabaseName("UxEngagementContactsClientProductOwner")
+                        .HasFilter("\"ContactRole\" = 'ClientProductOwner' AND \"RemovedAt\" IS NULL");
+
+                    b.ToTable("EngagementContacts", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementContactsEmail", "char_length(\"Email\") BETWEEN 3 AND 320 AND \"Email\" = lower(btrim(\"Email\"))");
+
+                            t.HasCheckConstraint("CkEngagementContactsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementContactsName", "char_length(btrim(\"Name\")) BETWEEN 1 AND 200 AND \"Name\" = btrim(\"Name\")");
+
+                            t.HasCheckConstraint("CkEngagementContactsRemoval", "(\"RemovedAt\" IS NULL AND \"RemovedByUserId\" IS NULL) OR (\"RemovedAt\" IS NOT NULL AND \"RemovedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkEngagementContactsRole", "\"ContactRole\" IN ('ClientProductOwner', 'Sponsor', 'Other')");
+
+                            t.HasCheckConstraint("CkEngagementContactsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("EngagementVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagementEvents");
+
+                    b.HasAlternateKey("OrganizationId", "EngagementId", "Id")
+                        .HasName("AkEngagementEventsOrganizationEngagementId");
+
+                    b.HasIndex("OrganizationId", "EngagementId", "OccurredAt", "Id")
+                        .HasDatabaseName("IxEngagementEventsOrganizationEngagementOccurredId");
+
+                    b.ToTable("EngagementEvents", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementEventsDetails", "jsonb_typeof(\"Details\") = 'object'");
+
+                            t.HasCheckConstraint("CkEngagementEventsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementEventsSubject", "\"SubjectType\" IN ('Engagement', 'Milestone', 'Contact', 'LinkCode')");
+
+                            t.HasCheckConstraint("CkEngagementEventsType", "char_length(btrim(\"EventType\")) BETWEEN 1 AND 160 AND \"EventType\" = btrim(\"EventType\")");
+
+                            t.HasCheckConstraint("CkEngagementEventsVersion", "\"EngagementVersion\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementLinkAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActingOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AttemptedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagementLinkAttempts");
+
+                    b.HasIndex("UserId", "AttemptedAt")
+                        .HasDatabaseName("IxEngagementLinkAttemptsUserAttemptedAt");
+
+                    b.ToTable("EngagementLinkAttempts", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementLinkAttemptsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementLinkAttemptsIds", "\"UserId\" <> '00000000-0000-0000-0000-000000000000' AND \"ActingOrganizationId\" <> '00000000-0000-0000-0000-000000000000'");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementLinkCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<byte[]>("CodeVerifier")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ConsumedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ConsumedForOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("InvalidatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IssuedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagementLinkCodes");
+
+                    b.HasAlternateKey("OrganizationId", "EngagementId", "Id")
+                        .HasName("AkEngagementLinkCodesOrganizationEngagementId");
+
+                    b.HasIndex("CodeVerifier")
+                        .IsUnique()
+                        .HasDatabaseName("UxEngagementLinkCodesVerifier");
+
+                    b.HasIndex("OrganizationId", "EngagementId")
+                        .IsUnique()
+                        .HasDatabaseName("UxEngagementLinkCodesOutstanding")
+                        .HasFilter("\"Status\" = 'Outstanding'");
+
+                    b.ToTable("EngagementLinkCodes", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementLinkCodesConsumption", "(\"Status\" = 'Consumed' AND \"ConsumedAt\" IS NOT NULL AND \"ConsumedByUserId\" IS NOT NULL AND \"ConsumedForOrganizationId\" IS NOT NULL) OR (\"Status\" <> 'Consumed' AND \"ConsumedAt\" IS NULL AND \"ConsumedByUserId\" IS NULL AND \"ConsumedForOrganizationId\" IS NULL)");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesExpiry", "\"ExpiresAt\" = \"IssuedAt\" + interval '168 hours'");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesInvalidation", "(\"Status\" = 'Invalidated' AND \"InvalidatedAt\" IS NOT NULL) OR (\"Status\" <> 'Invalidated' AND \"InvalidatedAt\" IS NULL)");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesStatus", "\"Status\" IN ('Outstanding', 'Consumed', 'Invalidated')");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesVerifier", "octet_length(\"CodeVerifier\") = 32");
+
+                            t.HasCheckConstraint("CkEngagementLinkCodesVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementMilestone", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("CurrentTargetDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("OriginalTargetDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkEngagementMilestones");
+
+                    b.HasAlternateKey("OrganizationId", "EngagementId", "Id")
+                        .HasName("AkEngagementMilestonesOrganizationEngagementId");
+
+                    b.ToTable("EngagementMilestones", "engagement", t =>
+                        {
+                            t.HasCheckConstraint("CkEngagementMilestonesId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkEngagementMilestonesName", "char_length(btrim(\"Name\")) BETWEEN 1 AND 200 AND \"Name\" = btrim(\"Name\")");
+
+                            t.HasCheckConstraint("CkEngagementMilestonesStatus", "\"Status\" IN ('Planned', 'Achieved', 'Missed', 'Retired')");
+
+                            t.HasCheckConstraint("CkEngagementMilestonesVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementContact", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "EngagementId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkEngagementContactsEngagements");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementEvent", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "EngagementId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkEngagementEventsEngagements");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementLinkCode", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "EngagementId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkEngagementLinkCodesEngagements");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementMilestone", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "EngagementId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkEngagementMilestonesEngagements");
+                });
 #pragma warning restore 612, 618
         }
     }

@@ -1,5 +1,6 @@
 using DeliveryPilot.EntityFrameworkCore.Reliability;
 using DeliveryPilot.Messaging.Outbox;
+using DeliveryPilot.Projects.Domain.Models.Engagements;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryPilot.Projects.Infrastructure.Persistence;
@@ -19,6 +20,25 @@ public sealed class ProjectsDbContext : DbContext
     {
     }
 
+    public DbSet<Engagement> Engagements => Set<Engagement>();
+    public DbSet<EngagementMilestone> EngagementMilestones => Set<EngagementMilestone>();
+    public DbSet<EngagementContact> EngagementContacts => Set<EngagementContact>();
+    public DbSet<EngagementLinkCode> EngagementLinkCodes => Set<EngagementLinkCode>();
+    public DbSet<EngagementLinkAttempt> EngagementLinkAttempts => Set<EngagementLinkAttempt>();
+    public DbSet<EngagementEvent> EngagementEvents => Set<EngagementEvent>();
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        EnsureHistoryIsAppendOnly();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        EnsureHistoryIsAppendOnly();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -27,5 +47,14 @@ public sealed class ProjectsDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(
             typeof(ProjectsDbContext).Assembly,
             type => type.Namespace == ConfigurationsNamespace);
+    }
+
+    private void EnsureHistoryIsAppendOnly()
+    {
+        ChangeTracker.DetectChanges();
+        if (ChangeTracker.Entries<EngagementEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Engagement history is append-only.");
+        }
     }
 }

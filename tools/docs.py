@@ -6,9 +6,14 @@ Run at repository root: python tools/docs.py validate
 from __future__ import annotations
 import argparse
 import json
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from collections import defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -44,6 +49,11 @@ MANDATORY_SECTIONS = {
     'US': ('Story', 'Acceptance criteria', 'Open questions'),
     'TASK': ('Objective', 'Codebase evidence', 'Test matrix', 'Acceptance', 'Unresolved decisions'),
 }
+STARTED_AT_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
+COMMIT_RE = re.compile(r'^[0-9a-f]{7,40}$')
+LIFECYCLE = {'start-task': ('pending', 'in_progress'), 'submit-task': ('in_progress', 'in_review'),
+             'return-task': ('in_review', 'in_progress'), 'complete-task': ('in_review', 'done')}
+VERIFY_HEADING = '### Verify-Module: '
 
 
 def decode_value(raw: str):
@@ -150,7 +160,20 @@ def inventory(root: Path):
                     errors.append(f'{p}: active/done task requires codebase_verified=true')
                 if not any(meta.get(k) for k in ('us_refs','fr_refs','nfr_refs')):
                     errors.append(f'{p}: task has no US/FR/NFR source references')
+                for key,pattern in (('started_at',STARTED_AT_RE),('base_commit',COMMIT_RE)):
+                    value=meta.get(key)
+                    if value is not None and (not isinstance(value,str) or not pattern.fullmatch(value)):
+                        errors.append(f'{p}: invalid {key} {value!r}')
+                if meta.get('status') in {'in_progress','in_review'} and not meta.get('started_at'):
+                    errors.append(f'{p}: {meta.get("status")} task requires started_at; use start-task')
             headings=[h.lower() for h in re.findall(r'^## (.+)$',body,re.M)]
+            # A repeated section usually means a damaged edit (duplicated text); fenced code is ignored.
+            unfenced=re.sub(r'^```.*?^```','',body,flags=re.M|re.S)
+            seen_headings=set()
+            for heading in re.findall(r'^## (.+)$',unfenced,re.M):
+                key=heading.strip().lower()
+                if key in seen_headings: errors.append(f'{p}: duplicate section heading {heading.strip()!r}')
+                seen_headings.add(key)
             for required in MANDATORY_SECTIONS[kind]:
                 if not any(required.lower() in h for h in headings):
                     errors.append(f'{p}: missing section matching {required!r}')
@@ -282,6 +305,262 @@ def check_task_readiness(items, task_id, resume=False):
     return errors
 
 
+# --- Task lifecycle: start -> verify -> submit -> review -> complete -------------------------------
+
+def split_frontmatter(text: str):
+    """Return (frontmatter lines, closing index) using the same bounds as parse_md."""
+    if not text.startswith('---\n'): raise ValueError('missing YAML frontmatter')
+    closing=text.find('\n---\n',4)
+    if closing == -1: raise ValueError('unclosed YAML frontmatter')
+    return text[4:closing].split('\n'), closing
+
+
+def write_atomic(path: Path, text: str, newline: str = '\n'):
+    fd,tmp=tempfile.mkstemp(dir=path.parent,prefix=f'.{path.name}.',suffix='.tmp')
+    try:
+        with os.fdopen(fd,'w',encoding='utf-8',newline=newline) as f: f.write(text)
+        os.replace(tmp,path)
+    except BaseException:
+        if os.path.exists(tmp): os.unlink(tmp)
+        raise
+
+
+def rewrite_task(path: Path, updates: dict, body: str | None = None):
+    """Change only the named frontmatter lines (and optionally the body); keep all other bytes."""
+    newline='\r\n' if b'\r\n' in path.read_bytes() else '\n'  # keep the file's own line endings
+    text=path.read_text(encoding='utf-8')
+    lines,closing=split_frontmatter(text)
+    anchor=next((i for i,l in enumerate(lines) if re.match(r'codebase_verified\s*:',l)),len(lines)-1)
+    for key,value in updates.items():
+        index=next((i for i,l in enumerate(lines) if re.match(rf'{key}\s*:',l)),None)
+        if index is None:
+            anchor+=1
+            lines.insert(anchor,f'{key}: {json.dumps(value)}')
+            continue
+        raw=lines[index].split(':',1)[1].strip()
+        bare=key == 'status' and isinstance(value,str) and not raw.startswith(('"',"'"))
+        lines[index]=f'{key}: {value if bare else json.dumps(value)}'
+    rest=text[closing:] if body is None else '\n---\n'+body
+    write_atomic(path,'---\n'+'\n'.join(lines)+rest,newline)
+
+
+def section_span(body: str, prefix: str):
+    """(heading start, heading end, section end) of the first '## <prefix>...' heading, or None."""
+    m=re.search(rf'^## {re.escape(prefix)}.*$',body,re.M)
+    if not m: return None
+    nxt=re.search(r'^## ',body[m.end():],re.M)
+    return m.start(),m.end(),(m.end()+nxt.start() if nxt else len(body))
+
+
+def section_text(body: str, prefix: str):
+    span=section_span(body,prefix)
+    return None if span is None else body[span[1]:span[2]].strip()
+
+
+def git_output(root: Path, *args):
+    try:
+        p=subprocess.run(['git','-C',str(root),*args],capture_output=True,text=True)
+    except OSError:
+        return None
+    return p.stdout.strip() if p.returncode == 0 else None
+
+
+def utc_now():
+    return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def clean(value) -> str:
+    """Copy a summary value into Markdown without placeholder-like brackets, pipes or newlines."""
+    return re.sub(r'\s+',' ',str(value)).replace('<','(').replace('>',')').replace('|','/').strip()
+
+
+def render_verify_section(summary: dict) -> str:
+    module=clean(summary.get('module','unknown'))
+    tests=summary.get('tests') or {}
+    commit=summary.get('commit')
+    lines=[f'{VERIFY_HEADING}{module}', '',
+           f'- Run: {clean(summary.get("finishedAt","unknown"))} at commit {clean(commit[:7]) if isinstance(commit,str) and commit else "unknown"}; result **{clean(summary.get("result","unknown"))}**',
+           f'- Command: `{clean(summary.get("invocation") or "scripts/Verify-Module.ps1 -Module " + module)}`',
+           '', '| Step | Status | Exit | Seconds | Command |', '|---|---|---|---|---|']
+    for step in summary.get('steps') or []:
+        command=clean(step.get('command') or '')
+        lines.append(f'| {clean(step.get("name",""))} | {clean(step.get("status",""))} | {clean(step.get("exitCode",""))} | '
+                     f'{clean(step.get("durationSeconds",""))} | {"`"+command+"`" if command else ""} |')
+    lines += ['', f'- Tests: {int(tests.get("passed",0))} passed, {int(tests.get("failed",0))} failed, '
+                  f'{int(tests.get("skipped",0))} skipped ({int(tests.get("dbSkipped",0))} database)']
+    reasons=tests.get('skipReasons') or {}
+    if reasons:
+        lines.append('- Skip reasons:')
+        for reason,count in sorted(reasons.items(),key=lambda kv:-int(kv[1]))[:10]:
+            lines.append(f'  - {int(count)} × {clean(reason)[:300]}')
+    if summary.get('trxPath'): lines.append(f'- TRX: `{clean(summary["trxPath"])}`')
+    return '\n'.join(lines)+'\n'
+
+
+def ensure_evidence_section(body: str) -> str:
+    if section_span(body,'Execution evidence'): return body
+    decisions=section_span(body,'Unresolved decisions')
+    block='## Execution evidence\n\n'
+    if decisions: return body[:decisions[0]]+block+body[decisions[0]:]
+    return body.rstrip('\n')+'\n\n'+block
+
+
+def verify_subsections(body: str):
+    """[(module, start, end)] for '### Verify-Module:' blocks inside the evidence section."""
+    span=section_span(body,'Execution evidence')
+    if not span: return []
+    starts=[m for m in re.finditer(rf'^{re.escape(VERIFY_HEADING)}(.+)$',body[span[1]:span[2]],re.M)]
+    result=[]
+    for m in starts:
+        start=span[1]+m.start()
+        nxt=re.search(r'^#{2,3} ',body[span[1]+m.end():span[2]],re.M)
+        end=span[1]+m.end()+nxt.start() if nxt else span[2]
+        result.append((m.group(1).strip(),start,end))
+    return result
+
+
+def append_to_section(body: str, start: int, end: int, line: str) -> str:
+    """Insert a line after the last non-blank line of body[start:end]."""
+    chunk=body[start:end]
+    stripped=chunk.rstrip('\n')
+    trailing=chunk[len(stripped):] or '\n'
+    return body[:start]+(stripped or '\n')+'\n'+line+trailing+body[end:]
+
+
+def upsert_verify_section(body: str, text: str, module: str) -> str:
+    body=ensure_evidence_section(body)
+    for name,start,end in verify_subsections(body):
+        if name.lower() == module.lower():
+            return body[:start]+text+'\n'+body[end:].lstrip('\n') if end < len(body) else body[:start]+text
+    span=section_span(body,'Execution evidence')
+    section=body[span[1]:span[2]]
+    stripped=section.rstrip('\n')
+    tail='\n\n' if span[2] < len(body) else '\n'
+    return body[:span[1]]+stripped+'\n\n'+text.rstrip('\n')+tail+body[span[2]:]
+
+
+def evidence_errors(meta: dict, body: str):
+    """Freshness rule shared by submit-task and complete-task; empty list means acceptable."""
+    evidence=section_text(body,'Execution evidence')
+    if evidence is None or not evidence:
+        return ['no ## Execution evidence; run verify-task or submit-task --no-verify "reason"']
+    if re.search(r'^- No verification: \S',evidence,re.M):
+        return []
+    blocks=verify_subsections(body)
+    if not blocks:
+        return ['no Verify-Module evidence; run verify-task or submit-task --no-verify "reason"']
+    errors=[]
+    started=meta.get('started_at')
+    for module,start,end in blocks:
+        block=body[start:end]
+        run=re.search(r'^- Run: (\S+) at commit \S+; result \*\*([a-z-]+)\*\*',block,re.M)
+        if not run:
+            errors.append(f'{module}: unreadable Verify-Module run line'); continue
+        if isinstance(started,str) and run.group(1) < started:
+            errors.append(f'{module}: evidence from {run.group(1)} predates started_at {started}; run verify-task again')
+        if run.group(2) not in {'passed','passed-with-skips'}:
+            errors.append(f'{module}: verification result is {run.group(2)}')
+        skipped=re.search(r'\((\d+) database\)',block)
+        if skipped and int(skipped.group(1)) > 0 and not re.search(r'^- Accepted skips: \S',block,re.M):
+            errors.append(f'{module}: {skipped.group(1)} database tests skipped; rerun with the database or submit-task --accept-skips "reason"')
+    return errors
+
+
+def transition_task(root: Path, items, task_id: str, command: str, accept_skips=None, no_verify=None):
+    entry=items.get(task_id)
+    if not entry or entry[1] != 'TASK': return [f'unknown task {task_id}']
+    path,_,meta,body=entry
+    source,target=LIFECYCLE[command]
+    status=meta.get('status')
+    errors=[]
+    if command == 'start-task':
+        if status == 'in_progress':
+            return [f'{path}: already in progress; use check-task --resume to continue']
+        errors+=check_task_readiness(items,task_id)
+        decisions=section_text(body,'Unresolved decisions')
+        first=next((l.strip() for l in (decisions or '').splitlines() if l.strip()),'')
+        if decisions is None:
+            errors.append(f'{path}: missing ## Unresolved decisions section')
+        elif not (first.startswith('None') or first.startswith('No ')):
+            errors.append(f'{path}: unresolved decisions must start with "None" or "No "; found {first[:200]!r}')
+    elif status != source:
+        errors.append(f'{path}: {command} needs status {source}; found {status!r}')
+    for flag,value in (('--accept-skips',accept_skips),('--no-verify',no_verify)):
+        if value is not None and not value.strip(): errors.append(f'{flag} requires a non-empty reason')
+    if errors: return errors
+    new_body=body
+    if command == 'submit-task':
+        if no_verify:
+            new_body=ensure_evidence_section(new_body)
+            span=section_span(new_body,'Execution evidence')
+            new_body=append_to_section(new_body,span[1],span[2],f'- No verification: {clean(no_verify)}')
+        if accept_skips:
+            for module,start,end in reversed(verify_subsections(new_body)):
+                block=new_body[start:end]
+                skipped=re.search(r'\((\d+) database\)',block)
+                if skipped and int(skipped.group(1)) > 0 and '- Accepted skips:' not in block:
+                    new_body=append_to_section(new_body,start,end,f'- Accepted skips: {clean(accept_skips)}')
+    if command in {'submit-task','complete-task'}:
+        errors+=[f'{path}: {e}' for e in evidence_errors(meta,new_body)]
+    if command == 'complete-task':
+        acceptance=section_text(body,'Acceptance') or ''
+        if not re.search(r'^\s*- \[[xX]\]',acceptance,re.M):
+            errors.append(f'{path}: acceptance section has no checked checkbox')
+        if re.search(r'^\s*- \[ \]',acceptance,re.M):
+            errors.append(f'{path}: acceptance section still has unchecked items')
+    if errors: return errors
+    updates={'status':target}
+    if command == 'start-task':
+        updates['started_at']=utc_now()
+        commit=git_output(root,'rev-parse','HEAD')
+        updates['base_commit']=commit if commit and COMMIT_RE.fullmatch(commit) else None
+        if updates['base_commit'] is None:
+            print('WARNING: base_commit not recorded: not a git work tree',file=sys.stderr)
+        else:
+            dirty=git_output(root,'status','--porcelain')
+            if dirty: print(f'NOTE: {len(dirty.splitlines())} uncommitted path(s) at start',file=sys.stderr)
+    rewrite_task(path,updates,None if new_body == body else new_body)
+    print(f'{task_id}: {status} -> {target}')
+    return []
+
+
+def run_verify_script(root: Path, module: str, require_db: bool, test_filter: str | None):
+    script=root/'scripts'/'Verify-Module.ps1'
+    if not script.is_file(): raise ValueError(f'{script} not found')
+    pwsh=shutil.which('pwsh')
+    if pwsh: shell=[pwsh,'-NoProfile','-NonInteractive','-File']
+    elif shutil.which('powershell'):
+        # Process-scoped policy for this child only; machine and user policy are never changed.
+        shell=[shutil.which('powershell'),'-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File']
+    else: raise ValueError('no pwsh or powershell on PATH; run scripts/Verify-Module.ps1 yourself and pass --from-summary')
+    with tempfile.TemporaryDirectory() as tmp:
+        out=Path(tmp)/'summary.json'
+        command=shell+[str(script),'-Module',module,'-OutFile',str(out)]
+        if require_db: command.append('-RequireDb')
+        if test_filter: command+=['-Filter',test_filter]
+        proc=subprocess.run(command,cwd=root)
+        if not out.is_file(): raise ValueError(f'verification script wrote no summary (exit {proc.returncode})')
+        return json.loads(out.read_text(encoding='utf-8-sig'))
+
+
+def verify_task(root: Path, items, task_id: str, module: str, require_db=False, test_filter=None, from_summary=None):
+    entry=items.get(task_id)
+    if not entry or entry[1] != 'TASK': return [f'unknown task {task_id}'], None
+    path,_,meta,body=entry
+    if meta.get('status') != 'in_progress':
+        return [f'{path}: verify-task needs status in_progress; found {meta.get("status")!r}'], None
+    if from_summary:
+        summary=json.loads(Path(from_summary).read_text(encoding='utf-8-sig'))
+    else:
+        summary=run_verify_script(root,module,require_db,test_filter)
+    if not isinstance(summary,dict) or str(summary.get('module','')).lower() != module.lower():
+        return [f'summary module {summary.get("module") if isinstance(summary,dict) else None!r} does not match --module {module}'], None
+    rewrite_task(path,{},upsert_verify_section(body,render_verify_section(summary),module))
+    result=summary.get('result')
+    print(f'{task_id}: recorded {module} verification ({result})')
+    return [], result
+
+
 def make_feature(root,ident,title,slug,release,priority):
     if not FEAT_RE.fullmatch(ident): raise ValueError('invalid feature ID')
     if not re.fullmatch('[a-z0-9]+(?:-[a-z0-9]+)*',slug): raise ValueError('invalid slug')
@@ -339,6 +618,19 @@ def main(argv=None):
     preflight=commands.add_parser('check-task',help='structural preflight before implementing a Task; not business approval')
     preflight.add_argument('--id',required=True)
     preflight.add_argument('--resume',action='store_true',help='permit authorized continuation of an in_progress task')
+    lifecycle={}
+    for name,text in (('start-task','pending -> in_progress after check-task and an open-decision check; records started_at/base_commit'),
+                      ('submit-task','in_progress -> in_review; requires fresh, non-failing verification evidence'),
+                      ('return-task','in_review -> in_progress when review sends work back'),
+                      ('complete-task','in_review -> done; requires checked acceptance and fresh evidence')):
+        lifecycle[name]=commands.add_parser(name,help=text)
+        lifecycle[name].add_argument('--id',required=True)
+    lifecycle['submit-task'].add_argument('--accept-skips',metavar='REASON',help='record why skipped database tests are acceptable')
+    lifecycle['submit-task'].add_argument('--no-verify',metavar='REASON',help='record why no module verification applies (e.g. docs-only task)')
+    verify=commands.add_parser('verify-task',help='run scripts/Verify-Module.ps1 for an in_progress task and record the evidence')
+    verify.add_argument('--id',required=True);verify.add_argument('--module',required=True)
+    verify.add_argument('--require-db',action='store_true');verify.add_argument('--filter')
+    verify.add_argument('--from-summary',metavar='JSON',help='record a summary saved by an earlier Verify-Module.ps1 -OutFile run')
     nxt=commands.add_parser('next-id',help='show next available candidate ID')
     nxt.add_argument('--type',required=True,choices=KINDS)
     nxt.add_argument('--feature',required=True)
@@ -354,6 +646,23 @@ def main(argv=None):
         if args.command=='scaffold-feature': make_feature(root,args.id,args.title,args.slug,args.release,args.priority)
         elif args.command=='next-id': print(next_id(root,args.type,args.feature))
         elif args.command=='new-artifact': create_artifact(root,args.type,args.feature,args.title,args.actor)
+        elif args.command in LIFECYCLE or args.command=='verify-task':
+            items,errors=inventory(root)
+            errors+=check_refs(root,items)+check_links(root)
+            target=items.get(args.id)
+            prefix=str(target[0]) if target else None
+            blocking=[e for e in errors if prefix and e.startswith(prefix)]
+            for warning in (e for e in errors if e not in blocking):
+                print('WARNING (other artifact):',warning,file=sys.stderr)
+            if not blocking:
+                if args.command=='verify-task':
+                    blocking,result=verify_task(root,items,args.id,args.module,args.require_db,args.filter,args.from_summary)
+                    if not blocking and result not in {'passed','passed-with-skips'}: return 1
+                else:
+                    blocking=transition_task(root,items,args.id,args.command,
+                                             getattr(args,'accept_skips',None),getattr(args,'no_verify',None))
+            for error in blocking: print('ERROR:',error,file=sys.stderr)
+            if blocking: return 1
         else:
             items,errors=inventory(root)
             errors+=check_refs(root,items)+check_links(root)

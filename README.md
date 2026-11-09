@@ -86,9 +86,32 @@ When the accompanying `tools/docs.py` and tests have been integrated into the re
 ```bash
 python tools/docs.py validate
 python tools/docs.py coverage --feature FEAT-DP-003
-python tools/docs.py check-task --id TASK-DP-003-001  # expected to fail: draft/blocked sample
+python tools/docs.py check-task --id TASK-DP-003-001  # structural preflight only
 python -m unittest discover -s tools/docs_validation -p "test_*.py" -v
 ```
+
+### Implementing a task
+
+Each command changes only the task's own file and refuses when its precondition fails:
+
+```bash
+python tools/docs.py start-task --id TASK-DP-XXX-NNN          # pending -> in_progress; runs check-task, needs "None"/"No ..." under Unresolved decisions
+python tools/docs.py verify-task --id TASK-DP-XXX-NNN --module Projects --require-db   # runs Verify-Module.ps1, records evidence
+python tools/docs.py submit-task --id TASK-DP-XXX-NNN         # in_progress -> in_review; needs fresh, non-failing evidence
+python tools/docs.py return-task --id TASK-DP-XXX-NNN         # in_review -> in_progress after review comments
+python tools/docs.py complete-task --id TASK-DP-XXX-NNN       # in_review -> done; all acceptance boxes checked
+```
+
+`submit-task --accept-skips "reason"` records why skipped database tests are acceptable; `submit-task --no-verify "reason"` records why no module run applies (documentation-only task). `verify-task --from-summary file.json` records a summary saved by an earlier `-OutFile` run.
+
+`scripts/Verify-Module.ps1 -Module Identity|Projects|Notification|Gateway|HttpClient [-RequireDb] [-NoBuild] [-Filter expr] [-SkipArchitecture] [-SkipDocs] [-OutFile path]` builds and tests one module (TRX under `artifacts/verify/`), runs the architecture rules in-process and validates docs, then prints a `VERIFY-SUMMARY` JSON line. Skipped tests are counted. With `-RequireDb` the run fails when the module's database variable is unset or any test was skipped because of it:
+
+| Module | PostgreSQL variable |
+|---|---|
+| Identity | `DELIVERYPILOT_TEST_POSTGRES` |
+| Projects | `DELIVERYPILOT_TEST_PROJECTS_POSTGRES` (own empty database; Identity and Projects both own a `reliability` schema) |
+| Notification | `DELIVERYPILOT_DELIVERY_TEST_POSTGRES` (broker/Mailpit/deployment skips are reported, not failed; `scripts/Test-EmailDelivery.ps1` remains the full integration harness) |
+| Gateway, HttpClient | none |
 
 **Test ownership:** Your root `tests/` directory stays reserved for existing .NET unit/integration tests. The Python documentation CLI's regression suite lives only under `tools/docs_validation/`, is executed separately, and does not change `dotnet test` configuration or test project references.
 

@@ -11,6 +11,8 @@ fr_refs: []
 nfr_refs: []
 depends_on: []
 codebase_verified: false
+started_at: null
+base_commit: null
 ---
 # TASK-DP-XXX-NNN — <Deliverable>
 
@@ -56,6 +58,9 @@ Describe steps, files to modify/create only if verified, migration safety, order
 - [ ] Relevant security/NFR and migration checks are satisfied.
 - [ ] Documentation updated only if contracts/decisions changed.
 - [ ] No unrelated changes or unresolved blocking policy decisions.
+
+## Execution evidence
+Filled during implementation: `verify-task` writes one `### Verify-Module:` block per module (commands, totals including skipped tests, run time). Add hand-written notes beside them; for a task with no module to verify, `submit-task --no-verify "reason"` records why.
 
 ## Unresolved decisions
 List blockers. **Provisional** tasks must not be presented as implementation-ready.

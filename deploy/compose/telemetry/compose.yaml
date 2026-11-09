@@ -42,7 +42,7 @@ services:
   prometheus:
     image: ${DELIVERYPILOT_PROMETHEUS_IMAGE}
     command: ["--config.file=/etc/prometheus/prometheus.yaml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=7d", "--enable-feature=exemplar-storage"]
-    volumes: ["../../observability/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro", "prometheus-data:/prometheus"]
+    volumes: ["../../observability/prometheus.yaml:/etc/prometheus/prometheus.yaml:ro", "../../observability/projects-alerts.yaml:/etc/prometheus/projects-alerts.yaml:ro", "prometheus-data:/prometheus"]
     restart: unless-stopped
     mem_limit: 512m
     logging: *logging

@@ -54,6 +54,38 @@ case "$kind" in
       cat /tmp/host-base.json
     fi
     ;;
+  projects-api|projects-worker|projects-migrationrunner)
+    role=${kind#projects-}
+    [ "$role" != migrationrunner ] || role=migrator
+    jq -n \
+      --arg connection "Host=127.0.0.1;Port=${DELIVERYPILOT_PROJECTS_POSTGRES_PORT:-25433};Database=DeliveryPilotProjects;Username=projects_${role};Include Error Detail=false" \
+      --arg password_file "$root/projects/${role}-password.secret" \
+      --arg observability "$observability" --arg endpoint "http://127.0.0.1:${DELIVERYPILOT_OTLP_PORT:-24317}" \
+      '{"ConnectionStrings:ApplicationDb":$connection,"Database:PasswordFile":$password_file,"Observability:Enabled":$observability,"Observability:Endpoint":$endpoint}' >/tmp/host-base.json
+    if [ "$kind" = projects-api ]; then
+      jq --rawfile jwt /source/identity/jwt-key.secret \
+        --rawfile outbound /source/identity/integration-key.secret \
+        --rawfile inbound /source/projects/integration-key.secret \
+        --arg issuer "${DELIVERYPILOT_JWT_ISSUER:-DeliveryPilot.Identity}" \
+        --arg audience "${DELIVERYPILOT_JWT_AUDIENCE:-DeliveryPilot}" \
+        --arg identity "http://127.0.0.1:${DELIVERYPILOT_IDENTITY_API_PORT:-19091}/" \
+        --arg frontend "$frontend" --arg urls "http://localhost:${DELIVERYPILOT_PROJECTS_API_PORT:-19093}" \
+        '. + {"Jwt:SecretKey":($jwt|gsub("[\\r\\n]";"")),"Jwt:Issuer":$issuer,"Jwt:Audience":$audience,
+          "Integrations:Identity:BaseUrl":$identity,"Integrations:Identity:ApiKeyHeaderName":"X-Integration-Key",
+          "Integrations:Identity:ApiKey":($outbound|gsub("[\\r\\n]";"")),"IntegrationApi:ApiKeys:0":($inbound|gsub("[\\r\\n]";"")),
+          "Cors:AllowedOrigins:0":$frontend,"Cors:AllowedMethods:0":"POST","Cors:AllowedMethods:1":"GET","Cors:AllowedMethods:2":"PUT",
+          "Cors:AllowedHeaders:0":"Content-Type","Cors:AllowedHeaders:1":"Authorization","Cors:AllowedHeaders:2":"Idempotency-Key",
+          "Serilog:Using:0":"Serilog.Sinks.Console","Serilog:WriteTo:0:Name":"Console","urls":$urls}' /tmp/host-base.json
+    elif [ "$kind" = projects-worker ]; then
+      jq --arg port "${DELIVERYPILOT_RABBITMQ_AMQP_PORT:?}" --arg vhost "${DELIVERYPILOT_MESSAGING_VIRTUAL_HOST:-/deliverypilot-local}" \
+        --arg password_file "$root/platform/projects-broker-password.secret" \
+        '. + {"Messaging:Host":"127.0.0.1","Messaging:Port":$port,"Messaging:VirtualHost":$vhost,
+          "Messaging:Username":"projects","Messaging:PasswordFile":$password_file,"Messaging:Development":"true",
+          "Messaging:UseTls":"false","Messaging:QuorumSize":"1","Observability:ServiceName":"DeliveryPilot.Projects.Worker"}' /tmp/host-base.json
+    else
+      cat /tmp/host-base.json
+    fi
+    ;;
   notification-api|notification-worker|notification-migrationrunner)
     role=runtime
     [ "$kind" != notification-migrationrunner ] || role=migrator

@@ -19,8 +19,8 @@ public static class OrganizationCapabilityCatalog
 {
     public const string SystemOrigin = "system";
     public const string CustomOrigin = "custom";
-    public const int CurrentTemplateVersion = 2;
-    public const int CurrentCatalogPolicyVersion = 2;
+    public const int CurrentTemplateVersion = 3;
+    public const int CurrentCatalogPolicyVersion = 3;
 
     public const string OwnerRoleCode = "owner";
     public const string AdminRoleCode = "admin";
@@ -48,6 +48,10 @@ public static class OrganizationCapabilityCatalog
     public const string EngagementsReadAll = "organization.engagements.read-all";
     public const string ProjectsCreate = "organization.projects.create";
 
+    // Catalog policy version 3 (TASK-DP-003-022, FEAT-DP-025 OQ-025-08): edit, close/reopen and client-link
+    // authority over engagements. Workspace-level only; it never grants project content (FR-DP-003-007).
+    public const string EngagementsManage = "organization.engagements.manage";
+
     private static readonly string[] OrderedDelegablePermissionCodes =
     [
         MembersRead,
@@ -63,6 +67,7 @@ public static class OrganizationCapabilityCatalog
         EngagementsCreate,
         EngagementsReadAll,
         ProjectsCreate,
+        EngagementsManage,
     ];
 
     private static readonly string[] OrderedAllPermissionCodes =
@@ -104,6 +109,17 @@ public static class OrganizationCapabilityCatalog
     };
 
     private static readonly HashSet<string> Version2KnownPermissionSet = new(Version2DelegablePermissionSet, StringComparer.Ordinal)
+    {
+        "organization.ownership.manage",
+    };
+
+    // Version 3 is frozen: version 2 codes plus the engagement-manage code.
+    private static readonly HashSet<string> Version3DelegablePermissionSet = new(Version2DelegablePermissionSet, StringComparer.Ordinal)
+    {
+        "organization.engagements.manage",
+    };
+
+    private static readonly HashSet<string> Version3KnownPermissionSet = new(Version3DelegablePermissionSet, StringComparer.Ordinal)
     {
         "organization.ownership.manage",
     };
@@ -304,6 +320,7 @@ public static class OrganizationCapabilityCatalog
         {
             1 => (Version1KnownPermissionSet, Version1DelegablePermissionSet),
             2 => (Version2KnownPermissionSet, Version2DelegablePermissionSet),
+            3 => (Version3KnownPermissionSet, Version3DelegablePermissionSet),
             _ => null,
         };
 

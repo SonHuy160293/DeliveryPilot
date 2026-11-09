@@ -1,6 +1,6 @@
 # Run DeliveryPilot locally
 
-The current checkout contains a backend: a gateway, Identity and Notification APIs and workers, PostgreSQL databases, RabbitMQ and a local Mailpit mailbox. Run the separate `DeliveryPilot-Web` frontend checkout alongside this deployment for browser workflows. Run backend commands from this repository root. The examples use Windows PowerShell; Linux users can use the Bash equivalents below.
+The current checkout contains a backend: a gateway, Identity, Notification and Projects APIs and workers, PostgreSQL databases, RabbitMQ and a local Mailpit mailbox. Run the separate `DeliveryPilot-Web` frontend checkout alongside this deployment for browser workflows. Run backend commands from this repository root. The examples use Windows PowerShell; Linux users can use the Bash equivalents below.
 
 The Gateway publishes the explicit Organization allowlist under `/identity/api/v1`, including workspace creation/listing, permissions, roles/retirement, member management, invitations, ownership nominations and audit history. Use the exact methods in `src/Gateway/DeliveryPilot.Gateway/proxy.json`; there is no catch-all or public integration/dispatch route. Identity validates bearer sessions and current workspace authority. New Organization routes have a 16 KB body ceiling, a 30-second timeout and no-store responses, including errors. Browser CORS permits GET/POST/PUT and the Idempotency-Key header for workspace creation; configure the exact trusted frontend origin for each environment.
 
@@ -43,6 +43,7 @@ Organization publication acceptance extends `scripts/Test-GatewayDeployment.ps1 
    Invoke-WebRequest -UseBasicParsing http://localhost:19090/health/ready
    Invoke-WebRequest -UseBasicParsing http://localhost:19091/health/ready
    Invoke-WebRequest -UseBasicParsing http://localhost:19092/health/ready
+   Invoke-WebRequest -UseBasicParsing http://localhost:19093/health/ready
    ```
 
    Each readiness request should return HTTP 200. Default addresses, configurable in `local.env`, are:
@@ -52,10 +53,12 @@ Organization publication acceptance extends `scripts/Test-GatewayDeployment.ps1 
    | Gateway | http://localhost:19090 |
    | Identity API | http://localhost:19091 |
    | Notification API | http://localhost:19092 |
+   | Projects API | http://localhost:19093 |
    | Mailpit inbox | http://localhost:28025 |
    | RabbitMQ management | http://localhost:25673 |
    | Identity PostgreSQL | localhost:25431 |
    | Notification PostgreSQL | localhost:25432 |
+   | Projects PostgreSQL | localhost:25433 |
 
    Mailpit captures local email. RabbitMQ credentials are generated in the local secrets directory; do not paste them into logs or documentation.
 
@@ -103,13 +106,15 @@ dotnet restore DeliveryPilot.slnx
 dotnet build DeliveryPilot.slnx
 ```
 
-Open five terminals in the repository root and run one command in each. Keep them running:
+Open seven terminals in the repository root and run one command in each. Keep them running:
 
 ```powershell
 dotnet run --project src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API --launch-profile Local
 dotnet run --project src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.Worker --launch-profile Local
 dotnet run --project src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.API --launch-profile Local
 dotnet run --project src/Modules/DeliveryPilot.Notification/DeliveryPilot.Notification.Worker --launch-profile Local
+dotnet run --project src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.API --launch-profile Local
+dotnet run --project src/Modules/DeliveryPilot.Projects/DeliveryPilot.Projects.Worker --launch-profile Local
 dotnet run --project src/Gateway/DeliveryPilot.Gateway --launch-profile Local
 ```
 
@@ -120,7 +125,7 @@ The addresses and readiness checks above apply here too. The migration runners h
 - PowerShell failures identify the Docker operation and service, for example `Docker Compose platform build (topology) failed`. The underlying Docker diagnostic appears immediately before it; the wrapper omits raw command arguments and configuration values.
 - If Docker cannot connect, start Docker Desktop/Engine and check the current user's access. If a port or subnet conflicts, update the corresponding values in `deploy/env/local.env`, then rerun `check` and `up`.
 - Use `status` and `logs` to locate a failing service; readiness can fail while a database or migration is still starting. Verify internet access if image pulls or package restore fail.
-- To select a component, add `-Module identity`, `-Module notification`, or `-Module gateway` to PowerShell actions (Bash: `--module identity`, etc.). The default is `all`. A gateway needs its downstream APIs available.
+- To select a component, add `-Module identity`, `-Module notification`, `-Module projects`, or `-Module gateway` to PowerShell actions (Bash: `--module identity`, etc.). The default is `all`. A gateway needs its downstream APIs available.
 - Add `-Telemetry` (Bash: `--telemetry`) to `init`, `check`, and `up` for the optional observability stack. The default Grafana port is 23000. Use the same flag when configuring host mode.
 - Local settings are for development. Server deployment requires separately provisioned secrets, immutable images, a TLS RabbitMQ cluster and server-specific configuration; consult `deploy/env/server.env.example` and the deployment scripts before using `-Environment server`.
 
@@ -145,3 +150,23 @@ Both launch scripts use this optional setting for setup-image and Compose builds
 The dedicated builder bypasses the damaged build cache; it does not repair that cache or require deletion of application containers, database volumes or secrets. Keep those separate from any later Docker cache maintenance. See Docker's [container builder documentation](https://docs.docker.com/build/builders/drivers/docker-container/) and [Compose builder selection](https://docs.docker.com/reference/cli/docker/compose/build/).
 
 Run `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Test-DeploymentCli.ps1` for offline argument-routing and safe-error regression checks. The full disposable-stack acceptance suite remains `scripts/Test-Deployment.ps1`.
+
+## Projects engagement creation and deployment
+
+Projects exposes `POST /api/v1/organizations/{organizationId}/engagements` directly on its local API port. Supply a real Identity bearer token and a nonempty UUID `Idempotency-Key`. The user must currently hold `organization.engagements.create` in the route workspace. Required JSON fields are `clientDisplayName`, `agreementReference` and `agreementSignedOn`; optional fields are `clientLegalName`, `clientCountryCode`, `engagementName` and `documentUrl`. Creation returns 201; replay returns 200 with the original creation snapshot and duplicate warning. Reusing a key for different normalized content returns 409. Invalid fields return 400, inactive sessions 401, denied authority 403 and unavailable Identity 503. Responses are no-store and bodies are limited to 16 KB.
+
+Full-detail readers can use `GET` on the engagement collection, an engagement ID, or its `/history` path. The list and history accept `limit` and `cursor`; the list also accepts `status=active|closed|all`. Read-all and manage holders see the workspace; other members see their own creations. Manage holders can update `/contract-value`, manage `/milestones`, and call `/close` or `/reopen`. Those mutations use expected versions as documented in their tasks.
+
+Projects Gateway routes belong to TASK-DP-025-013. Server Compose publishes no Projects API or PostgreSQL port. Local ports are controlled by `DELIVERYPILOT_PROJECTS_API_PORT` (19093) and `DELIVERYPILOT_PROJECTS_POSTGRES_PORT` (25433); verification defaults are 29093/35433. Image variables are `DELIVERYPILOT_PROJECTS_API_IMAGE`, `DELIVERYPILOT_PROJECTS_WORKER_IMAGE` and `DELIVERYPILOT_PROJECTS_MIGRATION_IMAGE`. Server deployments use prebuilt release images. The internal Identity URL defaults to `http://identity-api:8080/` and may be set with `DELIVERYPILOT_PROJECTS_IDENTITY_BASE_URL`; host mode uses Identity's loopback port. The `all` selection includes Projects after Identity and Notification. Selecting Projects alone preserves the other module containers and expects Identity to be available for protected requests.
+
+When upgrading an existing local deployment, rerun `init` to add Projects credentials while preserving existing files. Existing local env files receive default Projects image/port values in the CLI; add explicit settings if different ports are needed. Add Projects release image settings explicitly to existing server env files. Provision `projects/admin-password.secret`, `migrator-password.secret`, `api-password.secret`, `worker-password.secret`, `integration-key.secret`, and `platform/projects-broker-password.secret` in the server secret directory.
+
+Projects API loads key-per-file settings from `/run/secrets/config` before service registration. `DELIVERYPILOT_CONFIG_SECRETS_DIRECTORY` overrides that directory for host tests. Deployment stages Identity's canonical JWT key as `Jwt__SecretKey`, Identity's integration key as `Integrations__Identity__ApiKey`, and Projects' separate inbound key as `IntegrationApi__ApiKeys__0`. The worker receives its database/broker files and the migrator its database file. Keys are not embedded in images or supplied as command arguments/environment values. JWT rotation updates Identity's canonical file, then restages and restarts both APIs; keys load at startup.
+
+The database/migration owner is `projects_migrator`. The API role can select/insert engagement events but cannot update, delete or truncate them, and cannot create schema objects. The worker has reliability access without engagement table grants. Startup runs migrations and refreshes grants before replacing runtime containers. Re-run grants after future migrations; engagement grants tolerate a reliability-only schema. `down` retains database volumes and source credentials. Correct a failed deployment's configuration/credentials and rerun `up`; application rollback uses previous images and retains data rather than automatically downgrading the database.
+
+Optional telemetry loads `deploy/observability/projects-alerts.yaml` into Prometheus. Rules select `service_name="DeliveryPilot.Projects.Worker"` for stalled outbox entries, dead letters and stale scan heartbeat. Email-specific operational rules stay in `deploy/delivery/alerts.yaml`.
+
+Run `scripts/Test-Deployment.ps1 -Config <disposable-config>` for full regression and Projects acceptance; it invokes `Test-ProjectsDeployment.ps1`, covering real Identity authentication, idempotency, request limits, CORS, runtime grants, secret isolation, independent redeploy, retained data and failure gating. These scripts accept only disposable `deliverypilot-verify-*` stacks. Run `scripts/Test-DeploymentCli.ps1` and `bash scripts/Test-DeploymentCli.sh` for CLI routing checks. Server verification renders the image-only profile; live production rollout uses operator-supplied images, credentials and broker configuration.
+
+For a new disposable configuration, copy `deploy/env/verify.env.example` to the ignored `deploy/env/verify.env`, choose unused ports/subnet, then pass `-Config deploy/env/verify.env` to the acceptance script. Existing local env files are preserved. Validate Projects alert syntax and module scoping with `docker run --rm --mount "type=bind,src=<absolute-repo-path>/deploy/observability,dst=/rules,readonly" --workdir /rules --entrypoint /bin/promtool prom/prometheus:v3.2.1 test rules projects-alerts.test.yaml`.

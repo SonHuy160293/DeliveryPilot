@@ -2,14 +2,14 @@
 param(
     [Parameter(Position = 0)][ValidateSet('init','check','up','down','status','logs')][string]$Action = 'up',
     [ValidateSet('local','server')][string]$Environment = 'local',
-    [ValidateSet('all','identity','notification','gateway')][string]$Module = 'all',
+    [ValidateSet('all','identity','notification','projects','gateway')][string]$Module = 'all',
     [ValidateSet('docker','host')][string]$Mode = 'docker',
     [switch]$Telemetry,
     [string]$Config
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$modules = @(if ($Module -eq 'all') { 'identity'; 'notification' } elseif ($Module -ne 'gateway') { $Module })
+$modules = @(if ($Module -eq 'all') { 'identity'; 'notification'; 'projects' } elseif ($Module -ne 'gateway') { $Module })
 $gateway = $Module -in @('all','gateway')
 $projects = @($modules) + @(if ($gateway) { 'gateway' })
 if ($Environment -eq 'server' -and $Mode -eq 'host') { throw 'Server deployments use prebuilt Docker images; host mode is local only.' }
@@ -22,7 +22,7 @@ function Invoke-Docker([string[]]$Arguments, [string]$Operation = 'Docker operat
     & docker @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Operation failed (exit $LASTEXITCODE). Review the Docker diagnostic above. Command arguments, configuration and secret values are omitted from this error." }
 }
-function Compose([ValidateSet('platform','identity','notification','gateway','telemetry')][string]$Project, [string[]]$Arguments) {
+function Compose([ValidateSet('platform','identity','notification','projects','gateway','telemetry')][string]$Project, [string[]]$Arguments) {
     # Report only known operation/service names, never raw arguments or env values.
     $operation = "Docker Compose $Project"
     if ($Arguments.Count -gt 0 -and $Arguments[0] -in @('build','config','run','up','down','ps','logs','pull')) {
@@ -64,6 +64,11 @@ function Load-Settings {
         $defaults.DELIVERYPILOT_GATEWAY_IMAGE='deliverypilot-gateway:local'
         $defaults.DELIVERYPILOT_GATEWAY_PUBLIC_HOST='localhost'
         $defaults.DELIVERYPILOT_INGRESS_PROXY_IP='172.31.250.1'
+        $defaults.DELIVERYPILOT_PROJECTS_API_IMAGE='deliverypilot-projects-api:local'
+        $defaults.DELIVERYPILOT_PROJECTS_WORKER_IMAGE='deliverypilot-projects-worker:local'
+        $defaults.DELIVERYPILOT_PROJECTS_MIGRATION_IMAGE='deliverypilot-projects-migration:local'
+        $defaults.DELIVERYPILOT_PROJECTS_API_PORT='19093'
+        $defaults.DELIVERYPILOT_PROJECTS_POSTGRES_PORT='25433'
     }
     foreach ($key in $defaults.Keys) {
         if (-not $settings[$key]) { $settings[$key] = $defaults[$key] }
@@ -110,6 +115,9 @@ function Check-Secrets {
         if ($name -eq 'identity') {
             $required += @('admin-password','migrator-password','api-password','worker-password','jwt-key','integration-key','invitation-dispatch-key') | ForEach-Object { "identity/$_.secret" }
             $required += "notification/keys/$activeKey.public.pem"
+        } elseif ($name -eq 'projects') {
+            $required += @('admin-password','migrator-password','api-password','worker-password','integration-key') | ForEach-Object { "projects/$_.secret" }
+            $required += @('identity/jwt-key.secret','identity/integration-key.secret')
         } else {
             $required += @('admin-password','migrator-password','runtime-password') | ForEach-Object { "notification/$_.secret" }
             $required += 'identity/invitation-dispatch-key.secret'
@@ -125,7 +133,7 @@ function Check-Secrets {
         if ([string]::IsNullOrWhiteSpace($content) -or $content -match 'CHANGE_ME|REPLACE_WITH') { throw "Secret file is empty or a placeholder: $relative" }
         if ($relative -eq 'identity/jwt-key.secret' -and $content.Trim().Length -lt 32) { throw 'JWT signing key must be at least 32 characters.' }
         if ($relative -eq 'identity/integration-key.secret' -and $content.Trim().Length -gt 4096) { throw 'Integration key must be at most 4096 characters.' }
-        if ($relative -match '^(identity|notification)/(admin|migrator|api|worker|runtime)-password.secret$' -and $content.Trim() -notmatch '^[0-9a-fA-F]{64}$') { throw "Database password must be 32 random bytes encoded as hex: $relative" }
+        if ($relative -match '^(identity|notification|projects)/(admin|migrator|api|worker|runtime)-password.secret$' -and $content.Trim() -notmatch '^[0-9a-fA-F]{64}$') { throw "Database password must be 32 random bytes encoded as hex: $relative" }
         $content = $null
     }
 }
@@ -133,7 +141,7 @@ function Check-Configuration {
     foreach ($entry in $settings.GetEnumerator()) {
         if ($entry.Key -in @('DELIVERYPILOT_GATEWAY_IMAGE','DELIVERYPILOT_GATEWAY_PUBLIC_HOST','DELIVERYPILOT_INGRESS_PROXY_IP') -and -not $gateway) { continue }
         if ($modules.Count -eq 0 -and $entry.Key -match '^DELIVERYPILOT_(MESSAGING|JWT|EMAIL)_') { continue }
-        if ($entry.Key -match '^DELIVERYPILOT_(IDENTITY|NOTIFICATION)_(API|WORKER|MIGRATION)_IMAGE$' -and $modules -notcontains $Matches[1].ToLowerInvariant()) { continue }
+        if ($entry.Key -match '^DELIVERYPILOT_(IDENTITY|NOTIFICATION|PROJECTS)_(API|WORKER|MIGRATION)_IMAGE$' -and $modules -notcontains $Matches[1].ToLowerInvariant()) { continue }
         if ($entry.Value -match 'CHANGE_ME|REPLACE_WITH|registry\.example') { throw "Replace the placeholder in $($entry.Key) before proceeding." }
         if ($entry.Key -match '_PORT$' -and ($entry.Value -notmatch '^\d+$' -or [int]$entry.Value -lt 1 -or [int]$entry.Value -gt 65535)) { throw "Invalid TCP port: $($entry.Key)" }
     }

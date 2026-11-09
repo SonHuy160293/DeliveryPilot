@@ -1,4 +1,7 @@
 using DeliveryPilot.SharedKernel.DependencyInjection;
+using DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
+using DeliveryPilot.Projects.Application.Features.Engagements.Queries;
+using DeliveryPilot.Projects.Application.Features.Engagements.ClientLinks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeliveryPilot.Projects.Application.DependencyInjection;
@@ -11,6 +14,9 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services)
         => services
+            .AddScoped<EngagementMutationService>()
+            .AddScoped<EngagementReadAuthorization>()
+            .AddScoped<ClientLinkAuthorization>()
             .AddApplicationCqrs()
             .AddApplicationPipelineBehaviors();
 
