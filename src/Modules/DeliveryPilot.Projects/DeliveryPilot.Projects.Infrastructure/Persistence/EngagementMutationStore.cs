@@ -6,6 +6,12 @@ namespace DeliveryPilot.Projects.Infrastructure.Persistence;
 
 public sealed class EngagementMutationStore(ProjectsDbContext dbContext) : IEngagementMutationStore
 {
+    public Task LockReferenceAsync(Guid organizationId, string reference, CancellationToken cancellationToken)
+        => EngagementReferenceQueries.LockAsync(dbContext, organizationId, reference, cancellationToken);
+
+    public Task<bool> HasOtherActiveReferenceAsync(Guid organizationId, string reference, Guid excludeEngagementId, CancellationToken cancellationToken)
+        => EngagementReferenceQueries.HasOtherActiveAsync(dbContext, organizationId, reference, excludeEngagementId, cancellationToken);
+
     public Task<Engagement?> LockAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken)
     {
         if (dbContext.Database.CurrentTransaction is null)

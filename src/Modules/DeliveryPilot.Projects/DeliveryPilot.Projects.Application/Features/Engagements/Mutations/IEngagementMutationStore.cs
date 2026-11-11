@@ -4,6 +4,8 @@ namespace DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
 
 public interface IEngagementMutationStore
 {
+    Task LockReferenceAsync(Guid organizationId, string reference, CancellationToken cancellationToken);
+    Task<bool> HasOtherActiveReferenceAsync(Guid organizationId, string reference, Guid excludeEngagementId, CancellationToken cancellationToken);
     Task<Engagement?> LockAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken);
     Task<EngagementMilestone?> FindMilestoneAsync(Guid organizationId, Guid engagementId, Guid milestoneId, CancellationToken cancellationToken);
     Task<EngagementContact?> FindContactAsync(Guid organizationId, Guid engagementId, Guid contactId, CancellationToken cancellationToken);

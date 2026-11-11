@@ -85,6 +85,62 @@ public sealed class Engagement
         return true;
     }
 
+    public IReadOnlyDictionary<string, EngagementFieldChange> UpdateDetails(
+        string? clientDisplayName,
+        string? clientLegalName,
+        string? clientCountryCode,
+        string? engagementName,
+        string? agreementReference,
+        DateOnly agreementSignedOn,
+        string? documentUrl,
+        string? reason,
+        DateTimeOffset occurredAt)
+    {
+        EnsureActive();
+        string display = EngagementFields.RequiredText(clientDisplayName, 200, nameof(clientDisplayName));
+        string? legal = EngagementFields.OptionalText(clientLegalName, 200, nameof(clientLegalName));
+        string? country = EngagementFields.CountryCode(clientCountryCode);
+        string? name = EngagementFields.OptionalText(engagementName, 200, nameof(engagementName));
+        string reference = EngagementFields.RequiredText(agreementReference, 100, nameof(agreementReference));
+        DateOnly signedOn = EngagementFields.CalendarDate(agreementSignedOn, nameof(agreementSignedOn));
+        string? url = EngagementFields.DocumentUrl(documentUrl);
+        EngagementFields.OptionalText(reason, 2000, nameof(reason));
+        if (reference != AgreementReference || signedOn != AgreementSignedOn)
+        {
+            EngagementFields.RequiredText(reason, 2000, nameof(reason));
+        }
+
+        var changed = new Dictionary<string, EngagementFieldChange>();
+        AddChange("clientDisplayName", ClientDisplayName, display);
+        AddChange("clientLegalName", ClientLegalName, legal);
+        AddChange("clientCountryCode", ClientCountryCode, country);
+        AddChange("engagementName", EngagementName, name);
+        AddChange("agreementReference", AgreementReference, reference);
+        AddChange("agreementSignedOn", AgreementSignedOn, signedOn);
+        AddChange("documentUrl", DocumentUrl, url);
+        if (changed.Count > 0)
+        {
+            ClientDisplayName = display;
+            ClientLegalName = legal;
+            ClientCountryCode = country;
+            EngagementName = name;
+            AgreementReference = reference;
+            AgreementSignedOn = signedOn;
+            DocumentUrl = url;
+            AdvanceVersion(occurredAt);
+        }
+
+        return changed;
+
+        void AddChange<T>(string field, T previous, T current)
+        {
+            if (!EqualityComparer<T>.Default.Equals(previous, current))
+            {
+                changed.Add(field, new EngagementFieldChange(previous, current));
+            }
+        }
+    }
+
     public void RecordChange(DateTimeOffset occurredAt)
     {
         EnsureActive();

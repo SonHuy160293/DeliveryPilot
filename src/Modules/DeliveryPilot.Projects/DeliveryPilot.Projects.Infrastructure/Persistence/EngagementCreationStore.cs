@@ -24,13 +24,7 @@ public sealed class EngagementCreationStore(ProjectsDbContext dbContext) : IEnga
     }
 
     public Task LockReferenceAsync(Guid organizationId, string reference, CancellationToken cancellationToken)
-    {
-        EnsureTransaction();
-
-        // PostgreSQL lower() matches the expression index's collation, including non-ASCII references.
-        string scope = $"engagement.reference:v1:{organizationId:D}:";
-        return dbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({scope} || lower({reference}), 0))", cancellationToken);
-    }
+        => EngagementReferenceQueries.LockAsync(dbContext, organizationId, reference, cancellationToken);
 
     public async Task<EngagementCreationSnapshot?> FindReplayAsync(Guid organizationId, Guid userId, Guid key, EngagementCreationDetails details, CancellationToken cancellationToken)
     {
@@ -63,14 +57,7 @@ public sealed class EngagementCreationStore(ProjectsDbContext dbContext) : IEnga
     }
 
     public Task<bool> HasActiveReferenceAsync(Guid organizationId, string reference, CancellationToken cancellationToken)
-    {
-        EnsureTransaction();
-        return dbContext.Engagements.FromSqlInterpolated($"""
-            SELECT * FROM engagement."Engagements"
-            WHERE "OrganizationId" = {organizationId} AND "Status" = 'Active'
-              AND lower("AgreementReference") = lower({reference})
-            """).AsNoTracking().AnyAsync(cancellationToken);
-    }
+        => EngagementReferenceQueries.HasOtherActiveAsync(dbContext, organizationId, reference, Guid.Empty, cancellationToken);
 
     public void Stage(Engagement engagement, EngagementEvent entry, Guid userId, Guid key, EngagementCreationDetails details, DateTimeOffset now)
     {

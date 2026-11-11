@@ -72,4 +72,18 @@ public sealed class EngagementMutationService(IEngagementMutationStore store, IW
         => store.InvalidateOutstandingCodeAsync(context.Engagement.OrganizationId, context.Engagement.Id, context.OccurredAt, cancellationToken);
 
     public void AddLinkCode(EngagementLinkCode code) => store.AddLinkCode(code);
+
+    public async Task<bool> CheckDuplicateReferenceAsync(EngagementMutationContext context, CancellationToken cancellationToken)
+    {
+        Engagement engagement = context.Engagement;
+        await store.LockReferenceAsync(engagement.OrganizationId, engagement.AgreementReference, cancellationToken);
+        CurrentUser? principal = currentUserProvider.GetCurrentUser();
+        if (!Guid.TryParse(principal?.SessionId, out Guid sessionId) || sessionId == Guid.Empty)
+        {
+            throw new UnauthorizedException("Authentication.Required", "Authentication is required.");
+        }
+
+        await authority.RequireAsync(context.UserId, engagement.OrganizationId, sessionId, WorkspacePermissions.EngagementsManage, cancellationToken);
+        return await store.HasOtherActiveReferenceAsync(engagement.OrganizationId, engagement.AgreementReference, engagement.Id, cancellationToken);
+    }
 }

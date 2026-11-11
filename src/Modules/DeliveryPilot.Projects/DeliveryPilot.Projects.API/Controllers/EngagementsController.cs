@@ -6,6 +6,7 @@ using DeliveryPilot.Projects.Application.Features.Engagements.Commands.CloseEnga
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.ReopenEngagement;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.RemoveEngagementClientLink;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.SetEngagementContractValue;
+using DeliveryPilot.Projects.Application.Features.Engagements.Commands.UpdateEngagementDetails;
 using DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
 using DeliveryPilot.Projects.Application.Features.Engagements.Queries;
 using DeliveryPilot.Projects.Application.Features.Engagements.Queries.GetEngagement;
@@ -24,6 +25,26 @@ namespace DeliveryPilot.Projects.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class EngagementsController(ISender sender) : ApiController(sender)
 {
+    [HttpPut("{engagementId:guid}")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> UpdateAsync(Guid organizationId, Guid engagementId, UpdateEngagementRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateEngagementDetailsCommand(
+            organizationId,
+            engagementId,
+            request.ExpectedVersion,
+            request.ClientDisplayName,
+            request.AgreementReference,
+            request.AgreementSignedOn,
+            request.ClientLegalName,
+            request.ClientCountryCode,
+            request.EngagementName,
+            request.DocumentUrl,
+            request.Reason);
+        Result<UpdatedEngagementDetails> result = await Sender.SendAsync(command, cancellationToken);
+        return Ok(result.Value);
+    }
+
     [HttpPost("{engagementId:guid}/client-link/remove")]
     [RequestSizeLimit(16384)]
     public async Task<IActionResult> RemoveClientLinkAsync(Guid organizationId, Guid engagementId, RemoveEngagementClientLinkRequest request, CancellationToken cancellationToken)

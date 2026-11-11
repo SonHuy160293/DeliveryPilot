@@ -49,6 +49,8 @@ public sealed class EngagementMutationHttpTests : IAsyncLifetime
     public async Task DisposeAsync()
     {
         await using ProjectsDbContext db = Context();
+        IQueryable<Guid> engagementIds = db.Engagements.Where(x => x.OrganizationId == _organizationId).Select(x => x.Id);
+        await db.Set<DeliveryPilot.EntityFrameworkCore.Reliability.IdempotencyRecord>().Where(x => x.ResultResourceId != null && engagementIds.Contains(x.ResultResourceId.Value)).ExecuteDeleteAsync();
         await db.EngagementEvents.Where(x => x.OrganizationId == _organizationId).ExecuteDeleteAsync();
         await db.EngagementMilestones.Where(x => x.OrganizationId == _organizationId).ExecuteDeleteAsync();
         await db.EngagementContacts.Where(x => x.OrganizationId == _organizationId).ExecuteDeleteAsync();
@@ -899,6 +901,196 @@ public sealed class EngagementMutationHttpTests : IAsyncLifetime
         await AssertErrorAsync(history, HttpStatusCode.NotFound);
     }
 
+    [PostgreSqlFact]
+    public async Task DetailUpdatesRecordOnlyChangedFieldsAndNormalizeNoOps()
+    {
+        using HttpResponseMessage changed = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(reference: " REF-2 ", legalName: " Client Ltd ", reason: "Amendment"));
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        using HttpResponseMessage noOp = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(version: 2, reference: "REF-2", legalName: "Client Ltd"));
+        Assert.Equal(HttpStatusCode.OK, noOp.StatusCode);
+        using JsonDocument noOpBody = await JsonDocument.ParseAsync(await noOp.Content.ReadAsStreamAsync());
+        Assert.Equal(2, noOpBody.RootElement.GetProperty("data").GetProperty("version").GetInt64());
+        using HttpResponseMessage cleared = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(version: 2, reference: "REF-2"));
+        Assert.Equal(HttpStatusCode.OK, cleared.StatusCode);
+        await using ProjectsDbContext db = Context();
+        Engagement actual = await db.Engagements.SingleAsync(x => x.Id == _engagementId);
+        Assert.Null(actual.ClientLegalName);
+        Assert.Equal(3, actual.Version);
+        EngagementEvent[] history = await db.EngagementEvents.OrderBy(x => x.EngagementVersion).ToArrayAsync();
+        Assert.Equal(2, history.Length);
+        Assert.All(history, entry => Assert.Equal("engagement.details-changed", entry.EventType));
+        Assert.Equal(_userId, history[0].ActorUserId);
+        Assert.Equal(_organizationId, history[0].ActorOrganizationId);
+        Assert.Equal(TimeSpan.Zero, history[0].OccurredAt.Offset);
+        Assert.Equal("Amendment", history[0].Reason);
+        using JsonDocument eventDetails = JsonDocument.Parse(history[0].Details);
+        JsonElement changes = eventDetails.RootElement.GetProperty("changed");
+        Assert.Equal(2, changes.EnumerateObject().Count());
+        Assert.Equal("REF-1", changes.GetProperty("agreementReference").GetProperty("previous").GetString());
+        Assert.Equal("REF-2", changes.GetProperty("agreementReference").GetProperty("new").GetString());
+        using HttpResponseMessage read = await ReadAsync("/history");
+        using JsonDocument readBody = await JsonDocument.ParseAsync(await read.Content.ReadAsStreamAsync());
+        JsonElement[] entries = readBody.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().ToArray();
+        JsonElement clearEntry = entries.Single(x => x.GetProperty("engagementVersion").GetInt64() == 3);
+        Assert.Equal(JsonValueKind.Null, clearEntry.GetProperty("details").GetProperty("changed").GetProperty("clientLegalName").GetProperty("new").ValueKind);
+    }
+
+    [PostgreSqlTheory]
+    [InlineData("reference-reason")]
+    [InlineData("date-reason")]
+    [InlineData("country")]
+    [InlineData("url")]
+    [InlineData("long-name")]
+    [InlineData("required")]
+    [InlineData("version")]
+    [InlineData("unknown")]
+    public async Task DetailUpdatesRejectInvalidInputsWithoutChanges(string scenario)
+    {
+        Dictionary<string, object?> body = DetailsBody();
+        switch (scenario)
+        {
+            case "reference-reason": body["agreementReference"] = "Different"; break;
+            case "date-reason": body["agreementSignedOn"] = "2027-01-01"; break;
+            case "country": body["clientCountryCode"] = "ZZ"; break;
+            case "url": body["documentUrl"] = "http://example.test"; break;
+            case "long-name": body["clientDisplayName"] = new string('X', 201); break;
+            case "required": body.Remove("clientDisplayName"); break;
+            case "version": body.Remove("expectedVersion"); break;
+            case "unknown": body["organizationId"] = _organizationId; break;
+        }
+
+        using HttpResponseMessage response = await SendAsync(HttpMethod.Put, string.Empty, body);
+        await AssertErrorAsync(response, HttpStatusCode.BadRequest);
+        await using ProjectsDbContext db = Context();
+        Assert.Equal(1, (await db.Engagements.SingleAsync(x => x.Id == _engagementId)).Version);
+        Assert.Empty(await db.EngagementEvents.Where(x => x.OrganizationId == _organizationId).ToArrayAsync());
+    }
+
+    [PostgreSqlFact]
+    public async Task DetailUpdatesWarnForOtherActiveReferencesButAllowDuplicates()
+    {
+        var other = Engagement.Create(_organizationId, _userId, DateTimeOffset.UtcNow, "Other", "MATCH", new DateOnly(2026, 1, 1));
+        await using (ProjectsDbContext db = Context())
+        {
+            db.Engagements.Add(other);
+            await db.SaveChangesAsync();
+        }
+
+        using HttpResponseMessage duplicate = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(reference: " match ", reason: "Correct"));
+        Assert.Equal(HttpStatusCode.OK, duplicate.StatusCode);
+        using JsonDocument duplicateBody = await JsonDocument.ParseAsync(await duplicate.Content.ReadAsStreamAsync());
+        Assert.True(duplicateBody.RootElement.GetProperty("data").GetProperty("duplicateAgreementReference").GetBoolean());
+        using HttpResponseMessage noOp = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(version: 2, reference: "match"));
+        using JsonDocument noOpBody = await JsonDocument.ParseAsync(await noOp.Content.ReadAsStreamAsync());
+        Assert.False(noOpBody.RootElement.GetProperty("data").GetProperty("duplicateAgreementReference").GetBoolean());
+        await using (ProjectsDbContext db = Context())
+        {
+            Engagement current = await db.Engagements.SingleAsync(x => x.Id == other.Id);
+            current.Close(_userId, "Complete", DateTimeOffset.UtcNow);
+            await db.SaveChangesAsync();
+        }
+
+        using HttpResponseMessage closedOnly = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(version: 2, reference: "MATCH", reason: "Case correction"));
+        Assert.Equal(HttpStatusCode.OK, closedOnly.StatusCode);
+        using JsonDocument closedBody = await JsonDocument.ParseAsync(await closedOnly.Content.ReadAsStreamAsync());
+        Assert.False(closedBody.RootElement.GetProperty("data").GetProperty("duplicateAgreementReference").GetBoolean());
+        Assert.Equal(3, closedBody.RootElement.GetProperty("data").GetProperty("version").GetInt64());
+    }
+
+    [PostgreSqlFact]
+    public async Task DetailUpdatesHaveOneConcurrentWinnerAndRollbackOnEventFailure()
+    {
+        _factory.FailStaging = true;
+        using HttpResponseMessage failed = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(reference: "Fail", reason: "Correct"));
+        Assert.Equal(HttpStatusCode.InternalServerError, failed.StatusCode);
+        _factory.FailStaging = false;
+        HttpResponseMessage[] responses = await Task.WhenAll(
+            SendAsync(HttpMethod.Put, string.Empty, DetailsBody(name: "One")),
+            SendAsync(HttpMethod.Put, string.Empty, DetailsBody(name: "Two")));
+        try
+        {
+            Assert.Single(responses, response => response.StatusCode == HttpStatusCode.OK);
+            Assert.Single(responses, response => response.StatusCode == HttpStatusCode.Conflict);
+            await using ProjectsDbContext db = Context();
+            Engagement engagement = await db.Engagements.SingleAsync(x => x.Id == _engagementId);
+            Assert.Equal("REF-1", engagement.AgreementReference);
+            Assert.Equal(2, engagement.Version);
+            Assert.Single(await db.EngagementEvents.Where(x => x.OrganizationId == _organizationId).ToArrayAsync());
+        }
+        finally
+        {
+            foreach (HttpResponseMessage response in responses)
+            {
+                response.Dispose();
+            }
+        }
+    }
+
+    [PostgreSqlFact]
+    public async Task DetailUpdatesDenyUnauthorizedCrossTenantAndClosedRequests()
+    {
+        _authority.Mode = "missing-permission";
+        using HttpResponseMessage denied = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(name: "Changed"));
+        await AssertErrorAsync(denied, HttpStatusCode.Forbidden);
+        _authority.Mode = "unavailable";
+        using HttpResponseMessage unavailable = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(name: "Changed"));
+        await AssertErrorAsync(unavailable, HttpStatusCode.ServiceUnavailable);
+        _authority.Mode = "allowed";
+        using HttpResponseMessage crossTenant = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(name: "Changed"), Guid.NewGuid());
+        await AssertErrorAsync(crossTenant, HttpStatusCode.NotFound);
+        using HttpResponseMessage close = await SendAsync(HttpMethod.Post, "close", new { expectedVersion = 1, reason = "Closed" });
+        Assert.Equal(HttpStatusCode.OK, close.StatusCode);
+        using HttpResponseMessage closed = await SendAsync(HttpMethod.Put, string.Empty, DetailsBody(version: 2, name: "Changed"));
+        await AssertErrorAsync(closed, HttpStatusCode.Conflict, "Engagement.Closed");
+    }
+
+    [PostgreSqlFact]
+    public async Task DetailUpdateAndCreationShareReferenceSerialization()
+    {
+        using HttpClient creator = _factory.CreateClient();
+        creator.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Token());
+        creator.DefaultRequestHeaders.Add("Idempotency-Key", Guid.NewGuid().ToString());
+        HttpResponseMessage[] responses = await Task.WhenAll(
+            creator.PostAsJsonAsync($"/api/v1/organizations/{_organizationId:D}/engagements", new { clientDisplayName = "Other", agreementReference = "Shared", agreementSignedOn = "2026-01-01" }),
+            SendAsync(HttpMethod.Put, string.Empty, DetailsBody(reference: "shared", reason: "Correct")));
+        try
+        {
+            Assert.Equal(HttpStatusCode.Created, responses[0].StatusCode);
+            Assert.Equal(HttpStatusCode.OK, responses[1].StatusCode);
+            using JsonDocument created = await JsonDocument.ParseAsync(await responses[0].Content.ReadAsStreamAsync());
+            using JsonDocument updated = await JsonDocument.ParseAsync(await responses[1].Content.ReadAsStreamAsync());
+            bool creationWarning = created.RootElement.GetProperty("data").GetProperty("duplicateAgreementReference").GetBoolean();
+            bool updateWarning = updated.RootElement.GetProperty("data").GetProperty("duplicateAgreementReference").GetBoolean();
+            Assert.True(creationWarning ^ updateWarning);
+        }
+        finally
+        {
+            foreach (HttpResponseMessage response in responses)
+            {
+                response.Dispose();
+            }
+        }
+    }
+
+    private static Dictionary<string, object?> DetailsBody(long version = 1, string reference = "REF-1", string? legalName = null, string? reason = null, string? name = null)
+    {
+        var body = new Dictionary<string, object?>
+        {
+            ["expectedVersion"] = version,
+            ["clientDisplayName"] = "Client",
+            ["agreementReference"] = reference,
+            ["agreementSignedOn"] = "2026-01-01",
+            ["reason"] = reason,
+            ["engagementName"] = name,
+        };
+        if (legalName is not null)
+        {
+            body["clientLegalName"] = legalName;
+        }
+
+        return body;
+    }
+
     private async Task<Guid> AddContactAsync(string name, string email, string role)
     {
         using HttpResponseMessage response = await SendAsync(HttpMethod.Post, "contacts", new { name, email, contactRole = role });
@@ -1014,6 +1206,8 @@ public sealed class EngagementMutationHttpTests : IAsyncLifetime
 
     private sealed class FailingStore(IEngagementMutationStore inner, Func<bool> shouldFail) : IEngagementMutationStore
     {
+        public Task LockReferenceAsync(Guid organizationId, string reference, CancellationToken cancellationToken) => inner.LockReferenceAsync(organizationId, reference, cancellationToken);
+        public Task<bool> HasOtherActiveReferenceAsync(Guid organizationId, string reference, Guid excludeEngagementId, CancellationToken cancellationToken) => inner.HasOtherActiveReferenceAsync(organizationId, reference, excludeEngagementId, cancellationToken);
         public Task<Engagement?> LockAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken) => inner.LockAsync(organizationId, engagementId, cancellationToken);
         public Task<EngagementMilestone?> FindMilestoneAsync(Guid organizationId, Guid engagementId, Guid milestoneId, CancellationToken cancellationToken) => inner.FindMilestoneAsync(organizationId, engagementId, milestoneId, cancellationToken);
         public Task<EngagementContact?> FindContactAsync(Guid organizationId, Guid engagementId, Guid contactId, CancellationToken cancellationToken) => inner.FindContactAsync(organizationId, engagementId, contactId, cancellationToken);
@@ -1047,7 +1241,7 @@ public sealed class EngagementMutationHttpTests : IAsyncLifetime
             int checks = Interlocked.Increment(ref _checks);
             OrganizationAuthorityCheckResult result = Mode == "denied" || (Mode == "revoked-after-lock" && checks > 1)
                 ? OrganizationAuthorityCheckResult.Denied(DateTimeOffset.UtcNow)
-                : new OrganizationAuthorityCheckResult(AuthorityDecision.Allowed, DateTimeOffset.UtcNow, request.OrganizationId, 1, Guid.NewGuid(), 1, false, Mode == "client-admin", Mode == "missing-permission" ? [] : [WorkspacePermissions.EngagementsManage]);
+                : new OrganizationAuthorityCheckResult(AuthorityDecision.Allowed, DateTimeOffset.UtcNow, request.OrganizationId, 1, Guid.NewGuid(), 1, false, Mode == "client-admin", Mode == "missing-permission" ? [] : [WorkspacePermissions.EngagementsManage, WorkspacePermissions.EngagementsCreate]);
             return Task.FromResult(Mode == "unavailable" ? FakeIdentityAuthorityClient.Unavailable<OrganizationAuthorityCheckResult>() : IntegrationResult<OrganizationAuthorityCheckResult>.Success(result, HttpStatusCode.OK));
         }
     }
