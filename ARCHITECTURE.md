@@ -56,7 +56,7 @@ HTTP surface (all routes under `api/v1/`):
 | `OrganizationPermissionsController` | `GET organizations/{id}/permissions` | Bearer |
 | `OrganizationInvitationsController` | `GET`, `POST organizations/{id}/invitations`, `GET …/{invitationId}`, `POST …/{invitationId}/resend\|reissue\|cancel` | Bearer |
 | `InvitationResponsesController` | `POST organization-invitations/{invitationId}/preview\|accept\|decline` (proof in body) | Bearer |
-| `UsersController` | `GET integrations/users/{userId}` | Integration API key |
+| `UsersController` | `GET integrations/users/{userId}`, `POST integrations/users/lookup` (1–100 IDs; display data only, unknown users omitted) | Integration API key |
 | `AuthorityController` | `POST integrations/authority/session-checks`, `POST integrations/authority/organization-checks` (internal session and workspace authority checks for other hosts; a denial is a 200 `denied` decision with no detail) | Integration API key |
 | `InvitationDeliveryEligibilityController` | `GET integrations/organization-invitation-deliveries/{deliveryMessageId}/eligibility` | Invitation dispatch key |
 
