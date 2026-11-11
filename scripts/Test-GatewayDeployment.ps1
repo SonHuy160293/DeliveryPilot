@@ -29,7 +29,7 @@ function Http-Status([string]$Path, [string]$Method = 'GET', [hashtable]$Headers
         foreach ($key in $Headers.Keys) { $null = $request.Headers.TryAddWithoutValidation($key, [string]$Headers[$key]) }
         $response = $client.SendAsync($request).GetAwaiter().GetResult()
         try {
-            if ($Path -match '^/identity/api/v1/(organizations|organization-invitations|me/(organizations|ownership-nominations))(/|$)') {
+            if ($Path -match '^/(identity/api/v1/(organizations|organization-invitations|me/(organizations|ownership-nominations))|projects/api/v1/organizations)(/|$)') {
                 Assert-True ($response.Headers.CacheControl -and $response.Headers.CacheControl.NoStore) 'Private response omitted no-store.'
             }
             return [int]$response.StatusCode
@@ -65,18 +65,26 @@ try {
     Assert-True ((Http-Status '/identity/api/v1/auth/refresh' 'POST') -eq 401) 'Refresh route did not reach Identity.'
     Assert-True ((Http-Status '/identity/api/v1/auth/logout' 'POST') -eq 204) 'Logout route did not reach Identity.'
     $routeModel = Get-Content -LiteralPath (Join-Path $repoRoot 'src/Gateway/DeliveryPilot.Gateway/proxy.json') -Raw | ConvertFrom-Json
-    $organizationRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Name -notin @('identity-register','identity-login','identity-refresh','identity-logout','notification-resend') })
+    $organizationRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Value.ClusterId -eq 'identity' -and $_.Name -notin @('identity-register','identity-login','identity-refresh','identity-logout') })
     Assert-True ($organizationRoutes.Count -eq 30) 'Organization allowlist changed without acceptance review.'
     foreach ($entry in $organizationRoutes) {
         $path = [regex]::Replace($entry.Value.Match.Path, '\{\w+:guid\}', '019a0000-0000-7000-8000-000000000001')
         Assert-True ((Http-Status $path $entry.Value.Match.Methods[0]) -eq 401) 'Protected Organization action did not reach bearer authentication.'
         Assert-True ((Http-Status $path 'DELETE') -eq 405) 'Organization action accepted an unsupported method.'
     }
+    $projectsRoutes = @($routeModel.ReverseProxy.Routes.PSObject.Properties | Where-Object { $_.Value.ClusterId -eq 'projects' })
+    Assert-True ($projectsRoutes.Count -eq 21) 'Projects allowlist changed without acceptance review.'
+    foreach ($entry in $projectsRoutes) {
+        $path = [regex]::Replace($entry.Value.Match.Path, '\{\w+:guid\}', '019a0000-0000-7000-8000-000000000001')
+        Assert-True ((Http-Status $path $entry.Value.Match.Methods[0]) -eq 401) 'Protected Projects action did not reach bearer authentication.'
+        Assert-True ((Http-Status $path 'DELETE') -eq 405) 'Projects action accepted an unsupported method.'
+    }
+    & (Join-Path $PSScriptRoot 'Test-EngagementGatewayJourney.ps1') -Config $Config
     Assert-True ((Http-Status '/identity/api/v1/integrations/organization-invitation-deliveries/019a0000-0000-7000-8000-000000000001/eligibility' 'POST') -eq 404) 'Invitation eligibility became public.'
     Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST') -eq 400) 'Webhook route did not reach Notification.'
     Assert-True ((Http-Status '/identity/api/v1/integrations/users/123' 'POST') -eq 404) 'Integration path became public.'
     Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend') -eq 405) 'Wrong method did not return 405.'
-    foreach ($module in @('identity','notification')) {
+    foreach ($module in @('identity','notification','projects')) {
         $model = Compose-Model $module
         Assert-True (-not $model.services.api.ports) 'Server API model publishes a host port.'
         & docker exec ($stack + '-gateway-gateway-1') curl --fail --silent --max-time 5 ('http://' + $module + '-api:8080/health/ready') *> $log
@@ -88,6 +96,9 @@ try {
             Assert-True ((Http-Status '/health/ready') -eq 200) 'Backend outage made gateway unready.'
             if ($module -eq 'notification') {
                 Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST') -in @(502,504)) 'Unavailable Notification destination did not return a forwarding failure.'
+            } elseif ($module -eq 'projects') {
+                Assert-True ((Http-Status '/projects/api/v1/organizations/019a0000-0000-7000-8000-000000000001/engagements') -in @(502,504)) 'Unavailable Projects destination did not return a forwarding failure.'
+                Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST') -eq 400) 'Stopping Projects interrupted Identity.'
             } else {
                 Assert-True ((Http-Status '/notification/api/v1/webhooks/email/resend' 'POST') -eq 400) 'Stopping Identity interrupted Notification.'
                 Assert-True ((Http-Status '/identity/api/v1/auth/register' 'POST') -in @(502,504)) 'Unavailable Identity destination did not return a forwarding failure.'
@@ -115,6 +126,8 @@ try {
     Assert-True ((Http-Status '/identity/api/v1/auth/login' 'POST' $headers) -eq 400) 'Production login forwarding failed.'
     Assert-True ((Http-Status '/identity/api/v1/me/organizations' 'GET' $headers) -eq 401) 'Production Organization read forwarding failed.'
     Assert-True ((Http-Status '/identity/api/v1/organizations' 'POST' $headers) -eq 401) 'Production Organization mutation forwarding failed.'
+    Assert-True ((Http-Status '/projects/api/v1/organizations/019a0000-0000-7000-8000-000000000001/engagements' 'GET' $headers) -eq 401) 'Production Projects read forwarding failed.'
+    Assert-True ((Http-Status '/projects/api/v1/organizations/019a0000-0000-7000-8000-000000000001/engagement-links/confirm' 'POST' $headers) -eq 401) 'Production Projects confirmation forwarding failed.'
     Write-Output 'PASS: production webhook, registration, and login forwarding.'
 } finally {
     if ($restore) {

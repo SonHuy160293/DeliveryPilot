@@ -17,7 +17,8 @@ public sealed class GatewayRequestMiddleware(RequestDelegate next, ILogger<Gatew
         if (context.Request.Path.StartsWithSegments("/identity/api/v1/organizations", StringComparison.OrdinalIgnoreCase)
             || context.Request.Path.StartsWithSegments("/identity/api/v1/organization-invitations", StringComparison.OrdinalIgnoreCase)
             || context.Request.Path.StartsWithSegments("/identity/api/v1/me/organizations", StringComparison.OrdinalIgnoreCase)
-            || context.Request.Path.StartsWithSegments("/identity/api/v1/me/ownership-nominations", StringComparison.OrdinalIgnoreCase))
+            || context.Request.Path.StartsWithSegments("/identity/api/v1/me/ownership-nominations", StringComparison.OrdinalIgnoreCase)
+            || context.Request.Path.StartsWithSegments("/projects/api/v1/organizations", StringComparison.OrdinalIgnoreCase))
         {
             // OnStarting survives Response.Clear in the safe error writer and overrides upstream caching.
             context.Response.OnStarting(() =>

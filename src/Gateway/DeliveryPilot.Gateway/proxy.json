@@ -835,6 +835,510 @@
           }
         ],
         "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-list": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements",
+          "Methods": [
+            "GET"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-create": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-detail": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}",
+          "Methods": [
+            "GET"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-update": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}",
+          "Methods": [
+            "PUT"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-history": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/history",
+          "Methods": [
+            "GET"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-value": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/contract-value",
+          "Methods": [
+            "PUT"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-close": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/close",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-reopen": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/reopen",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-code": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/link-codes",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-engagements-unlink": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/client-link/remove",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-milestones-add": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/milestones",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-milestones-edit": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/milestones/{milestoneId:guid}",
+          "Methods": [
+            "PUT"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-milestones-date": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/milestones/{milestoneId:guid}/change-date",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-milestones-status": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/milestones/{milestoneId:guid}/change-status",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-contacts-add": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/contacts",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-contacts-edit": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/contacts/{contactId:guid}",
+          "Methods": [
+            "PUT"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-contacts-remove": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagements/{engagementId:guid}/contacts/{contactId:guid}/remove",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-links-list": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagement-links",
+          "Methods": [
+            "GET"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-links-preview": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagement-links/preview",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-links-confirm": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagement-links/confirm",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
+      },
+      "projects-links-remove": {
+        "ClusterId": "projects",
+        "Match": {
+          "Path": "/projects/api/v1/organizations/{organizationId:guid}/engagement-links/{engagementId:guid}/remove",
+          "Methods": [
+            "POST"
+          ]
+        },
+        "Timeout": "00:00:30",
+        "MaxRequestBodySize": 16384,
+        "Transforms": [
+          {
+            "PathRemovePrefix": "/projects"
+          },
+          {
+            "X-Forwarded": "Set",
+            "Prefix": "Remove"
+          },
+          {
+            "RequestHeaderRemove": "Forwarded"
+          }
+        ],
+        "CorsPolicy": "ConfiguredCors"
       }
     },
     "Clusters": {
@@ -858,6 +1362,16 @@
         "Destinations": {
           "notification-api": {
             "Address": "http://127.0.0.1:19092/"
+          }
+        }
+      },
+      "projects": {
+        "HttpRequest": {
+          "ActivityTimeout": "00:00:30"
+        },
+        "Destinations": {
+          "projects-api": {
+            "Address": "http://127.0.0.1:19093/"
           }
         }
       }
