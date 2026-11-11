@@ -1,6 +1,8 @@
 using DeliveryPilot.AspNetCore.Controllers;
 using DeliveryPilot.Projects.API.Contracts.Engagements;
 using DeliveryPilot.Projects.Application.Features.Engagements.ClientLinks;
+using DeliveryPilot.Projects.Application.Features.Engagements.Commands.PreviewEngagementLink;
+using DeliveryPilot.Projects.Application.Features.Engagements.Commands.ConfirmEngagementLink;
 using DeliveryPilot.SharedKernel.Abstractions.Shared;
 using DeliveryPilot.SharedKernel.Cqrs;
 using Microsoft.AspNetCore.Authorization;
@@ -13,6 +15,22 @@ namespace DeliveryPilot.Projects.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class EngagementLinksController(ISender sender) : ApiController(sender)
 {
+    [HttpPost("preview")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> PreviewAsync(Guid organizationId, EngagementLinkCodeRequest request, CancellationToken cancellationToken)
+    {
+        Result<EngagementLinkPreview> result = await Sender.SendAsync(new PreviewEngagementLinkCommand(organizationId, request.Code), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpPost("confirm")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> ConfirmAsync(Guid organizationId, EngagementLinkCodeRequest request, CancellationToken cancellationToken)
+    {
+        Result<EngagementLinkPreview> result = await Sender.SendAsync(new ConfirmEngagementLinkCommand(organizationId, request.Code), cancellationToken);
+        return Ok(result.Value);
+    }
+
     [HttpGet]
     public async Task<IActionResult> ListAsync(Guid organizationId, CancellationToken cancellationToken)
     {

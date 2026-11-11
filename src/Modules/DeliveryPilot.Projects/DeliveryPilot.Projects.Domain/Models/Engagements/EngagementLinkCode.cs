@@ -1,3 +1,5 @@
+using DeliveryPilot.SharedKernel.Exceptions;
+
 namespace DeliveryPilot.Projects.Domain.Models.Engagements;
 
 public sealed class EngagementLinkCode
@@ -23,6 +25,22 @@ public sealed class EngagementLinkCode
     public Guid? ConsumedForOrganizationId { get; private set; }
     public DateTimeOffset? InvalidatedAt { get; private set; }
     public long Version { get; private set; }
+
+    public bool IsUsableAt(DateTimeOffset now) => Status == OutstandingStatus && now < ExpiresAt;
+
+    public void Consume(Guid userId, Guid clientOrganizationId, DateTimeOffset now)
+    {
+        if (!IsUsableAt(now))
+        {
+            throw new NotFoundException("EngagementLink.InvalidCode", "The link code is invalid or unavailable.");
+        }
+
+        ConsumedByUserId = EngagementFields.NonEmptyId(userId, nameof(userId));
+        ConsumedForOrganizationId = EngagementFields.NonEmptyId(clientOrganizationId, nameof(clientOrganizationId));
+        ConsumedAt = now.ToUniversalTime();
+        Status = ConsumedStatus;
+        Version = checked(Version + 1);
+    }
 
     public bool Invalidate(DateTimeOffset occurredAt)
     {

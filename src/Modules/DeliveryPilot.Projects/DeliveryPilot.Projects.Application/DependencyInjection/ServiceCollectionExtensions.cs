@@ -17,6 +17,7 @@ public static class ServiceCollectionExtensions
             .AddScoped<EngagementMutationService>()
             .AddScoped<EngagementReadAuthorization>()
             .AddScoped<ClientLinkAuthorization>()
+            .AddScoped<EngagementLinkConfirmationService>()
             .AddApplicationCqrs()
             .AddApplicationPipelineBehaviors();
 

@@ -41,6 +41,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEngagementMutationStore, EngagementMutationStore>();
         services.AddScoped<IEngagementReadStore, EngagementReadStore>();
         services.AddScoped<IClientLinkStore, ClientLinkStore>();
+        services.AddOptions<EngagementLinkAttemptOptions>()
+            .Bind(configuration.GetSection("EngagementLinks:Attempts"))
+            .Validate(options => options.MaxFailures > 0 && options.Window > TimeSpan.Zero && options.Window <= TimeSpan.FromDays(1), "A positive attempt limit and a window of at most one day are required.")
+            .ValidateOnStart();
+        services.AddScoped<ILinkAttemptLimiter>(provider => new LinkAttemptLimiter(connectionString, provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EngagementLinkAttemptOptions>>()));
         services.AddSingleton<IEngagementLinkCodeGenerator, EngagementLinkCodeGenerator>();
 
         return services;

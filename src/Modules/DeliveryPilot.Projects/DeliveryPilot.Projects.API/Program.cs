@@ -79,6 +79,7 @@ try
         await next(context);
     });
     app.UseGlobalExceptionHandling();
+    app.UseMiddleware<EngagementLinkRateLimitMiddleware>();
     app.UseMiddleware<RequestBodyLimitMiddleware>();
     app.UseApiStatusCodeEnvelope();
     app.UseSerilogRequestLogging();

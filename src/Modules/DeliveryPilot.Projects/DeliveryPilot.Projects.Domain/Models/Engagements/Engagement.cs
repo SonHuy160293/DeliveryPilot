@@ -102,6 +102,23 @@ public sealed class Engagement
         return clientOrganizationId;
     }
 
+    public void EnsureCanConfirmClientLink(Guid clientOrganizationId)
+    {
+        if (Status != ActiveStatus || ClientOrganizationId is not null || clientOrganizationId == OrganizationId)
+        {
+            throw new NotFoundException("EngagementLink.InvalidCode", "The link code is invalid or unavailable.");
+        }
+    }
+
+    public void ConfirmClientLink(Guid clientOrganizationId, Guid userId, DateTimeOffset now)
+    {
+        EnsureCanConfirmClientLink(clientOrganizationId);
+        ClientOrganizationId = EngagementFields.NonEmptyId(clientOrganizationId, nameof(clientOrganizationId));
+        ClientLinkedByUserId = EngagementFields.NonEmptyId(userId, nameof(userId));
+        ClientLinkedAt = now.ToUniversalTime();
+        AdvanceVersion(now);
+    }
+
     public bool Close(Guid userId, string? reason, DateTimeOffset occurredAt)
     {
         EngagementFields.RequiredText(reason, 2000, nameof(reason));
