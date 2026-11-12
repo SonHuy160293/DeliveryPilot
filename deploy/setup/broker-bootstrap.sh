@@ -16,7 +16,11 @@ for module in identity notification projects; do
  read_pattern="^deliverypilot\.$module\."
  write_pattern="(^deliverypilot\.$module\.|^deliverypilot\.messaging\.unrouted$)"
  configure_pattern='^deliverypilot\.'
- if [[ "$module" == projects ]]; then configure_pattern="$read_pattern"; fi
+ if [[ "$module" == projects ]]; then
+   configure_pattern="$read_pattern"
+   read_pattern='(^deliverypilot\.projects\.|^deliverypilot\.notification\.project-guest-invitation-email-status\.v1$)'
+   write_pattern='(^deliverypilot\.projects\.|^deliverypilot\.notification\.project-guest-invitation-email-requested\.v1$|^deliverypilot\.messaging\.unrouted$)'
+ fi
  # Exchange binding requires read permission on the incoming receipt exchange.
  # This exact exchange exception does not grant reads of Notification's inbox.
  if [[ "$module" == identity ]]; then

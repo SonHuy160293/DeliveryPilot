@@ -1,4 +1,5 @@
 using DeliveryPilot.Notification.Domain.Models;
+using DeliveryPilot.Notification.Infrastructure.Email.Workers;
 using DeliveryPilot.Notification.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -64,9 +65,9 @@ public static class NotificationOperations
             id = Guid.Parse(args[3]);
             var job = await db.EmailDeliveries.SingleAsync(x => x.Id == id, ct);
             job.Redrive(DateTimeOffset.UtcNow);
-            if (job.RequestKind == "organization-invitation")
+            if (job.IsInvitation)
             {
-                InvitationStatusOutbox.Stage(db, job, "retrying", null, DateTimeOffset.UtcNow);
+                InvitationDeliveryStrategy.Stage(db, job, "retrying", null, DateTimeOffset.UtcNow);
             }
         }
 
@@ -80,9 +81,9 @@ public static class NotificationOperations
             var job = await db.EmailDeliveries.SingleAsync(x => x.Id == id, ct);
             string previousStatus = job.Status;
             job.ReconcileAccepted(DateTimeOffset.UtcNow, args[4]);
-            if (job.RequestKind == "organization-invitation" && previousStatus != job.Status)
+            if (job.IsInvitation && previousStatus != job.Status)
             {
-                InvitationStatusOutbox.Stage(db, job, "provider-accepted", null, DateTimeOffset.UtcNow);
+                InvitationDeliveryStrategy.Stage(db, job, "provider-accepted", null, DateTimeOffset.UtcNow);
             }
         }
 

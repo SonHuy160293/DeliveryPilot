@@ -22,6 +22,7 @@ public sealed class EmailPayloadProtection(IOptions<EmailDeliveryOptions> settin
 
     public byte[] Decrypt(EmailDeliveryRequestedV1 request) => EnvelopeEncryption.Decrypt(new(request.Payload.WrappedKey, request.Payload.Nonce, request.Payload.Tag, request.Payload.Ciphertext), request.AssociatedData(), File.ReadAllText(KeyPath(request.Payload.KeyId, ".private.pem")));
     public byte[] Decrypt(OrganizationInvitationEmailRequestedV1 request) => EnvelopeEncryption.Decrypt(new(request.Payload.WrappedKey, request.Payload.Nonce, request.Payload.Tag, request.Payload.Ciphertext), request.AssociatedData(), File.ReadAllText(KeyPath(request.Payload.KeyId, ".private.pem")));
+    public byte[] Decrypt(ProjectGuestInvitationEmailRequestedV1 request) => EnvelopeEncryption.Decrypt(new(request.Payload.WrappedKey, request.Payload.Nonce, request.Payload.Tag, request.Payload.Ciphertext), request.AssociatedData(), File.ReadAllText(KeyPath(request.Payload.KeyId, ".private.pem")));
     public string Freeze(Guid id, ReadOnlySpan<byte> plain)
     {
         var cipher = EnvelopeEncryption.Encrypt(plain, Encoding.UTF8.GetBytes($"{id:D}|rendered:v1"), File.ReadAllText(KeyPath(_options.ActiveKeyId, ".public.pem")));

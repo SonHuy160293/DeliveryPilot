@@ -146,6 +146,8 @@ services:
       Notification__EmailDelivery__MonthlyLimit: ${DELIVERYPILOT_EMAIL_MONTHLY_LIMIT:-3000}
       InvitationDispatch__IdentityOrigin: http://identity-api:8080/
       InvitationDispatch__ApiKeyFile: /run/secrets/invitation-dispatch-key.secret
+      ProjectGuestInvitationDispatch__ProjectsOrigin: http://projects-api:8080/
+      ProjectGuestInvitationDispatch__ApiKeyFile: /run/secrets/project-guest-invitation-dispatch-key.secret
       Observability__Enabled: ${DELIVERYPILOT_OBSERVABILITY_ENABLED:-false}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_SERVICE_NAME: DeliveryPilot.Notification.Worker

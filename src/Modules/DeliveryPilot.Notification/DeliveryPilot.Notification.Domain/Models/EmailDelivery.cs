@@ -42,9 +42,18 @@ public sealed class EmailDelivery
         return delivery;
     }
 
+    public static EmailDelivery CreateProjectGuestInvitation(Guid id, string hash, string encryptedRequest, DateTimeOffset created, DateTimeOffset expires)
+    {
+        EmailDelivery delivery = Create(id, hash, encryptedRequest, created, expires);
+        delivery.RequestKind = "project-guest-invitation";
+        return delivery;
+    }
+
+    public bool IsInvitation => RequestKind is "organization-invitation" or "project-guest-invitation";
+
     public long NextInvitationStatusSequence()
     {
-        if (RequestKind != "organization-invitation")
+        if (!IsInvitation)
         {
             throw new InvalidOperationException("Only invitation deliveries publish invitation status.");
         }
@@ -130,7 +139,7 @@ public sealed class EmailDelivery
 
     public void Obsolete()
     {
-        if (RequestKind != "organization-invitation")
+        if (!IsInvitation)
         {
             throw new InvalidOperationException("Only invitation deliveries can become obsolete.");
         }

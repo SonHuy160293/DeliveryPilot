@@ -386,7 +386,7 @@ namespace DeliveryPilot.Notification.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CkEmailDeliveryAttempts", "\"Attempts\" >= 0");
 
-                            t.HasCheckConstraint("CkEmailDeliveryRequestKind", "\"RequestKind\" IN ('verification','organization-invitation') AND \"InvitationStatusSequence\" >= 0");
+                            t.HasCheckConstraint("CkEmailDeliveryRequestKind", "\"RequestKind\" IN ('verification','organization-invitation','project-guest-invitation') AND \"InvitationStatusSequence\" >= 0");
 
                             t.HasCheckConstraint("CkEmailDeliveryStatus", "\"Status\" IN ('Pending','Processing','ProviderAccepted','DeadLetter','Expired','Suppressed')");
 

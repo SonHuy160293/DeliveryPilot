@@ -10,6 +10,7 @@ for name in jwt-key integration-key invitation-dispatch-key; do new_base64 "/sou
 for name in admin-password migrator-password runtime-password; do new_hex "/source/notification/$name.secret"; done
 for name in admin-password migrator-password api-password worker-password; do new_hex "/source/projects/$name.secret"; done
 new_base64 /source/projects/integration-key.secret
+new_base64 /source/projects/project-guest-invitation-dispatch-key.secret
 keys=/source/notification/keys
 if [[ ! -e "$keys/local-v1.private.pem" && ! -e "$keys/local-v1.public.pem" ]]; then
   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$keys/local-v1.private.pem" 2>/dev/null

@@ -22,9 +22,9 @@ public sealed class DeliveryMaintenanceWorker(IServiceScopeFactory scopes, ILogg
                 foreach (var job in expired)
                 {
                     job.Expire();
-                    if (job.RequestKind == "organization-invitation")
+                    if (job.IsInvitation)
                     {
-                        InvitationStatusOutbox.Stage(db, job, "expired", null, now);
+                        InvitationDeliveryStrategy.Stage(db, job, "expired", null, now);
                     }
                 }
 

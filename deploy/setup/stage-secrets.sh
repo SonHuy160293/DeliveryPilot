@@ -56,6 +56,7 @@ elif [[ "$module" == notification ]]; then
   copy_secret /source/notification/runtime-password.secret /staged/worker/database-password
   copy_secret /source/platform/notification-broker-password.secret /staged/worker/broker-password
   copy_secret /source/identity/invitation-dispatch-key.secret /staged/worker/invitation-dispatch-key.secret
+  copy_secret /source/projects/project-guest-invitation-dispatch-key.secret /staged/worker/project-guest-invitation-dispatch-key.secret
   copy_secret /source/notification/keys/recipient-hmac.secret /staged/api/recipient-hmac.secret
   for name in resend-api.secret resend-webhook.secret; do
     if [[ -f "/source/notification/keys/$name" ]]; then

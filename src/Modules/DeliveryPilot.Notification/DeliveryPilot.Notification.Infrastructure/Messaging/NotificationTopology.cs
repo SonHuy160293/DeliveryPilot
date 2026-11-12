@@ -17,6 +17,8 @@ public static class NotificationTopology
             config.Message<EmailDeliveryRecordedV1>(m => m.SetEntityName("deliverypilot.notification.email-recorded.v1"));
             config.Message<OrganizationInvitationEmailRequestedV1>(m => m.SetEntityName("deliverypilot.notification.organization-invitation-email-requested.v1"));
             config.Message<OrganizationInvitationEmailStatusV1>(m => m.SetEntityName("deliverypilot.notification.organization-invitation-email-status.v1"));
+            config.Message<ProjectGuestInvitationEmailRequestedV1>(m => m.SetEntityName("deliverypilot.notification.project-guest-invitation-email-requested.v1"));
+            config.Message<ProjectGuestInvitationEmailStatusV1>(m => m.SetEntityName("deliverypilot.notification.project-guest-invitation-email-status.v1"));
             config.ReceiveEndpoint("deliverypilot.notification.email-requested.v1", endpoint =>
             {
                 RabbitConfiguration.ConfigureQueue(endpoint, broker);
@@ -35,6 +37,18 @@ public static class NotificationTopology
                 endpoint.ConfigureConsumeTopology = false;
                 endpoint.Bind<OrganizationInvitationEmailRequestedV1>();
             });
+            config.ReceiveEndpoint("deliverypilot.notification.project-guest-invitation-email-requested.v1", endpoint =>
+            {
+                RabbitConfiguration.ConfigureQueue(endpoint, broker);
+                endpoint.ConfigureConsumeTopology = false;
+                endpoint.Bind<ProjectGuestInvitationEmailRequestedV1>();
+            });
+            config.ReceiveEndpoint("deliverypilot.projects.project-guest-invitation-email-status.v1", endpoint =>
+            {
+                RabbitConfiguration.ConfigureQueue(endpoint, broker);
+                endpoint.ConfigureConsumeTopology = false;
+                endpoint.Bind<ProjectGuestInvitationEmailStatusV1>();
+            });
             config.ReceiveEndpoint("deliverypilot.identity.organization-invitation-email-status.v1", endpoint =>
             {
                 RabbitConfiguration.ConfigureQueue(endpoint, broker);
@@ -49,6 +63,10 @@ public static class NotificationTopology
                 "deliverypilot.identity.email-recorded.v1_skipped",
                 "deliverypilot.notification.organization-invitation-email-requested.v1_error",
                 "deliverypilot.notification.organization-invitation-email-requested.v1_skipped",
+                "deliverypilot.notification.project-guest-invitation-email-requested.v1_error",
+                "deliverypilot.notification.project-guest-invitation-email-requested.v1_skipped",
+                "deliverypilot.projects.project-guest-invitation-email-status.v1_error",
+                "deliverypilot.projects.project-guest-invitation-email-status.v1_skipped",
                 "deliverypilot.identity.organization-invitation-email-status.v1_error",
                 "deliverypilot.identity.organization-invitation-email-status.v1_skipped",
                 "deliverypilot.messaging.unrouted"

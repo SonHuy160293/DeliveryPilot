@@ -11,8 +11,24 @@ public static class InvitationStatusOutbox
     {
         long sequence = job.NextInvitationStatusSequence();
         string? safeCode = OrganizationInvitationEmailStatusV1.IsAllowedFailureCode(failureCode) ? failureCode : "Other";
-        var message = new OrganizationInvitationEmailStatusV1(Guid.CreateVersion7(), job.Id, "notification", sequence, now.ToUniversalTime(), status, safeCode);
-        message.Validate();
-        db.Set<OutboxMessage>().Add(OutboxMessage.Create(message.MessageId, OrganizationInvitationEmailStatusV1.EventType, 1, job.Id, sequence, JsonSerializer.Serialize(message), job.Id, job.Id, now));
+        Guid messageId = Guid.CreateVersion7();
+        string eventType;
+        string json;
+        if (job.RequestKind == "project-guest-invitation")
+        {
+            var message = new ProjectGuestInvitationEmailStatusV1(messageId, job.Id, "notification", sequence, now.ToUniversalTime(), status, safeCode);
+            message.Validate();
+            eventType = ProjectGuestInvitationEmailStatusV1.EventType;
+            json = JsonSerializer.Serialize(message);
+        }
+        else
+        {
+            var message = new OrganizationInvitationEmailStatusV1(messageId, job.Id, "notification", sequence, now.ToUniversalTime(), status, safeCode);
+            message.Validate();
+            eventType = OrganizationInvitationEmailStatusV1.EventType;
+            json = JsonSerializer.Serialize(message);
+        }
+
+        db.Set<OutboxMessage>().Add(OutboxMessage.Create(messageId, eventType, 1, job.Id, sequence, json, job.Id, job.Id, now));
     }
 }

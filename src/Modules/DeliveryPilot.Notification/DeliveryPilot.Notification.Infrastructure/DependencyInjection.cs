@@ -42,12 +42,16 @@ public static class DependencyInjection
         services.AddDbContext<NotificationInboxDbContext>(options => options.UseNpgsql(connection));
         services.AddScoped<IUnitOfWork, NotificationUnitOfWork>();
         services.AddScoped<IEmailDeliveryRepository, EmailDeliveryRepository>();
+        services.AddScoped<IProjectGuestInvitationRepository, ProjectGuestInvitationRepository>();
         return services;
     }
 
     public static IServiceCollection AddNotificationEmail(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddHttpClient<IInvitationDispatchEligibility, InvitationDispatchEligibility>(client => client.Timeout = TimeSpan.FromSeconds(2))
+            .RemoveAllLoggers()
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, UseCookies = false, ConnectTimeout = TimeSpan.FromSeconds(2) });
+        services.AddHttpClient<IProjectGuestInvitationDispatchEligibility, ProjectGuestInvitationDispatchEligibility>(client => client.Timeout = TimeSpan.FromSeconds(2))
             .RemoveAllLoggers()
             .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false, UseCookies = false, ConnectTimeout = TimeSpan.FromSeconds(2) });
         var options = configuration.GetSection("Notification:EmailDelivery").Get<EmailDeliveryOptions>() ?? new();
@@ -86,10 +90,12 @@ public static class DependencyInjection
         services.AddScoped<IIntegrationEventPublisher, MassTransitEventPublisher>();
         services.AddSingleton(new IntegrationEventRegistration(EmailDeliveryRecordedV1.EventType, typeof(EmailDeliveryRecordedV1)));
         services.AddSingleton(new IntegrationEventRegistration(OrganizationInvitationEmailStatusV1.EventType, typeof(OrganizationInvitationEmailStatusV1), value => ((OrganizationInvitationEmailStatusV1)value).Validate()));
+        services.AddSingleton(new IntegrationEventRegistration(ProjectGuestInvitationEmailStatusV1.EventType, typeof(ProjectGuestInvitationEmailStatusV1), value => ((ProjectGuestInvitationEmailStatusV1)value).Validate()));
         services.AddMassTransit(x =>
         {
             x.AddConsumer<EmailDeliveryRequestedConsumer>();
             x.AddConsumer<InvitationEmailRequestedConsumer>();
+            x.AddConsumer<ProjectGuestInvitationEmailRequestedConsumer>();
             x.UsingRabbitMq((context, bus) =>
             {
                 RabbitConfiguration.ConfigureHost(bus, broker);
@@ -98,6 +104,8 @@ public static class DependencyInjection
                 bus.Message<EmailDeliveryRecordedV1>(m => m.SetEntityName("deliverypilot.notification.email-recorded.v1"));
                 bus.Message<OrganizationInvitationEmailRequestedV1>(m => m.SetEntityName("deliverypilot.notification.organization-invitation-email-requested.v1"));
                 bus.Message<OrganizationInvitationEmailStatusV1>(m => m.SetEntityName("deliverypilot.notification.organization-invitation-email-status.v1"));
+                bus.Message<ProjectGuestInvitationEmailRequestedV1>(m => m.SetEntityName("deliverypilot.notification.project-guest-invitation-email-requested.v1"));
+                bus.Message<ProjectGuestInvitationEmailStatusV1>(m => m.SetEntityName("deliverypilot.notification.project-guest-invitation-email-status.v1"));
                 if (runWorkers)
                 {
                     bus.ReceiveEndpoint("deliverypilot.notification.email-requested.v1", endpoint =>
@@ -109,6 +117,11 @@ public static class DependencyInjection
                     {
                         RabbitConfiguration.ConfigureQueue(endpoint, broker);
                         endpoint.ConfigureConsumer<InvitationEmailRequestedConsumer>(context);
+                    });
+                    bus.ReceiveEndpoint("deliverypilot.notification.project-guest-invitation-email-requested.v1", endpoint =>
+                    {
+                        RabbitConfiguration.ConfigureQueue(endpoint, broker);
+                        endpoint.ConfigureConsumer<ProjectGuestInvitationEmailRequestedConsumer>(context);
                     });
                 }
             });

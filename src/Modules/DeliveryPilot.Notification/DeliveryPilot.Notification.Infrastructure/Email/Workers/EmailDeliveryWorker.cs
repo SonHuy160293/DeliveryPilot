@@ -77,9 +77,9 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
             if (!job.CanSend(now))
             {
                 job.Expire();
-                if (job.RequestKind == "organization-invitation")
+                if (job.IsInvitation)
                 {
-                    InvitationStatusOutbox.Stage(db, job, "expired", null, now);
+                    InvitationDeliveryStrategy.Stage(db, job, "expired", null, now);
                 }
                 await db.SaveChangesAsync(ct);
                 await tx.CommitAsync(ct);
@@ -124,18 +124,17 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
             if (job.FrozenRequestJson is null)
             {
                 var verification = job.RequestKind == "verification" ? JsonSerializer.Deserialize<EmailDeliveryRequestedV1>(job.RequestJson)! : null;
-                var invitation = job.RequestKind == "organization-invitation" ? JsonSerializer.Deserialize<OrganizationInvitationEmailRequestedV1>(job.RequestJson)! : null;
-                raw = verification is not null ? protection.Decrypt(verification) : protection.Decrypt(invitation ?? throw new ArgumentException("Unknown email request kind."));
+                raw = verification is not null ? protection.Decrypt(verification) : InvitationDeliveryStrategy.Decrypt(job, protection);
                 try
                 {
-                    var rendered = verification is not null ? VerificationTemplate.Render(verification, raw, options) : OrganizationInvitationTemplate.Render(invitation!, raw, options);
+                    var rendered = verification is not null ? VerificationTemplate.Render(verification, raw, options) : InvitationDeliveryStrategy.Render(job, raw, options);
                     string recipientHash = protection.RecipientHash(rendered.To[0]);
                     if (await db.EmailSuppressions.AnyAsync(x => x.RecipientHash == recipientHash, ct))
                     {
                         job.Suppress();
-                        if (job.RequestKind == "organization-invitation")
+                        if (job.IsInvitation)
                         {
-                            InvitationStatusOutbox.Stage(db, job, "suppressed", null, DateTimeOffset.UtcNow);
+                            InvitationDeliveryStrategy.Stage(db, job, "suppressed", null, DateTimeOffset.UtcNow);
                         }
                         await db.SaveChangesAsync(ct);
                         return;
@@ -165,9 +164,9 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
                 if (await db.EmailSuppressions.AnyAsync(x => x.RecipientHash == recipientHash, ct))
                 {
                     job.Suppress();
-                    if (job.RequestKind == "organization-invitation")
+                    if (job.IsInvitation)
                     {
-                        InvitationStatusOutbox.Stage(db, job, "suppressed", null, DateTimeOffset.UtcNow);
+                        InvitationDeliveryStrategy.Stage(db, job, "suppressed", null, DateTimeOffset.UtcNow);
                     }
                     await db.SaveChangesAsync(ct);
                     return;
@@ -176,9 +175,9 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
                 if (!job.CanSend(DateTimeOffset.UtcNow))
                 {
                     job.Expire();
-                    if (job.RequestKind == "organization-invitation")
+                    if (job.IsInvitation)
                     {
-                        InvitationStatusOutbox.Stage(db, job, "expired", null, DateTimeOffset.UtcNow);
+                        InvitationDeliveryStrategy.Stage(db, job, "expired", null, DateTimeOffset.UtcNow);
                     }
                     await db.SaveChangesAsync(ct);
                     return;
@@ -189,20 +188,20 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
                     return;
                 }
 
-                if (job.RequestKind == "organization-invitation")
+                if (job.IsInvitation)
                 {
-                    bool? allowed = await scope.ServiceProvider.GetRequiredService<IInvitationDispatchEligibility>().IsAllowedAsync(job.Id, ct);
+                    bool? allowed = await InvitationDeliveryStrategy.IsAllowedAsync(job, scope.ServiceProvider, ct);
                     if (allowed != true)
                     {
                         if (allowed == false)
                         {
                             job.Obsolete();
-                            InvitationStatusOutbox.Stage(db, job, "obsolete", null, DateTimeOffset.UtcNow);
+                            InvitationDeliveryStrategy.Stage(db, job, "obsolete", null, DateTimeOffset.UtcNow);
                         }
                         else
                         {
                             job.Retry(DateTimeOffset.UtcNow.AddMinutes(1), "AuthorityUnavailable");
-                            InvitationStatusOutbox.Stage(db, job, "retrying", "AuthorityUnavailable", DateTimeOffset.UtcNow);
+                            InvitationDeliveryStrategy.Stage(db, job, "retrying", "AuthorityUnavailable", DateTimeOffset.UtcNow);
                         }
 
                         await db.SaveChangesAsync(ct);
@@ -310,7 +309,7 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
             attempt.FailureCode = result.Code;
         }
 
-        if (job.RequestKind == "organization-invitation")
+        if (job.IsInvitation)
         {
             string status = job.Status switch
             {
@@ -319,7 +318,7 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
                 "Expired" => "expired",
                 _ => "failed",
             };
-            InvitationStatusOutbox.Stage(db, job, status, job.FailureCode, DateTimeOffset.UtcNow);
+            InvitationDeliveryStrategy.Stage(db, job, status, job.FailureCode, DateTimeOffset.UtcNow);
         }
 
         await db.SaveChangesAsync(ct);
@@ -353,9 +352,9 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, ILogger<Ema
             {
                 string previousOutcome = job.Outcome;
                 job.RecordOutcome(outcome);
-                if (job.RequestKind == "organization-invitation" && job.Outcome != previousOutcome)
+                if (job.IsInvitation && job.Outcome != previousOutcome)
                 {
-                    InvitationStatusOutbox.Stage(db, job, job.Outcome.ToLowerInvariant(), null, DateTimeOffset.UtcNow);
+                    InvitationDeliveryStrategy.Stage(db, job, job.Outcome.ToLowerInvariant(), null, DateTimeOffset.UtcNow);
                 }
             }
 

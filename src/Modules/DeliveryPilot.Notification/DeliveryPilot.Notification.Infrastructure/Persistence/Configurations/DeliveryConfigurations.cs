@@ -12,7 +12,7 @@ public sealed class EmailDeliveryConfiguration : IEntityTypeConfiguration<EmailD
             t.HasCheckConstraint("CkEmailDeliveryTime", "\"ExpiresAt\" > \"CreatedAt\"");
             t.HasCheckConstraint("CkEmailDeliveryAttempts", "\"Attempts\" >= 0");
             t.HasCheckConstraint("CkEmailDeliveryStatus", "\"Status\" IN ('Pending','Processing','ProviderAccepted','DeadLetter','Expired','Suppressed')");
-            t.HasCheckConstraint("CkEmailDeliveryRequestKind", "\"RequestKind\" IN ('verification','organization-invitation') AND \"InvitationStatusSequence\" >= 0");
+            t.HasCheckConstraint("CkEmailDeliveryRequestKind", "\"RequestKind\" IN ('verification','organization-invitation','project-guest-invitation') AND \"InvitationStatusSequence\" >= 0");
         });
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).ValueGeneratedNever();
