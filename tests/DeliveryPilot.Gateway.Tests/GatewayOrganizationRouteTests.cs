@@ -86,11 +86,11 @@ public sealed partial class GatewayHttpTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.True(response.Headers.CacheControl?.NoStore);
         JsonObject json = (await response.Content.ReadFromJsonAsync<JsonObject>())!;
-        Assert.Equal(internalPath, json["path"] !.GetValue<string>());
-        Assert.Equal(query, json["query"] !.GetValue<string>());
-        Assert.Equal(body, json["body"] !.GetValue<string>());
-        Assert.Equal(key, json["idempotencyKey"] !.GetValue<string>());
-        Assert.Equal("Bearer private-token-marker", json["authorization"] !.GetValue<string>());
+        Assert.Equal(internalPath, json["path"]!.GetValue<string>());
+        Assert.Equal(query, json["query"]!.GetValue<string>());
+        Assert.Equal(body, json["body"]!.GetValue<string>());
+        Assert.Equal(key, json["idempotencyKey"]!.GetValue<string>());
+        Assert.Equal("Bearer private-token-marker", json["authorization"]!.GetValue<string>());
         using HttpResponseMessage denied = await rig.Client.DeleteAsync(path);
         Assert.Equal(HttpStatusCode.MethodNotAllowed, denied.StatusCode);
         Assert.True(denied.Headers.CacheControl?.NoStore);
@@ -104,19 +104,19 @@ public sealed partial class GatewayHttpTests
     public async Task ProductionOrganizationAllowlistMatchesTheReviewedThirtyMethodPathPairs()
     {
         string path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../src/Gateway/DeliveryPilot.Gateway/proxy.json"));
-        JsonObject routes = JsonNode.Parse(await File.ReadAllTextAsync(path))!["ReverseProxy"] !["Routes"] !.AsObject();
+        JsonObject routes = JsonNode.Parse(await File.ReadAllTextAsync(path))!["ReverseProxy"]!["Routes"]!.AsObject();
         Assert.Equal(56, routes.Count);
         var expected = OrganizationRoutes().Select(item => item[0] + " /identity/api/v1" + item[1]).ToHashSet(StringComparer.Ordinal);
-        var actual = routes.Where(item => item.Value!["ClusterId"]!.GetValue<string>() == "identity" && item.Key is not("identity-register" or "identity-login" or "identity-refresh" or "identity-logout")).Select(item =>
+        var actual = routes.Where(item => item.Value!["ClusterId"]!.GetValue<string>() == "identity" && item.Key is not ("identity-register" or "identity-login" or "identity-refresh" or "identity-logout")).Select(item =>
         {
             JsonNode route = item.Value!;
-            Assert.Equal("identity", route["ClusterId"] !.GetValue<string>());
-            Assert.Equal("ConfiguredCors", route["CorsPolicy"] !.GetValue<string>());
-            Assert.Equal("00:00:30", route["Timeout"] !.GetValue<string>());
-            Assert.Equal(16384, route["MaxRequestBodySize"] !.GetValue<int>());
-            Assert.Equal("/identity", route["Transforms"] ![0] !["PathRemovePrefix"] !.GetValue<string>());
-            Assert.Single(route["Match"] !["Methods"] !.AsArray());
-            return route["Match"] !["Methods"] ![0] !.GetValue<string>() + " " + route["Match"] !["Path"] !.GetValue<string>();
+            Assert.Equal("identity", route["ClusterId"]!.GetValue<string>());
+            Assert.Equal("ConfiguredCors", route["CorsPolicy"]!.GetValue<string>());
+            Assert.Equal("00:00:30", route["Timeout"]!.GetValue<string>());
+            Assert.Equal(16384, route["MaxRequestBodySize"]!.GetValue<int>());
+            Assert.Equal("/identity", route["Transforms"]![0]!["PathRemovePrefix"]!.GetValue<string>());
+            Assert.Single(route["Match"]!["Methods"]!.AsArray());
+            return route["Match"]!["Methods"]![0]!.GetValue<string>() + " " + route["Match"]!["Path"]!.GetValue<string>();
         }).ToHashSet(StringComparer.Ordinal);
         Assert.True(expected.SetEquals(actual));
     }
@@ -126,6 +126,8 @@ public sealed partial class GatewayHttpTests
     [InlineData("/identity/api/v1/integrations/users/019a0000-0000-7000-8000-000000000001")]
     [InlineData("/identity/api/v1/integrations/authority/session-checks")]
     [InlineData("/identity/api/v1/integrations/authority/organization-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/membership-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/email-matches")]
     [InlineData("/identity/api/v1/organizations/019a0000-0000-7000-8000-000000000001/unknown")]
     public async Task PrivateAndUnknownOrganizationPathsRemainUnpublished(string path)
     {
@@ -172,7 +174,7 @@ public sealed partial class GatewayHttpTests
             Assert.Equal("{\"safe\":true}", await response.Content.ReadAsStringAsync());
         }
 
-        await using var unavailable = await Rig.StartAsync(config => config["ReverseProxy"] !["Clusters"] !["identity"] !["Destinations"] !["identity-api"] !["Address"] = "http://127.0.0.1:1/");
+        await using var unavailable = await Rig.StartAsync(config => config["ReverseProxy"]!["Clusters"]!["identity"]!["Destinations"]!["identity-api"]!["Address"] = "http://127.0.0.1:1/");
         using HttpResponseMessage failure = await unavailable.Client.GetAsync(path);
         Assert.Equal(HttpStatusCode.BadGateway, failure.StatusCode);
         Assert.True(failure.Headers.CacheControl?.NoStore);

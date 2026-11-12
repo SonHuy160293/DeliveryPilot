@@ -271,6 +271,25 @@ public sealed class OrganizationAuthorizationService(
         }
     }
 
+    public async Task<IReadOnlySet<Guid>> GetActiveMemberUserIdsAsync(Guid organizationId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            List<Guid> ids = await (from membership in dbContext.OrganizationMemberships.AsNoTracking()
+                                    join user in dbContext.Users.AsNoTracking() on membership.UserId equals user.Id
+                                    join organization in dbContext.Organizations.AsNoTracking() on membership.OrganizationId equals organization.Id
+                                    where membership.OrganizationId == organizationId && userIds.Contains(membership.UserId)
+                                        && membership.Status == "active" && user.Status == AuthSessionService.ActiveUserStatus
+                                        && organization.Status == "active"
+                                    select membership.UserId).ToListAsync(cancellationToken);
+            return ids.ToHashSet();
+        }
+        catch (Exception ex) when (IsStoreUnavailable(ex, cancellationToken))
+        {
+            throw CreateAuthorityUnavailable();
+        }
+    }
+
     public async Task<OrganizationMemberSecurityContext?> EvaluateActorAsync(
         Guid organizationId,
         Guid userId,

@@ -56,6 +56,8 @@ public sealed partial class GatewayHttpTests
     [InlineData("/identity/api/v1/integrations/organization-invitation-deliveries/01900000-0000-7000-8000-000000000001/eligibility")]
     [InlineData("/identity/api/v1/integrations/authority/session-checks")]
     [InlineData("/identity/api/v1/integrations/authority/organization-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/membership-checks")]
+    [InlineData("/identity/api/v1/integrations/authority/email-matches")]
     [InlineData("/identity/swagger/index.html")]
     [InlineData("/notification/health/ready")]
     [InlineData("/api/v1/proxy-test")]
@@ -379,7 +381,8 @@ public sealed partial class GatewayHttpTests
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["AllowedHosts"] = "api.example.test", ["ForwardedHeaders:KnownProxies:0"] = "127.0.0.1",
+            ["AllowedHosts"] = "api.example.test",
+            ["ForwardedHeaders:KnownProxies:0"] = "127.0.0.1",
             ["Cors:AllowedOrigins:0"] = "https://frontend.example.test",
         });
         builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { [key] = value });
@@ -495,11 +498,17 @@ public sealed partial class GatewayHttpTests
                 string body = await reader.ReadToEndAsync(context.RequestAborted);
                 await context.Response.WriteAsJsonAsync(new
                 {
-                    path = context.Request.Path.Value, query = context.Request.QueryString.Value, body,
-                    authorization = context.Request.Headers.Authorization.ToString(), signature = context.Request.Headers["svix-signature"].ToString(),
+                    path = context.Request.Path.Value,
+                    query = context.Request.QueryString.Value,
+                    body,
+                    authorization = context.Request.Headers.Authorization.ToString(),
+                    signature = context.Request.Headers["svix-signature"].ToString(),
                     idempotencyKey = context.Request.Headers["Idempotency-Key"].ToString(),
-                    correlation = context.TraceIdentifier, traceId = Activity.Current?.TraceId.ToString(), traceparent = context.Request.Headers["traceparent"].ToString(),
-                    remoteIp = context.Connection.RemoteIpAddress?.ToString(), scheme = context.Request.Scheme,
+                    correlation = context.TraceIdentifier,
+                    traceId = Activity.Current?.TraceId.ToString(),
+                    traceparent = context.Request.Headers["traceparent"].ToString(),
+                    remoteIp = context.Connection.RemoteIpAddress?.ToString(),
+                    scheme = context.Request.Scheme,
                 });
             });
             await rig._backend.StartAsync();

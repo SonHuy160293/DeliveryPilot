@@ -2,6 +2,9 @@ namespace DeliveryPilot.Identity.Application.Abstractions.Security;
 
 public interface IOrganizationAuthorization
 {
+    /// <summary>Uncached membership read; store failures throw <c>ServiceUnavailableException</c>.</summary>
+    Task<IReadOnlySet<Guid>> GetActiveMemberUserIdsAsync(Guid organizationId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default);
+
     Task<Guid> GetAuthenticatedUserIdAsync(CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<OrganizationWorkspaceBrief>> ListEligibleWorkspacesAsync(CancellationToken cancellationToken = default);

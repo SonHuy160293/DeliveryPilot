@@ -81,6 +81,7 @@ public sealed class OrganizationReadAuthorizationTests
 
     private sealed class DeniedAuthorization : IOrganizationAuthorization
     {
+        public Task<IReadOnlySet<Guid>> GetActiveMemberUserIdsAsync(Guid organizationId, IReadOnlyCollection<Guid> userIds, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Guid MembershipId { get; } = Guid.NewGuid();
         public string? LastCapability { get; private set; }
         public bool AllowGeneralRead { get; init; }

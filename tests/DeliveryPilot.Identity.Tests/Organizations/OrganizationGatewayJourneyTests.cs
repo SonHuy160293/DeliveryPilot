@@ -71,7 +71,8 @@ public sealed class OrganizationGatewayJourneyTests
         JsonNode config = JsonNode.Parse(await File.ReadAllTextAsync(rig.RoutesFile))!;
         foreach ((string id, JsonNode? value) in config["ReverseProxy"] !["Routes"] !.AsObject())
         {
-            if (id is "identity-register" or "identity-login" or "identity-refresh" or "identity-logout" or "notification-resend")
+            if (value!["ClusterId"]!.GetValue<string>() != "identity"
+                || id is "identity-register" or "identity-login" or "identity-refresh" or "identity-logout")
             {
                 continue;
             }

@@ -1,6 +1,9 @@
 using System.Text.Json;
 using DeliveryPilot.Identity.Application.Features.Authority.Queries.CheckOrganizationAuthority;
 using DeliveryPilot.Identity.Application.Features.Authority.Queries.CheckSession;
+using DeliveryPilot.Identity.Application.Features.Authority.Queries.CheckOrganizationMembership;
+using DeliveryPilot.Identity.Application.Features.Authority.Queries.MatchUserEmail;
+using DeliveryPilot.Identity.Infrastructure.Persistence.Repositories;
 using DeliveryPilot.Identity.Contracts.Authority;
 using DeliveryPilot.Identity.Infrastructure.Persistence.DbContexts;
 using DeliveryPilot.Identity.Infrastructure.Security;
@@ -14,6 +17,49 @@ namespace DeliveryPilot.Identity.Tests.Security;
 public sealed class AuthorityCheckUnitTests
 {
     private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
+    [Fact]
+    public async Task NewChecksValidateAndRedactTheirRecords()
+    {
+        Guid id = Guid.NewGuid();
+        var membership = new CheckOrganizationMembershipQueryValidator();
+        foreach (CheckOrganizationMembershipQuery query in new CheckOrganizationMembershipQuery[]
+        {
+            new(null, [id]), new(Guid.Empty, [id]), new(id, null), new(id, []), new(id, [Guid.Empty]),
+            new(id, Enumerable.Repeat(id, 101).ToArray()),
+        })
+        {
+            await Assert.ThrowsAsync<CqrsValidationException>(() => membership.ValidateAsync(query, CancellationToken.None));
+        }
+
+        await membership.ValidateAsync(new(id, Enumerable.Repeat(id, 100).ToArray()), CancellationToken.None);
+        var email = new MatchUserEmailQueryValidator();
+        foreach (MatchUserEmailQuery query in new MatchUserEmailQuery[]
+        {
+            new(null, "abc"), new(Guid.Empty, "abc"), new(id, null), new(id, "  "), new(id, " ab "), new(id, new string('a', 321)),
+        })
+        {
+            CqrsValidationException error = await Assert.ThrowsAsync<CqrsValidationException>(() => email.ValidateAsync(query, CancellationToken.None));
+            Assert.DoesNotContain(query.Email ?? "unavailable-secret", string.Join(" ", error.Errors), StringComparison.Ordinal);
+        }
+
+        await email.ValidateAsync(new(id, "abc"), CancellationToken.None);
+        object[] records = [new OrganizationMembershipCheckRequest(id, [id]), new OrganizationMembershipCheckResult(DateTimeOffset.UtcNow, []), new OrganizationMembershipCheckItem(id, true), new UserEmailMatchRequest(id, "secret@example.test"), new UserEmailMatchResult(true, DateTimeOffset.UtcNow), new CheckOrganizationMembershipQuery(id, [id]), new MatchUserEmailQuery(id, "secret@example.test")];
+        foreach (object record in records)
+        {
+            Assert.Equal(record.GetType().Name, record.ToString());
+        }
+    }
+
+    [Fact]
+    public async Task NewStoresFailClosedWhenDatabaseIsUnavailable()
+    {
+        DbContextOptions<IdentityDbContext> options = new DbContextOptionsBuilder<IdentityDbContext>()
+            .UseNpgsql("Host=127.0.0.1;Port=1;Database=unavailable;Username=none;Password=none;Timeout=1;Pooling=false").Options;
+        await using var context = new IdentityDbContext(options);
+        await Assert.ThrowsAsync<ServiceUnavailableException>(() => new OrganizationAuthorizationService(context).GetActiveMemberUserIdsAsync(Guid.NewGuid(), [Guid.NewGuid()]));
+        await Assert.ThrowsAsync<ServiceUnavailableException>(() => new UserEmailMatchStore(context).IsActiveUserWithPrimaryEmailAsync(Guid.NewGuid(), "secret@example.test", CancellationToken.None));
+    }
 
     [Fact]
     public async Task SessionCheckValidatorRejectsEmptyIdentifiers()

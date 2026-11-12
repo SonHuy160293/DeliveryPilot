@@ -7,6 +7,7 @@ using DeliveryPilot.Identity.Application.Features.OrganizationInvitations;
 using DeliveryPilot.Identity.Application.Features.OrganizationMemberships;
 using DeliveryPilot.Identity.Application.Features.OwnershipNominations;
 using DeliveryPilot.Identity.Application.Features.Users.Queries.LookupUsers;
+using DeliveryPilot.Identity.Application.Features.Authority.Queries.MatchUserEmail;
 using DeliveryPilot.Identity.Infrastructure.Auditing;
 using DeliveryPilot.Identity.Infrastructure.Persistence.Core;
 using DeliveryPilot.Identity.Infrastructure.Persistence.DbContexts;
@@ -56,6 +57,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPasswordHashService, PasswordHashService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserLookupStore, UserLookupStore>();
+        services.AddScoped<IUserEmailMatchStore, UserEmailMatchStore>();
         services.AddScoped<IPasswordCredentialRepository, PasswordCredentialRepository>();
         services.AddScoped<IIdentityAuditWriter, IdentityAuditWriter>();
         services.AddScoped<IOrganizationAuthorization, OrganizationAuthorizationService>();
