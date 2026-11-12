@@ -737,6 +737,633 @@ namespace DeliveryPilot.Projects.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.Project", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ActivatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ActivatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClientPoAssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClientPoAssignedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientPoWaiverReason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid?>("ClientProductOwnerParticipantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("EngagementId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<short>("SprintLengthWeeks")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)2);
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkProjects");
+
+                    b.HasAlternateKey("OrganizationId", "Id")
+                        .HasName("AkProjectsOrganizationId");
+
+                    b.HasIndex("OrganizationId", "EngagementId")
+                        .HasDatabaseName("IxProjectsOrganizationEngagement");
+
+                    b.HasIndex("OrganizationId", "Id", "ClientProductOwnerParticipantId")
+                        .HasDatabaseName("IxProjectsClientProductOwner");
+
+                    b.HasIndex("OrganizationId", "Status", "CreatedAt", "Id")
+                        .HasDatabaseName("IxProjectsOrganizationStatusCreatedId");
+
+                    b.ToTable("Projects", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectsActivation", "(\"Status\" = 'Draft' AND \"ActivatedAt\" IS NULL AND \"ActivatedByUserId\" IS NULL) OR (\"Status\" = 'Active' AND \"ActivatedAt\" IS NOT NULL AND \"ActivatedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectsClientPo", "(\"ClientProductOwnerParticipantId\" IS NULL AND \"ClientPoAssignedAt\" IS NULL AND \"ClientPoAssignedByUserId\" IS NULL) OR (\"ClientProductOwnerParticipantId\" IS NOT NULL AND \"ClientPoAssignedAt\" IS NOT NULL AND \"ClientPoAssignedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectsEngagement", "\"Kind\" = 'Client' OR \"EngagementId\" IS NULL");
+
+                            t.HasCheckConstraint("CkProjectsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectsIds", "\"OrganizationId\" <> '00000000-0000-0000-0000-000000000000' AND \"CreatedByUserId\" <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CkProjectsKind", "\"Kind\" IN ('Client', 'Internal')");
+
+                            t.HasCheckConstraint("CkProjectsName", "char_length(btrim(\"Name\")) BETWEEN 1 AND 160 AND \"Name\" = btrim(\"Name\")");
+
+                            t.HasCheckConstraint("CkProjectsPurpose", "char_length(btrim(\"Purpose\")) BETWEEN 1 AND 500 AND \"Purpose\" = btrim(\"Purpose\")");
+
+                            t.HasCheckConstraint("CkProjectsSprintLength", "\"SprintLengthWeeks\" BETWEEN 1 AND 4");
+
+                            t.HasCheckConstraint("CkProjectsStatus", "\"Status\" IN ('Draft', 'Active')");
+
+                            t.HasCheckConstraint("CkProjectsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectBrief", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Assumptions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ConstraintsAndDependencies")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ObjectivesAndSuccessCriteria")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("OpenQuestions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Problem")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ProductGoal")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ScopeAndExclusions")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("ProjectId")
+                        .HasName("PkProjectBriefs");
+
+                    b.HasIndex("OrganizationId", "ProjectId")
+                        .IsUnique()
+                        .HasDatabaseName("UxProjectBriefsOrganizationProject");
+
+                    b.ToTable("ProjectBriefs", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectBriefsUpdate", "(\"UpdatedAt\" IS NULL AND \"UpdatedByUserId\" IS NULL) OR (\"UpdatedAt\" IS NOT NULL AND \"UpdatedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectBriefsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorOrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id")
+                        .HasName("PkProjectEvents");
+
+                    b.HasAlternateKey("OrganizationId", "ProjectId", "Id")
+                        .HasName("AkProjectEventsOrganizationProjectId");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "OccurredAt", "Id")
+                        .HasDatabaseName("IxProjectEventsOrganizationProjectOccurredId");
+
+                    b.ToTable("ProjectEvents", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectEventsDetails", "jsonb_typeof(\"Details\") = 'object'");
+
+                            t.HasCheckConstraint("CkProjectEventsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectEventsSubject", "\"SubjectType\" IN ('Project', 'Brief', 'Participant', 'RoleGrant', 'Invitation', 'Stakeholder', 'ClientPo', 'GuestShare')");
+
+                            t.HasCheckConstraint("CkProjectEventsType", "char_length(btrim(\"EventType\")) BETWEEN 1 AND 160 AND \"EventType\" = btrim(\"EventType\")");
+
+                            t.HasCheckConstraint("CkProjectEventsVersion", "\"ProjectVersion\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClosedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CurrentDeliveryMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IssuedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("LastIssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OfferedRoleCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<Guid?>("ReplacesInvitationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<byte[]>("TokenVerifier")
+                        .IsRequired()
+                        .HasColumnType("bytea");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkProjectGuestInvitations");
+
+                    b.HasAlternateKey("OrganizationId", "ProjectId", "Id")
+                        .HasName("AkProjectGuestInvitationsOrganizationProjectId");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "RecipientEmail")
+                        .IsUnique()
+                        .HasDatabaseName("UxProjectGuestInvitationsPending")
+                        .HasFilter("\"Status\" = 'Pending'");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "ReplacesInvitationId")
+                        .HasDatabaseName("IxProjectGuestInvitationsReplacement");
+
+                    b.ToTable("ProjectGuestInvitations", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectGuestInvitationsClosure", "(\"Status\" = 'Pending' AND \"ClosedAt\" IS NULL AND \"ClosedByUserId\" IS NULL) OR (\"Status\" = 'Expired' AND \"ClosedAt\" IS NOT NULL AND \"ClosedByUserId\" IS NULL) OR (\"Status\" IN ('Accepted', 'Declined', 'Cancelled') AND \"ClosedAt\" IS NOT NULL AND \"ClosedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsEmail", "char_length(\"RecipientEmail\") BETWEEN 3 AND 320 AND \"RecipientEmail\" = lower(btrim(\"RecipientEmail\"))");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsExpiry", "\"ExpiresAt\" = \"LastIssuedAt\" + interval '168 hours'");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsRole", "\"OfferedRoleCode\" IN ('ProjectManager', 'BusinessAnalyst', 'Developer', 'QualityAssurance', 'DevOps', 'Viewer')");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsStatus", "\"Status\" IN ('Pending', 'Accepted', 'Declined', 'Cancelled', 'Expired')");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsVerifier", "octet_length(\"TokenVerifier\") = 32");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitationDelivery", b =>
+                {
+                    b.Property<Guid>("DeliveryMessageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("InvitationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("LastEventSequence")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("DeliveryMessageId")
+                        .HasName("PkProjectGuestInvitationDeliveries");
+
+                    b.HasIndex("InvitationId", "IssuedAt")
+                        .HasDatabaseName("IxProjectGuestInvitationDeliveriesInvitationIssued");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "InvitationId")
+                        .HasDatabaseName("IxProjectGuestInvitationDeliveriesInvitation");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "IssuedAt")
+                        .HasDatabaseName("IxProjectGuestInvitationDeliveriesProjectIssued");
+
+                    b.ToTable("ProjectGuestInvitationDeliveries", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectGuestInvitationDeliveriesExpiry", "\"ExpiresAt\" > \"IssuedAt\"");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationDeliveriesId", "uuid_extract_version(\"DeliveryMessageId\") = 7");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationDeliveriesSequence", "\"LastEventSequence\" >= 0");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationDeliveriesStatus", "\"Status\" IN ('queued', 'retrying', 'provider-accepted', 'delivered', 'bounced', 'complained', 'failed', 'suppressed', 'expired', 'obsolete')");
+
+                            t.HasCheckConstraint("CkProjectGuestInvitationDeliveriesVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ActiveSince")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AdmittedViaInvitationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("EndedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("FirstJoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkProjectParticipants");
+
+                    b.HasAlternateKey("OrganizationId", "ProjectId", "Id")
+                        .HasName("AkProjectParticipantsOrganizationProjectId");
+
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("IxProjectParticipantsUserStatus");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "AdmittedViaInvitationId")
+                        .HasDatabaseName("IxProjectParticipantsInvitation");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UxProjectParticipantsUser");
+
+                    b.HasIndex("OrganizationId", "UserId", "Status")
+                        .HasDatabaseName("IxProjectParticipantsOrganizationUserStatus");
+
+                    b.ToTable("ProjectParticipants", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectParticipantsEnd", "(\"Status\" = 'Active' AND \"EndedAt\" IS NULL AND \"EndedByUserId\" IS NULL) OR (\"Status\" <> 'Active' AND \"EndedAt\" IS NOT NULL AND \"EndedByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectParticipantsId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectParticipantsKind", "\"Kind\" IN ('Member', 'Guest')");
+
+                            t.HasCheckConstraint("CkProjectParticipantsStatus", "\"Status\" IN ('Active', 'Removed', 'Revoked', 'Left')");
+
+                            t.HasCheckConstraint("CkProjectParticipantsUser", "\"UserId\" <> '00000000-0000-0000-0000-000000000000'");
+
+                            t.HasCheckConstraint("CkProjectParticipantsVersion", "\"Version\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipantRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("GrantedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GrantedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ParticipantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RevokedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id")
+                        .HasName("PkProjectParticipantRoles");
+
+                    b.HasAlternateKey("OrganizationId", "ProjectId", "Id")
+                        .HasName("AkProjectParticipantRolesOrganizationProjectId");
+
+                    b.HasIndex("OrganizationId", "ParticipantId", "RoleCode")
+                        .IsUnique()
+                        .HasDatabaseName("UxProjectParticipantRolesActive")
+                        .HasFilter("\"RevokedAt\" IS NULL");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "ParticipantId")
+                        .HasDatabaseName("IxProjectParticipantRolesParticipant");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "RoleCode")
+                        .HasDatabaseName("IxProjectParticipantRolesActiveProjectRole")
+                        .HasFilter("\"RevokedAt\" IS NULL");
+
+                    b.ToTable("ProjectParticipantRoles", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectParticipantRolesCode", "\"RoleCode\" IN ('ProjectAdministrator', 'ProjectManager', 'BusinessAnalyst', 'Developer', 'QualityAssurance', 'DevOps', 'Viewer')");
+
+                            t.HasCheckConstraint("CkProjectParticipantRolesId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectParticipantRolesRevocation", "(\"RevokedAt\" IS NULL AND \"RevokedByUserId\" IS NULL) OR (\"RevokedAt\" IS NOT NULL AND \"RevokedByUserId\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectStakeholder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisionAreas")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("OrganizationName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ParticipantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Responsibilities")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("RetiredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RetiredByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Side")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1L);
+
+                    b.HasKey("Id")
+                        .HasName("PkProjectStakeholders");
+
+                    b.HasAlternateKey("OrganizationId", "ProjectId", "Id")
+                        .HasName("AkProjectStakeholdersOrganizationProjectId");
+
+                    b.HasIndex("OrganizationId", "ProjectId", "ParticipantId")
+                        .HasDatabaseName("IxProjectStakeholdersParticipant");
+
+                    b.ToTable("ProjectStakeholders", "project", t =>
+                        {
+                            t.HasCheckConstraint("CkProjectStakeholdersEmail", "\"Email\" IS NULL OR (char_length(\"Email\") BETWEEN 3 AND 320 AND \"Email\" = lower(btrim(\"Email\")))");
+
+                            t.HasCheckConstraint("CkProjectStakeholdersId", "uuid_extract_version(\"Id\") = 7");
+
+                            t.HasCheckConstraint("CkProjectStakeholdersName", "char_length(btrim(\"Name\")) BETWEEN 1 AND 200 AND \"Name\" = btrim(\"Name\")");
+
+                            t.HasCheckConstraint("CkProjectStakeholdersRetirement", "(\"RetiredAt\" IS NULL AND \"RetiredByUserId\" IS NULL) OR (\"RetiredAt\" IS NOT NULL AND \"RetiredByUserId\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CkProjectStakeholdersSide", "\"Side\" IN ('Vendor', 'Client')");
+
+                            t.HasCheckConstraint("CkProjectStakeholdersVersion", "\"Version\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Engagements.EngagementContact", b =>
                 {
                     b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
@@ -779,6 +1406,137 @@ namespace DeliveryPilot.Projects.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("FkEngagementMilestonesEngagements");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.Project", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Engagements.Engagement", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "EngagementId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FkProjectsEngagements");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipant", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "Id", "ClientProductOwnerParticipantId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FkProjectsClientProductOwner");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectBrief", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithOne()
+                        .HasForeignKey("DeliveryPilot.Projects.Domain.Models.Projects.ProjectBrief", "OrganizationId", "ProjectId")
+                        .HasPrincipalKey("DeliveryPilot.Projects.Domain.Models.Projects.Project", "OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectBriefsProjects");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectEvent", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectEventsProjects");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitation", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectGuestInvitationsProjects");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId", "ReplacesInvitationId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FkProjectGuestInvitationsReplacedInvitation");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitationDelivery", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectGuestInvitationDeliveriesProjects");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId", "InvitationId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectGuestInvitationDeliveriesInvitations");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipant", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectParticipantsProjects");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectGuestInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId", "AdmittedViaInvitationId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FkProjectParticipantsInvitations");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipantRole", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectParticipantRolesProjects");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipant", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId", "ParticipantId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectParticipantRolesParticipants");
+                });
+
+            modelBuilder.Entity("DeliveryPilot.Projects.Domain.Models.Projects.ProjectStakeholder", b =>
+                {
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.Project", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId")
+                        .HasPrincipalKey("OrganizationId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FkProjectStakeholdersProjects");
+
+                    b.HasOne("DeliveryPilot.Projects.Domain.Models.Projects.ProjectParticipant", null)
+                        .WithMany()
+                        .HasForeignKey("OrganizationId", "ProjectId", "ParticipantId")
+                        .HasPrincipalKey("OrganizationId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FkProjectStakeholdersParticipants");
                 });
 #pragma warning restore 612, 618
         }

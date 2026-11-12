@@ -1,6 +1,7 @@
 using DeliveryPilot.EntityFrameworkCore.Reliability;
 using DeliveryPilot.Messaging.Outbox;
 using DeliveryPilot.Projects.Domain.Models.Engagements;
+using DeliveryPilot.Projects.Domain.Models.Projects;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryPilot.Projects.Infrastructure.Persistence;
@@ -26,6 +27,14 @@ public sealed class ProjectsDbContext : DbContext
     public DbSet<EngagementLinkCode> EngagementLinkCodes => Set<EngagementLinkCode>();
     public DbSet<EngagementLinkAttempt> EngagementLinkAttempts => Set<EngagementLinkAttempt>();
     public DbSet<EngagementEvent> EngagementEvents => Set<EngagementEvent>();
+    public DbSet<Project> Projects => Set<Project>();
+    public DbSet<ProjectBrief> ProjectBriefs => Set<ProjectBrief>();
+    public DbSet<ProjectParticipant> ProjectParticipants => Set<ProjectParticipant>();
+    public DbSet<ProjectParticipantRole> ProjectParticipantRoles => Set<ProjectParticipantRole>();
+    public DbSet<ProjectGuestInvitation> ProjectGuestInvitations => Set<ProjectGuestInvitation>();
+    public DbSet<ProjectGuestInvitationDelivery> ProjectGuestInvitationDeliveries => Set<ProjectGuestInvitationDelivery>();
+    public DbSet<ProjectStakeholder> ProjectStakeholders => Set<ProjectStakeholder>();
+    public DbSet<ProjectEvent> ProjectEvents => Set<ProjectEvent>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -55,6 +64,11 @@ public sealed class ProjectsDbContext : DbContext
         if (ChangeTracker.Entries<EngagementEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
         {
             throw new InvalidOperationException("Engagement history is append-only.");
+        }
+
+        if (ChangeTracker.Entries<ProjectEvent>().Any(entry => entry.State is EntityState.Modified or EntityState.Deleted))
+        {
+            throw new InvalidOperationException("Project history is append-only.");
         }
     }
 }

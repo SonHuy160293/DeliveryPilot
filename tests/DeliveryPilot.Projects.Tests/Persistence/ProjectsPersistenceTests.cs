@@ -9,7 +9,7 @@ namespace DeliveryPilot.Projects.Tests.Persistence;
 public sealed class ProjectsPersistenceTests
 {
     [Fact]
-    public void ModelHasEngagementAndReliabilityTablesAndBothMigrations()
+    public void ModelHasEngagementProjectAndReliabilityTablesAndAllMigrations()
     {
         using ProjectsDbContext context = new ProjectsDbContextFactory().CreateDbContext([]);
 
@@ -19,9 +19,10 @@ public sealed class ProjectsPersistenceTests
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-        Assert.Equal(["engagement", "reliability"], schemas);
+        Assert.Equal(["engagement", "project", "reliability"], schemas);
         Assert.Contains(context.Database.GetMigrations(), id => id.EndsWith("_InitialReliability", StringComparison.Ordinal));
         Assert.Contains(context.Database.GetMigrations(), id => id.EndsWith("_AddEngagementPersistence", StringComparison.Ordinal));
+        Assert.Contains(context.Database.GetMigrations(), id => id.EndsWith("_AddProjectPersistence", StringComparison.Ordinal));
     }
 
     [PostgreSqlFact]

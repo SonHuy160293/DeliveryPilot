@@ -21,9 +21,10 @@ public sealed class EngagementPostgreSqlTests
         await context.Database.MigrateAsync();
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
 
-        // Never roll back a populated engagement schema, even if a test connection was misconfigured.
+        // Never roll back populated business schemas, even if a test connection was misconfigured.
         Assert.False(await context.Engagements.AnyAsync());
         Assert.False(await context.EngagementLinkAttempts.AnyAsync());
+        Assert.False(await context.Projects.AnyAsync());
         var messageId = Guid.NewGuid();
         context.Set<OutboxMessage>().Add(OutboxMessage.Create(messageId, "projects.persistence-test.v1", 1, Guid.NewGuid(), 1, "{}", Guid.NewGuid(), null, DateTimeOffset.UtcNow));
         await context.SaveChangesAsync();
@@ -42,6 +43,8 @@ public sealed class EngagementPostgreSqlTests
             await using var connection = new NpgsqlConnection(PostgreSqlFactAttribute.ConnectionString);
             await connection.OpenAsync();
             await using var command = new NpgsqlCommand("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'engagement'", connection);
+            Assert.Equal(0L, await command.ExecuteScalarAsync());
+            command.CommandText = "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'project'";
             Assert.Equal(0L, await command.ExecuteScalarAsync());
         }
         finally
