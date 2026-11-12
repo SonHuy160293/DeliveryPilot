@@ -66,6 +66,18 @@ public sealed class ProjectCreationHttpTests : IAsyncLifetime
         Assert.Equal("Draft", snapshot.Status);
         Assert.Equal((short)2, snapshot.SprintLengthWeeks);
         Assert.Equal(engagement.Id, snapshot.EngagementId);
+        using (HttpClient reader = Client())
+        {
+            using HttpResponseMessage read = await reader.GetAsync($"/api/v1/organizations/{_organization:D}/projects/{snapshot.Id:D}");
+            Assert.Equal(HttpStatusCode.OK, read.StatusCode);
+            using JsonDocument detail = JsonDocument.Parse(await read.Content.ReadAsStringAsync());
+            Assert.Equal(snapshot.Id, detail.RootElement.GetProperty("data").GetProperty("id").GetGuid());
+            Assert.Equal(engagement.Id, detail.RootElement.GetProperty("data").GetProperty("engagementId").GetGuid());
+            using HttpResponseMessage list = await reader.GetAsync($"/api/v1/organizations/{_organization:D}/projects");
+            Assert.Equal(HttpStatusCode.OK, list.StatusCode);
+            using JsonDocument page = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
+            Assert.Contains(page.RootElement.GetProperty("data").GetProperty("items").EnumerateArray(), item => item.GetProperty("id").GetGuid() == snapshot.Id);
+        }
         await using ProjectsDbContext db = Context();
         Project project = await db.Projects.SingleAsync(x => x.Id == snapshot.Id);
         Assert.Equal("Project", project.Name);
