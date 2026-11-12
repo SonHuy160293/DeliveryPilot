@@ -1,7 +1,7 @@
 ---
 id: FEAT-DP-002
 title: "User Initialization"
-status: draft
+status: ready
 priority: P0
 release: "MVP"
 depends_on: []
@@ -11,7 +11,7 @@ depends_on: []
 ## Problem and business outcome
 Prospective and returning agency users and external collaborators need to establish a platform identity, authenticate as that identity and end authenticated access before they can safely participate in delivery work. The roadmap identifies registration, login and logout as MVP/P0 scope; it does not settle the detailed authentication or session policy.
 
-**Intended outcome:** An eligible person can register, a returning eligible user can sign in under the correct identity, and a user can end the reviewed access scope with a clear result. Acceptance must include rejected attempts, duplicate/concurrent submissions, ended-context replay and resource-authorization boundaries. These are draft outcomes for stakeholder review, not approved product policy or claims of implementation.
+**Intended outcome:** An eligible person can register, a returning eligible user can sign in under the correct identity, and a user can end the reviewed access scope with a clear result. Acceptance must include rejected attempts, duplicate/concurrent submissions, ended-context replay and resource-authorization boundaries. These outcomes are reviewed for internal completeness; `ready` implies neither client approval nor implementation completion.
 
 ## Actors and scope
 | Actor | Need / boundary |
@@ -28,7 +28,7 @@ Prospective and returning agency users and external collaborators need to establ
 ## Feature policy and constraints
 - **Agreed direction:** The [roadmap](../../roadmap.md) establishes FEAT-DP-002, MVP/P0 and the three journeys. BR-002 permits one identity across several organizations; BR-004/BR-005/BR-008 preserve resource authorization boundaries.
 - **Confirmed registration:** Anonymous DisplayName/Email/Password enrollment creates an active user, returns Created/userId and does not verify email or log the user in. Email is trim/case-insensitive unique; duplicate feedback is exactly "This email is exist".
-- **Reviewed login/session policy:** The user confirmed active-account login, configurable JWT and rotating-refresh lifetimes, current-session logout, account revalidation and client-owned onboarding. Login requirements and story are internally ready; the separate logout story remains draft.
+- **Reviewed login/session policy:** The user confirmed active-account login, configurable JWT and rotating-refresh lifetimes, current-session logout, account revalidation and client-owned onboarding. Login requirements and story are internally ready. *Update 2026-11-12:* the logout FR/US are now `ready` as well (UR-DP-002-003, FR-DP-002-006, US-DP-002-003), and all five tasks are done (TASK-DP-002-005 delivered refresh and logout).
 - NFR-001/NFR-002 constrain isolation and authorization; NFR-004 covers integrity/concurrency; NFR-008 covers private authentication data. Durable security evidence, retention and abuse-limit implementation are deferred for initial registration and login.
 - **Implementation context (reviewed 2026-11-08):** [Current backend documentation](../../../ARCHITECTURE.md) and [AuthController](../../../src/Modules/DeliveryPilot.Identity/DeliveryPilot.Identity.API/Controllers/AuthController.cs) establish registration/login endpoints; User, PasswordCredential and AuthSession are mapped. Session issuance/validation exists; refresh/logout HTTP endpoints remain follow-up work. Organization persistence and bounded authorization workflows are implemented separately under FEAT-DP-003; privileged platform operations remain deferred. Authentication itself supplies no resource grants. See the [Identity implementation note](../../architecture/modules/identity/README.md#verified-implementation-baseline); target host consolidation remains a proposal.
 
@@ -39,7 +39,7 @@ Prospective and returning agency users and external collaborators need to establ
 4. **Authorization handoff:** An authenticated person still needs the owning feature's membership, project, sharing and approver permissions. Login or a caller-supplied TenantId is not an access grant.
 
 ## Artifact index
-Needs are in [ur/](ur/), observable behavior in [fr/](fr/), and user-valued acceptance scenarios in [us/](us/). Registration and reviewed login sources are ready for internal completeness; the separate logout FR/US remain draft. Each artifact owns its contract. Derive downstream coverage with:
+Needs are in [ur/](ur/), observable behavior in [fr/](fr/), and user-valued acceptance scenarios in [us/](us/). The 3 URs, 8 FRs and 3 USs for registration, login and logout are all `ready` for internal completeness, with `approval_ref: null`. The feature status was aligned to `ready` on 2026-11-12 to match these reviewed source artifacts; this records no approval. Each artifact owns its contract. Derive downstream coverage with:
 
 ```text
 python tools/docs.py coverage --feature FEAT-DP-002
