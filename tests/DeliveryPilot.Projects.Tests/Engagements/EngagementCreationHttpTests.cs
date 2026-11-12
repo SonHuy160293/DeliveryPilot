@@ -374,6 +374,9 @@ public sealed class EngagementCreationHttpTests : IAsyncLifetime
         private int _checks;
         internal string Mode { get; set; } = "allowed";
 
+        public Task<IntegrationResult<DeliveryPilot.Identity.Contracts.UserLookupResult>> LookupUsersAsync(DeliveryPilot.Identity.Contracts.UserLookupRequest request, CancellationToken cancellationToken)
+            => throw new InvalidOperationException("Creation must not look up display names.");
+
         public Task<IntegrationResult<SessionCheckResult>> CheckSessionAsync(SessionCheckRequest request, CancellationToken cancellationToken)
             => Task.FromResult(Mode == "session-unavailable" ? FakeIdentityAuthorityClient.Unavailable<SessionCheckResult>() : IntegrationResult<SessionCheckResult>.Success(new SessionCheckResult(Mode != "session-denied"), HttpStatusCode.OK));
 

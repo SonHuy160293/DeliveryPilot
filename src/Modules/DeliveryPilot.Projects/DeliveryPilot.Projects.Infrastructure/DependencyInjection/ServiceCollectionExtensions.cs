@@ -1,6 +1,7 @@
 using DeliveryPilot.AspNetCore.HttpClient.DependencyInjection;
 using DeliveryPilot.EntityFrameworkCore.Interceptors;
 using DeliveryPilot.Projects.Application.Abstractions.Authority;
+using DeliveryPilot.Projects.Application.Abstractions.Identity;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.CreateEngagement;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.IssueEngagementLinkCode;
 using DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
@@ -60,6 +61,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddIdentityIntegration(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<IUserDirectory, IdentityUserDirectory>();
         services.AddIntegrationHttpClient<IIdentityAuthorityClient, IdentityAuthorityClient>(
             IdentityIntegration.ClientName,
             configuration.GetSection(IdentityIntegration.ConfigurationSection));

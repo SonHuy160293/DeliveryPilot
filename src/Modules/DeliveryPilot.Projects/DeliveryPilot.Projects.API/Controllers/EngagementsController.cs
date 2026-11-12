@@ -67,7 +67,7 @@ public sealed class EngagementsController(ISender sender) : ApiController(sender
     public async Task<IActionResult> ListAsync(Guid organizationId, [FromQuery] string? status = null, [FromQuery] int limit = 50, [FromQuery] string? cursor = null, CancellationToken cancellationToken = default)
     {
         var query = new ListEngagementsQuery(organizationId, QueryValue("status", status), limit, QueryValue("cursor", cursor));
-        Result<EngagementPage<EngagementDetail>> result = await Sender.SendAsync(query, cancellationToken);
+        Result<EngagementPage<EngagementListEntry>> result = await Sender.SendAsync(query, cancellationToken);
         return Ok(result.Value);
     }
 
@@ -75,7 +75,7 @@ public sealed class EngagementsController(ISender sender) : ApiController(sender
     public async Task<IActionResult> GetAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken)
     {
         var query = new GetEngagementQuery(organizationId, engagementId);
-        Result<EngagementDetail> result = await Sender.SendAsync(query, cancellationToken);
+        Result<EngagementView> result = await Sender.SendAsync(query, cancellationToken);
         return Ok(result.Value);
     }
 

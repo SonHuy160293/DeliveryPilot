@@ -1,9 +1,12 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using DeliveryPilot.Identity.Contracts.Authority;
+using DeliveryPilot.Identity.Contracts;
 using DeliveryPilot.Projects.Infrastructure.DependencyInjection;
 using DeliveryPilot.Projects.Infrastructure.Identity;
 using DeliveryPilot.Projects.Tests.Support;
+using DeliveryPilot.SharedKernel.Integrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http;
@@ -41,6 +44,23 @@ public sealed class IdentityAuthorityClientTests
         Assert.Equal(new Uri(TestConfiguration.IdentityBaseUrl + IdentityIntegration.OrganizationChecksEndpoint), handler.RequestUri);
     }
 
+    [Fact]
+    public async Task UserLookupUsesInternalPostIntegrationKeyAndEnvelope()
+    {
+        Guid id = Guid.NewGuid();
+        using var handler = new RecordingHandler($$$"""{"success":true,"data":{"users":[{"id":"{{{id}}}","displayName":"Ada","avatarUrl":null,"status":"active"}]}}""");
+        await using ServiceProvider provider = BuildProvider(handler);
+        IntegrationResult<UserLookupResult> result = await provider.GetRequiredService<IIdentityAuthorityClient>().LookupUsersAsync(new UserLookupRequest([id]), CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Ada", Assert.Single(result.Data!.Users).DisplayName);
+        Assert.Equal(HttpMethod.Post, handler.Method);
+        Assert.Equal(new Uri(TestConfiguration.IdentityBaseUrl + "api/v1/integrations/users/lookup"), handler.RequestUri);
+        Assert.Equal(TestConfiguration.IntegrationApiKey, handler.IntegrationKey);
+        using JsonDocument body = JsonDocument.Parse(handler.Body!);
+        Assert.Equal(id, body.RootElement.GetProperty("userIds")[0].GetGuid());
+        Assert.Single(body.RootElement.EnumerateObject());
+    }
+
     private static ServiceProvider BuildProvider(RecordingHandler handler)
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(TestConfiguration.Host()).Build();
@@ -60,16 +80,18 @@ public sealed class IdentityAuthorityClientTests
         public Uri? RequestUri { get; private set; }
 
         public string? IntegrationKey { get; private set; }
+        public string? Body { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Method = request.Method;
             RequestUri = request.RequestUri;
             IntegrationKey = request.Headers.TryGetValues("X-Integration-Key", out var values) ? values.Single() : null;
-            return Task.FromResult(new HttpResponseMessage(status)
+            Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(status)
             {
                 Content = new StringContent(body, Encoding.UTF8, "application/json"),
-            });
+            };
         }
     }
 }

@@ -490,6 +490,9 @@ public sealed class EngagementLinkConfirmationHttpTests : IAsyncLifetime
         internal string Role { get; set; } = "owner";
         internal bool AllowClientOnVendor { get; set; }
 
+        public Task<IntegrationResult<DeliveryPilot.Identity.Contracts.UserLookupResult>> LookupUsersAsync(DeliveryPilot.Identity.Contracts.UserLookupRequest request, CancellationToken cancellationToken)
+            => throw new InvalidOperationException("Link confirmation must not look up display names.");
+
         public Task<IntegrationResult<SessionCheckResult>> CheckSessionAsync(SessionCheckRequest request, CancellationToken cancellationToken)
             => Task.FromResult(IntegrationResult<SessionCheckResult>.Success(new SessionCheckResult(true), HttpStatusCode.OK));
 

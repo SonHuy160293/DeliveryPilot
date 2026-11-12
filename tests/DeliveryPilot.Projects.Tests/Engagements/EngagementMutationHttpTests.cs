@@ -1233,6 +1233,9 @@ public sealed class EngagementMutationHttpTests : IAsyncLifetime
         private int _checks;
         internal string Mode { get; set; } = "allowed";
 
+        public Task<IntegrationResult<DeliveryPilot.Identity.Contracts.UserLookupResult>> LookupUsersAsync(DeliveryPilot.Identity.Contracts.UserLookupRequest request, CancellationToken cancellationToken)
+            => throw new InvalidOperationException("Mutations must not look up display names.");
+
         public Task<IntegrationResult<SessionCheckResult>> CheckSessionAsync(SessionCheckRequest request, CancellationToken cancellationToken)
             => Task.FromResult(IntegrationResult<SessionCheckResult>.Success(new SessionCheckResult(true), HttpStatusCode.OK));
 

@@ -1,51 +1,79 @@
 using System.Text.Json;
 using DeliveryPilot.Projects.Application.Features.Engagements.Queries;
 using DeliveryPilot.Projects.Domain.Models.Engagements;
+using DeliveryPilot.Projects.Domain.Models.Projects;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryPilot.Projects.Infrastructure.Persistence;
 
 public sealed class EngagementReadStore(ProjectsDbContext dbContext) : IEngagementReadStore
 {
-    public async Task<EngagementPage<EngagementDetail>> ListAsync(Guid organizationId, ReadAccess access, string status, int limit, EngagementPageKey? after, CancellationToken cancellationToken)
+    public async Task<EngagementPage<EngagementListEntry>> ListAsync(Guid organizationId, ReadAccess access, string status, int limit, EngagementPageKey? after, CancellationToken cancellationToken)
     {
-        IQueryable<Engagement> query = Visible(organizationId, access);
+        IQueryable<VisibleEngagement> query = Visible(organizationId, access);
         if (status != "all")
         {
             string state = status == "active" ? Engagement.ActiveStatus : Engagement.ClosedStatus;
-            query = query.Where(x => x.Status == state);
+            query = query.Where(x => x.Engagement.Status == state);
         }
 
         if (after is not null)
         {
-            query = query.Where(x => x.CreatedAt < after.Time || (x.CreatedAt == after.Time && x.Id.CompareTo(after.Id) > 0));
+            query = query.Where(x => x.Engagement.CreatedAt < after.Time || (x.Engagement.CreatedAt == after.Time && x.Engagement.Id.CompareTo(after.Id) > 0));
         }
 
-        List<Engagement> rows = await query.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Take(limit + 1).ToListAsync(cancellationToken);
+        List<VisibleEngagement> rows = await query.OrderByDescending(x => x.Engagement.CreatedAt).ThenBy(x => x.Engagement.Id).Take(limit + 1).ToListAsync(cancellationToken);
         bool more = rows.Count > limit;
         if (more)
         {
             rows.RemoveAt(rows.Count - 1);
         }
 
-        IReadOnlyList<EngagementDetail> details = await BuildDetailsAsync(organizationId, rows, cancellationToken);
-        string? next = more ? EngagementCursor.Encode(organizationId, Guid.Empty, status, rows[^1].CreatedAt, rows[^1].Id) : null;
-        return new EngagementPage<EngagementDetail>(details, next);
+        IReadOnlyList<EngagementListEntry> details = await BuildEntriesAsync(organizationId, rows, cancellationToken);
+        string? next = more ? EngagementCursor.Encode(organizationId, Guid.Empty, status, rows[^1].Engagement.CreatedAt, rows[^1].Engagement.Id) : null;
+        return new EngagementPage<EngagementListEntry>(details, next);
     }
 
-    public async Task<EngagementDetail?> GetAsync(Guid organizationId, Guid engagementId, ReadAccess access, CancellationToken cancellationToken)
+    public async Task<EngagementView?> GetAsync(Guid organizationId, Guid engagementId, ReadAccess access, CancellationToken cancellationToken)
     {
-        Engagement? row = await Visible(organizationId, access).SingleOrDefaultAsync(x => x.Id == engagementId, cancellationToken);
+        VisibleEngagement? row = await Visible(organizationId, access).SingleOrDefaultAsync(x => x.Engagement.Id == engagementId, cancellationToken);
         if (row is null)
         {
             return null;
         }
 
-        return (await BuildDetailsAsync(organizationId, [row], cancellationToken))[0];
+        return (await BuildEntriesAsync(organizationId, [row], cancellationToken))[0];
     }
 
     public Task<bool> CanReadAsync(Guid organizationId, Guid engagementId, ReadAccess access, CancellationToken cancellationToken)
-        => Visible(organizationId, access).AnyAsync(x => x.Id == engagementId, cancellationToken);
+        => dbContext.Engagements.AsNoTracking().AnyAsync(
+            x => x.OrganizationId == organizationId && x.Id == engagementId && (access.CanReadAll || x.CreatedByUserId == access.UserId),
+            cancellationToken);
+
+    public async Task<IReadOnlyList<EngagementProjectView>> ListProjectsAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken)
+    {
+        var projects = await dbContext.Projects.AsNoTracking()
+            .Where(project => project.OrganizationId == organizationId && project.EngagementId == engagementId)
+            .OrderBy(project => project.CreatedAt).ThenBy(project => project.Id)
+            .Select(project => new { project.Id, project.Name, project.Status }).ToListAsync(cancellationToken);
+        if (projects.Count == 0)
+        {
+            return [];
+        }
+
+        Guid[] ids = projects.Select(project => project.Id).ToArray();
+        var administrators = await (
+            from participant in dbContext.ProjectParticipants.AsNoTracking()
+            join role in dbContext.ProjectParticipantRoles.AsNoTracking()
+                on new { participant.OrganizationId, participant.ProjectId, ParticipantId = participant.Id }
+                equals new { role.OrganizationId, role.ProjectId, role.ParticipantId }
+            where participant.OrganizationId == organizationId && ids.Contains(participant.ProjectId)
+                && participant.Status == ProjectParticipant.ActiveStatus && role.RevokedAt == null
+                && role.RoleCode == ProjectRoles.ProjectAdministrator
+            select new { participant.ProjectId, participant.UserId }).Distinct().ToListAsync(cancellationToken);
+        ILookup<Guid, EngagementAdministratorView> byProject = administrators.ToLookup(admin => admin.ProjectId, admin => new EngagementAdministratorView(admin.UserId, null));
+        return projects.Select(project => new EngagementProjectView(project.Id, project.Name, project.Status, byProject[project.Id].ToArray())).ToArray();
+    }
 
     public async Task<EngagementPage<EngagementHistoryEntry>> HistoryAsync(Guid organizationId, Guid engagementId, int limit, EngagementPageKey? after, CancellationToken cancellationToken)
     {
@@ -67,19 +95,27 @@ public sealed class EngagementReadStore(ProjectsDbContext dbContext) : IEngageme
         return new EngagementPage<EngagementHistoryEntry>(entries, next);
     }
 
-    private IQueryable<Engagement> Visible(Guid organizationId, ReadAccess access)
-        => dbContext.Engagements.AsNoTracking().Where(x => x.OrganizationId == organizationId && (access.CanReadAll || x.CreatedByUserId == access.UserId));
+    private IQueryable<VisibleEngagement> Visible(Guid organizationId, ReadAccess access)
+        => dbContext.Engagements.AsNoTracking()
+            .Where(engagement => engagement.OrganizationId == organizationId)
+            .Where(engagement => access.CanReadAll || engagement.CreatedByUserId == access.UserId
+                || dbContext.Projects.Any(project => project.OrganizationId == organizationId && project.EngagementId == engagement.Id
+                    && dbContext.ProjectParticipants.Any(participant => participant.OrganizationId == organizationId
+                        && participant.ProjectId == project.Id && participant.UserId == access.UserId
+                        && participant.Kind == ProjectParticipant.MemberKind && participant.Status == ProjectParticipant.ActiveStatus)))
+            .Select(engagement => new VisibleEngagement { Engagement = engagement, Full = access.CanReadAll || engagement.CreatedByUserId == access.UserId });
 
-    private async Task<IReadOnlyList<EngagementDetail>> BuildDetailsAsync(Guid organizationId, IReadOnlyList<Engagement> rows, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<EngagementListEntry>> BuildEntriesAsync(Guid organizationId, IReadOnlyList<VisibleEngagement> rows, CancellationToken cancellationToken)
     {
         if (rows.Count == 0)
         {
             return [];
         }
 
-        Guid[] ids = rows.Select(x => x.Id).ToArray();
-        var contacts = await dbContext.EngagementContacts.AsNoTracking()
-            .Where(x => x.OrganizationId == organizationId && ids.Contains(x.EngagementId) && x.RemovedAt == null)
+        Guid[] ids = rows.Select(x => x.Engagement.Id).ToArray();
+        Guid[] fullIds = rows.Where(x => x.Full).Select(x => x.Engagement.Id).ToArray();
+        var contacts = fullIds.Length == 0 ? [] : await dbContext.EngagementContacts.AsNoTracking()
+            .Where(x => x.OrganizationId == organizationId && fullIds.Contains(x.EngagementId) && x.RemovedAt == null)
             .OrderBy(x => x.CreatedAt).ThenBy(x => x.Id)
             .Select(x => new { x.EngagementId, View = new EngagementContactView(x.Id, x.Name, x.Email, x.ContactRole, x.CreatedByUserId, x.CreatedAt, x.UpdatedAt, x.Version) })
             .ToListAsync(cancellationToken);
@@ -90,13 +126,23 @@ public sealed class EngagementReadStore(ProjectsDbContext dbContext) : IEngageme
             .ToListAsync(cancellationToken);
 
         // Project only expiry and ownership; never load the code verifier for a read response.
-        var codes = await dbContext.EngagementLinkCodes.AsNoTracking()
-            .Where(x => x.OrganizationId == organizationId && ids.Contains(x.EngagementId) && x.Status == EngagementLinkCode.OutstandingStatus)
+        var codes = fullIds.Length == 0 ? [] : await dbContext.EngagementLinkCodes.AsNoTracking()
+            .Where(x => x.OrganizationId == organizationId && fullIds.Contains(x.EngagementId) && x.Status == EngagementLinkCode.OutstandingStatus)
             .Select(x => new { x.EngagementId, x.ExpiresAt }).ToListAsync(cancellationToken);
 
-        return rows.Select(x =>
+        ILookup<Guid, EngagementContactView> contactsByEngagement = contacts.ToLookup(x => x.EngagementId, x => x.View);
+        ILookup<Guid, EngagementMilestoneView> milestonesByEngagement = milestones.ToLookup(x => x.EngagementId, x => x.View);
+        var codesByEngagement = codes.ToDictionary(x => x.EngagementId);
+        return rows.Select<VisibleEngagement, EngagementListEntry>(row =>
         {
-            var code = codes.SingleOrDefault(item => item.EngagementId == x.Id);
+            Engagement x = row.Engagement;
+            EngagementMilestoneView[] milestoneViews = milestonesByEngagement[x.Id].ToArray();
+            if (!row.Full)
+            {
+                return new EngagementSummary(x.Id, x.ClientDisplayName, x.EngagementName, x.AgreementReference, x.Status, milestoneViews, x.Version);
+            }
+
+            var code = codesByEngagement.GetValueOrDefault(x.Id);
             return new EngagementDetail(
                 x.Id,
                 x.OrganizationId,
@@ -122,8 +168,8 @@ public sealed class EngagementReadStore(ProjectsDbContext dbContext) : IEngageme
                 x.CreatedAt,
                 x.UpdatedAt,
                 x.Version,
-                contacts.Where(item => item.EngagementId == x.Id).Select(item => item.View).ToArray(),
-                milestones.Where(item => item.EngagementId == x.Id).Select(item => item.View).ToArray());
+                contactsByEngagement[x.Id].ToArray(),
+                milestoneViews);
         }).ToArray();
     }
 
@@ -131,5 +177,11 @@ public sealed class EngagementReadStore(ProjectsDbContext dbContext) : IEngageme
     {
         using JsonDocument document = JsonDocument.Parse(json);
         return document.RootElement.Clone();
+    }
+
+    private sealed class VisibleEngagement
+    {
+        public Engagement Engagement { get; init; } = null!;
+        public bool Full { get; init; }
     }
 }

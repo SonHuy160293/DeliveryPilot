@@ -4,9 +4,9 @@ using DeliveryPilot.SharedKernel.Exceptions;
 
 namespace DeliveryPilot.Projects.Application.Features.Engagements.Queries.ListEngagements;
 
-public sealed class ListEngagementsHandler(EngagementReadAuthorization authorization, IEngagementReadStore store) : IQueryHandler<ListEngagementsQuery, EngagementPage<EngagementDetail>>
+public sealed class ListEngagementsHandler(EngagementReadAuthorization authorization, IEngagementReadStore store) : IQueryHandler<ListEngagementsQuery, EngagementPage<EngagementListEntry>>
 {
-    public async Task<Result<EngagementPage<EngagementDetail>>> HandleAsync(ListEngagementsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<EngagementPage<EngagementListEntry>>> HandleAsync(ListEngagementsQuery request, CancellationToken cancellationToken)
     {
         ReadAccess access = await authorization.RequireAsync(request.OrganizationId, cancellationToken);
         string status = request.Status?.Trim().ToLowerInvariant() ?? "active";
@@ -16,7 +16,7 @@ public sealed class ListEngagementsHandler(EngagementReadAuthorization authoriza
         }
 
         EngagementPageKey? key = EngagementCursor.Parse(request.Cursor, request.OrganizationId, Guid.Empty, status, request.Limit);
-        EngagementPage<EngagementDetail> page = await store.ListAsync(request.OrganizationId, access, status, request.Limit, key, cancellationToken);
+        EngagementPage<EngagementListEntry> page = await store.ListAsync(request.OrganizationId, access, status, request.Limit, key, cancellationToken);
         return Result.Success(page);
     }
 }

@@ -1,6 +1,10 @@
+using System.Text.Json.Serialization;
+
 namespace DeliveryPilot.Projects.Application.Features.Engagements.Queries;
 
-public sealed record EngagementDetail(
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "tier")]
+[JsonDerivedType(typeof(EngagementDetail), EngagementTier.Full)]
+public record EngagementDetail(
     Guid Id,
     Guid OrganizationId,
     string ClientDisplayName,
@@ -26,7 +30,10 @@ public sealed record EngagementDetail(
     DateTimeOffset UpdatedAt,
     long Version,
     IReadOnlyList<EngagementContactView> Contacts,
-    IReadOnlyList<EngagementMilestoneView> Milestones)
+    IReadOnlyList<EngagementMilestoneView> Milestones) : EngagementListEntry
 {
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<EngagementProjectView>? Projects { get; init; }
+
     public override string ToString() => nameof(EngagementDetail);
 }
