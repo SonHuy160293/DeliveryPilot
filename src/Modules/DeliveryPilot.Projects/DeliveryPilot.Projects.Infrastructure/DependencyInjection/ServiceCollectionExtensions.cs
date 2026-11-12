@@ -3,6 +3,7 @@ using DeliveryPilot.EntityFrameworkCore.Interceptors;
 using DeliveryPilot.Projects.Application.Abstractions.Authority;
 using DeliveryPilot.Projects.Application.Abstractions.Identity;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.CreateEngagement;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.CreateProject;
 using DeliveryPilot.Projects.Application.Features.Engagements.Commands.IssueEngagementLinkCode;
 using DeliveryPilot.Projects.Application.Features.Engagements.Mutations;
 using DeliveryPilot.Projects.Application.Features.Engagements.Queries;
@@ -39,6 +40,7 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>()));
         services.AddScoped<IEngagementCreationStore, EngagementCreationStore>();
+        services.AddScoped<IProjectCreationStore, ProjectCreationStore>();
         services.AddScoped<IEngagementMutationStore, EngagementMutationStore>();
         services.AddScoped<IEngagementReadStore, EngagementReadStore>();
         services.AddScoped<IClientLinkStore, ClientLinkStore>();

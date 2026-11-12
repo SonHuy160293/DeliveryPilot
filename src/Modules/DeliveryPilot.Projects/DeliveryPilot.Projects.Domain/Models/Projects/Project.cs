@@ -30,6 +30,15 @@ public sealed class Project
     public DateTimeOffset UpdatedAt { get; private set; }
     public long Version { get; private set; }
 
+    public static ProjectCreation CreateWithAdministrator(Guid organizationId, Guid createdByUserId, DateTimeOffset createdAt, string name, string purpose, string kind, Guid? engagementId)
+    {
+        Project project = Create(organizationId, createdByUserId, createdAt, name, purpose, kind, engagementId);
+        ProjectBrief brief = ProjectBrief.CreateFor(project);
+        ProjectParticipant participant = ProjectParticipant.CreateMember(organizationId, project.Id, createdByUserId, createdAt);
+        ProjectParticipantRole role = ProjectParticipantRole.Grant(participant, ProjectRoles.ProjectAdministrator, createdByUserId, createdAt);
+        return new ProjectCreation(project, brief, participant, role);
+    }
+
     public static Project Create(Guid organizationId, Guid createdByUserId, DateTimeOffset createdAt, string name, string purpose, string kind, Guid? engagementId = null)
     {
         if (kind is not (ClientKind or InternalKind) || (kind == InternalKind && engagementId.HasValue))
