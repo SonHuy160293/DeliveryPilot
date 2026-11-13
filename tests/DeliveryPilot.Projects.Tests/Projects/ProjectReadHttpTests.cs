@@ -179,6 +179,113 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
     }
 
     [PostgreSqlFact]
+    public async Task SprintLengthAndBriefEditsUseIndependentVersions()
+    {
+        await using (ProjectsDbContext db = Context())
+        {
+            await db.ProjectParticipantRoles.Where(x => x.ParticipantId == _memberParticipant && x.RoleCode == ProjectRoles.BusinessAnalyst).ExecuteUpdateAsync(x => x.SetProperty(r => r.RoleCode, ProjectRoles.ProjectManager));
+        }
+
+        using HttpClient member = Client(_member);
+        string path = $"/api/v1/organizations/{_organization:D}/projects/{_project:D}";
+        Task<HttpResponseMessage> brief = member.PutAsJsonAsync(path + "/brief", new { expectedVersion = 1, productGoal = "Goal" });
+        Task<HttpResponseMessage> cadence = member.PutAsJsonAsync(path + "/sprint-length", new { expectedVersion = 1, sprintLengthWeeks = 3 });
+        using HttpResponseMessage briefResult = await brief;
+        using HttpResponseMessage cadenceResult = await cadence;
+        Assert.Equal(HttpStatusCode.OK, briefResult.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, cadenceResult.StatusCode);
+        using HttpResponseMessage stale = await member.PutAsJsonAsync(path + "/sprint-length", new { expectedVersion = 1, sprintLengthWeeks = 4 });
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        using HttpResponseMessage invalid = await member.PutAsJsonAsync(path + "/sprint-length", new { expectedVersion = 2, sprintLengthWeeks = 5 });
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        using HttpResponseMessage noop = await member.PutAsJsonAsync(path + "/sprint-length", new { expectedVersion = 2, sprintLengthWeeks = 3 });
+        Assert.Equal(HttpStatusCode.OK, noop.StatusCode);
+        using HttpClient guest = Client(_guest);
+        using HttpResponseMessage guestDenied = await guest.PutAsJsonAsync(path + "/sprint-length", new { expectedVersion = 2, sprintLengthWeeks = 4 });
+        Assert.Equal(HttpStatusCode.Forbidden, guestDenied.StatusCode);
+        await using ProjectsDbContext check = Context();
+        Assert.Equal(2, (await check.Projects.SingleAsync(x => x.Id == _project)).Version);
+        Assert.Equal(2, (await check.ProjectBriefs.SingleAsync(x => x.ProjectId == _project)).Version);
+        Assert.Equal(2, await check.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+    }
+
+    [PostgreSqlFact]
+    public async Task DraftKindAndEngagementChangesRequireBothAuthoritiesAndKeepOneEventPerChange()
+    {
+        Engagement target = Engagement.Create(_organization, _otherUser, DateTimeOffset.UtcNow, "Target", "R", new DateOnly(2026, 1, 1));
+        Engagement foreign = Engagement.Create(_otherOrganization, _otherUser, DateTimeOffset.UtcNow, "Foreign", "R", new DateOnly(2026, 1, 1));
+        await using (ProjectsDbContext db = Context())
+        {
+            db.Engagements.AddRange(target, foreign);
+            await db.SaveChangesAsync();
+        }
+
+        using HttpClient admin = Client(_otherUser);
+        string path = $"/api/v1/organizations/{_organization:D}/projects/{_project:D}/engagement";
+        object move = new { expectedVersion = 1, kind = "Client", engagementId = target.Id, reason = "move" };
+        using HttpResponseMessage noManage = await admin.PutAsJsonAsync(path, move);
+        Assert.Equal(HttpStatusCode.Forbidden, noManage.StatusCode);
+        _identity.CanManageEngagements = true;
+        using HttpResponseMessage crossTenant = await admin.PutAsJsonAsync(path, new { expectedVersion = 1, kind = "Client", engagementId = foreign.Id, reason = "move" });
+        Assert.Equal(HttpStatusCode.NotFound, crossTenant.StatusCode);
+        using HttpResponseMessage missingReason = await admin.PutAsJsonAsync(path, new { expectedVersion = 1, kind = "Client", engagementId = target.Id });
+        Assert.Equal(HttpStatusCode.BadRequest, missingReason.StatusCode);
+        using HttpResponseMessage invalidInternal = await admin.PutAsJsonAsync(path, new { expectedVersion = 1, kind = "Internal", engagementId = target.Id, reason = "invalid" });
+        Assert.Equal(HttpStatusCode.BadRequest, invalidInternal.StatusCode);
+        using HttpClient guest = Client(_guest);
+        using HttpResponseMessage guestDenied = await guest.PutAsJsonAsync(path, move);
+        Assert.Equal(HttpStatusCode.Forbidden, guestDenied.StatusCode);
+        _identity.Mode = "unavailable";
+        using HttpResponseMessage unavailable = await admin.PutAsJsonAsync(path, move);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, unavailable.StatusCode);
+        _identity.Mode = "allowed";
+        using HttpResponseMessage moved = await admin.PutAsJsonAsync(path, move);
+        Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+        using HttpResponseMessage stale = await admin.PutAsJsonAsync(path, move);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        using HttpResponseMessage internalProject = await admin.PutAsJsonAsync(path, new { expectedVersion = 2, kind = "Internal", engagementId = (Guid?)null, reason = "internal" });
+        Assert.Equal(HttpStatusCode.OK, internalProject.StatusCode);
+        using HttpResponseMessage clientProject = await admin.PutAsJsonAsync(path, new { expectedVersion = 3, kind = "Client", engagementId = target.Id, reason = "client" });
+        Assert.Equal(HttpStatusCode.OK, clientProject.StatusCode);
+        using HttpResponseMessage remove = await admin.PutAsJsonAsync(path, new { expectedVersion = 4, kind = "Client", engagementId = (Guid?)null, reason = "remove" });
+        Assert.Equal(HttpStatusCode.OK, remove.StatusCode);
+        using HttpResponseMessage noop = await admin.PutAsJsonAsync(path, new { expectedVersion = 5, kind = "Client", engagementId = (Guid?)null, reason = "same" });
+        Assert.Equal(HttpStatusCode.OK, noop.StatusCode);
+        await using ProjectsDbContext check = Context();
+        Assert.Equal(4, await check.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+        await check.Projects.Where(x => x.Id == _project).ExecuteUpdateAsync(x => x.SetProperty(p => p.Status, Project.ActiveStatus).SetProperty(p => p.ActivatedAt, DateTimeOffset.UtcNow).SetProperty(p => p.ActivatedByUserId, _otherUser));
+        using HttpResponseMessage active = await admin.PutAsJsonAsync(path, new { expectedVersion = 5, kind = "Client", engagementId = target.Id, reason = "move" });
+        Assert.Equal(HttpStatusCode.Conflict, active.StatusCode);
+        Assert.Equal("Project.NotDraft", await ErrorCodeAsync(active));
+        using HttpResponseMessage activeCadence = await admin.PutAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_project:D}/sprint-length", new { expectedVersion = 5, sprintLengthWeeks = 3 });
+        Assert.Equal(HttpStatusCode.OK, activeCadence.StatusCode);
+    }
+
+    [PostgreSqlFact]
+    public async Task EngagementMoveWaitsForConcurrentCloseAndRejectsClosedRow()
+    {
+        Engagement target = Engagement.Create(_organization, _otherUser, DateTimeOffset.UtcNow, "Closing", "R", new DateOnly(2026, 1, 1));
+        await using ProjectsDbContext db = Context();
+        db.Engagements.Add(target);
+        await db.SaveChangesAsync();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        Engagement locked = await db.Engagements.FromSqlInterpolated($"SELECT * FROM engagement.\"Engagements\" WHERE \"Id\" = {target.Id} FOR UPDATE").SingleAsync();
+        _identity.CanManageEngagements = true;
+        _locks.Match = "engagement.\"Engagements\"";
+        _locks.Attempted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using HttpClient admin = Client(_otherUser);
+        Task<HttpResponseMessage> pending = admin.PutAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_project:D}/engagement", new { expectedVersion = 1, kind = "Client", engagementId = target.Id, reason = "move" });
+        await _locks.Attempted.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        locked.Close(_otherUser, "closed", DateTimeOffset.UtcNow);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        using HttpResponseMessage response = await pending;
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("Engagement.Closed", await ErrorCodeAsync(response));
+        Assert.Equal(0, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+    }
+
+    [PostgreSqlFact]
     public async Task NonparticipantsAndCrossTenantRequestsAlwaysSeeNotFound()
     {
         _identity.IsOwner = true;
@@ -378,10 +485,11 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
     private sealed class LockObserver : DbCommandInterceptor
     {
         internal TaskCompletionSource? Attempted { get; set; }
+        internal string Match { get; set; } = "FOR SHARE";
 
         public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
         {
-            if (command.CommandText.Contains("FOR SHARE", StringComparison.Ordinal))
+            if (command.CommandText.Contains(Match, StringComparison.Ordinal) && command.CommandText.Contains("FOR SHARE", StringComparison.Ordinal))
             {
                 Attempted?.TrySetResult();
             }
@@ -405,13 +513,15 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
         internal string Mode { get; set; } = "allowed";
         internal bool IsOwner { get; set; }
         internal bool LookupUnavailable { get; set; }
+        internal bool CanManageEngagements { get; set; }
         internal int WorkspaceCalls { get; private set; }
         public Task<IntegrationResult<SessionCheckResult>> CheckSessionAsync(SessionCheckRequest request, CancellationToken cancellationToken) => Task.FromResult(IntegrationResult<SessionCheckResult>.Success(new SessionCheckResult(true), HttpStatusCode.OK));
         public Task<IntegrationResult<OrganizationAuthorityCheckResult>> CheckOrganizationAuthorityAsync(OrganizationAuthorityCheckRequest request, CancellationToken cancellationToken)
         {
             WorkspaceCalls++;
             if (Mode == "unavailable") { return Task.FromResult(FakeIdentityAuthorityClient.Unavailable<OrganizationAuthorityCheckResult>()); }
-            OrganizationAuthorityCheckResult result = Mode == "denied" ? OrganizationAuthorityCheckResult.Denied(DateTimeOffset.UtcNow) : new OrganizationAuthorityCheckResult(AuthorityDecision.Allowed, DateTimeOffset.UtcNow, request.OrganizationId, 1, Guid.NewGuid(), 1, IsOwner, false, ["organization.engagements.read-all"]);
+            string[] permissions = CanManageEngagements ? ["organization.engagements.read-all", "organization.engagements.manage"] : ["organization.engagements.read-all"];
+            OrganizationAuthorityCheckResult result = Mode == "denied" ? OrganizationAuthorityCheckResult.Denied(DateTimeOffset.UtcNow) : new OrganizationAuthorityCheckResult(AuthorityDecision.Allowed, DateTimeOffset.UtcNow, request.OrganizationId, 1, Guid.NewGuid(), 1, IsOwner, false, permissions);
             return Task.FromResult(IntegrationResult<OrganizationAuthorityCheckResult>.Success(result, HttpStatusCode.OK));
         }
 

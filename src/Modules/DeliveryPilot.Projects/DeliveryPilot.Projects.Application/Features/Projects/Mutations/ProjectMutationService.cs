@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DeliveryPilot.Projects.Application.Features.Projects.Access;
 using DeliveryPilot.Projects.Domain.Models.Projects;
+using DeliveryPilot.Projects.Domain.Models.Engagements;
 
 namespace DeliveryPilot.Projects.Application.Features.Projects.Mutations;
 
@@ -22,7 +23,24 @@ public sealed class ProjectMutationService(IProjectMutationStore store, ProjectA
 
         DateTimeOffset now = clock.GetUtcNow().ToUniversalTime();
         now = new DateTimeOffset(now.Ticks - (now.Ticks % 10), TimeSpan.Zero);
-        return (new ProjectMutationContext(project, identity.UserId, now), brief);
+        return (new ProjectMutationContext(project, identity.UserId, identity.SessionId, now), brief);
+    }
+
+    public async Task<(ProjectMutationContext Context, Engagement? Engagement)> LockProjectAsync(Guid organizationId, Guid projectId, string permission, Guid? engagementId, CancellationToken cancellationToken)
+    {
+        ProjectIdentity identity = access.CurrentIdentity();
+        await access.RequireAsync(organizationId, projectId, identity, permission, cancellationToken);
+        Project? project = await store.LockProjectAsync(organizationId, projectId, true, cancellationToken);
+        Engagement? engagement = engagementId.HasValue ? await store.LockEngagementAsync(organizationId, engagementId.Value, cancellationToken) : null;
+        await access.RequireAsync(organizationId, projectId, identity, permission, cancellationToken);
+        if (project is null)
+        {
+            throw ProjectAccessEvaluator.NotFound();
+        }
+
+        DateTimeOffset now = clock.GetUtcNow().ToUniversalTime();
+        now = new DateTimeOffset(now.Ticks - (now.Ticks % 10), TimeSpan.Zero);
+        return (new ProjectMutationContext(project, identity.UserId, identity.SessionId, now), engagement);
     }
 
     public void Record(ProjectMutationContext context, string eventType, string subjectType, Guid subjectId, object details, string? reason = null)

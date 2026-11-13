@@ -1,5 +1,6 @@
 using DeliveryPilot.Projects.Application.Features.Projects.Mutations;
 using DeliveryPilot.Projects.Domain.Models.Projects;
+using DeliveryPilot.Projects.Domain.Models.Engagements;
 using Microsoft.EntityFrameworkCore;
 
 namespace DeliveryPilot.Projects.Infrastructure.Persistence;
@@ -21,6 +22,12 @@ public sealed class ProjectMutationStore(ProjectsDbContext dbContext) : IProject
     }
 
     public void AddEvent(ProjectEvent entry) => dbContext.ProjectEvents.Add(entry);
+
+    public Task<Engagement?> LockEngagementAsync(Guid organizationId, Guid engagementId, CancellationToken cancellationToken)
+    {
+        EnsureTransaction();
+        return dbContext.Engagements.FromSqlInterpolated($"SELECT * FROM engagement.\"Engagements\" WHERE \"OrganizationId\" = {organizationId} AND \"Id\" = {engagementId} FOR SHARE").SingleOrDefaultAsync(cancellationToken);
+    }
 
     private void EnsureTransaction()
     {

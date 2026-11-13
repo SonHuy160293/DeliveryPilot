@@ -1,6 +1,9 @@
 using DeliveryPilot.AspNetCore.Controllers;
 using DeliveryPilot.Projects.API.Contracts.Projects;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.CreateProject;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.ChangeProjectEngagement;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.ChangeSprintLength;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.UpdateProjectBrief;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.GetProject;
@@ -21,6 +24,22 @@ namespace DeliveryPilot.Projects.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class ProjectsController(ISender sender) : ApiController(sender)
 {
+    [HttpPut("{projectId:guid}/sprint-length")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> ChangeSprintLengthAsync(Guid organizationId, Guid projectId, ChangeSprintLengthRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectSettingsResult> result = await Sender.SendAsync(new ChangeSprintLengthCommand(organizationId, projectId, request.ExpectedVersion, request.SprintLengthWeeks), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpPut("{projectId:guid}/engagement")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> ChangeEngagementAsync(Guid organizationId, Guid projectId, ChangeProjectEngagementRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectSettingsResult> result = await Sender.SendAsync(new ChangeProjectEngagementCommand(organizationId, projectId, request.ExpectedVersion, request.Kind, request.EngagementId, request.Reason), cancellationToken);
+        return Ok(result.Value);
+    }
+
     [HttpGet("{projectId:guid}/brief")]
     public async Task<IActionResult> GetBriefAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
     {

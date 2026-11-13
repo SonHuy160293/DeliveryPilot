@@ -30,6 +30,62 @@ public sealed class Project
     public DateTimeOffset UpdatedAt { get; private set; }
     public long Version { get; private set; }
 
+    public bool ChangeSprintLength(short weeks, long expectedVersion, DateTimeOffset now)
+    {
+        CheckVersion(expectedVersion);
+        if (weeks is < 1 or > 4)
+        {
+            throw new BadRequestException("Project.InvalidSprintLength", "Sprint length must be one to four weeks.");
+        }
+
+        if (SprintLengthWeeks == weeks)
+        {
+            return false;
+        }
+
+        SprintLengthWeeks = weeks;
+        Touch(now);
+        return true;
+    }
+
+    public bool ChangeEngagement(string kind, Guid? engagementId, long expectedVersion, DateTimeOffset now)
+    {
+        CheckVersion(expectedVersion);
+        if (Status != DraftStatus)
+        {
+            throw new ConflictException("Project.NotDraft", "The project is not Draft.");
+        }
+
+        if (kind is not (ClientKind or InternalKind) || (kind == InternalKind && engagementId.HasValue))
+        {
+            throw new BadRequestException("Project.InvalidKind", "Internal projects cannot have an engagement.");
+        }
+
+        if (Kind == kind && EngagementId == engagementId)
+        {
+            return false;
+        }
+
+        Kind = kind;
+        EngagementId = ProjectFields.OptionalId(engagementId, nameof(engagementId));
+        Touch(now);
+        return true;
+    }
+
+    private void CheckVersion(long expectedVersion)
+    {
+        if (Version != expectedVersion)
+        {
+            throw new ConflictException("Project.VersionConflict", "The project has changed.");
+        }
+    }
+
+    private void Touch(DateTimeOffset now)
+    {
+        UpdatedAt = now.ToUniversalTime();
+        Version = checked(Version + 1);
+    }
+
     public static ProjectCreation CreateWithAdministrator(Guid organizationId, Guid createdByUserId, DateTimeOffset createdAt, string name, string purpose, string kind, Guid? engagementId)
     {
         Project project = Create(organizationId, createdByUserId, createdAt, name, purpose, kind, engagementId);
