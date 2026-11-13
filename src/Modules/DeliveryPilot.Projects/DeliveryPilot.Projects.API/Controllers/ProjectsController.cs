@@ -1,10 +1,13 @@
 using DeliveryPilot.AspNetCore.Controllers;
 using DeliveryPilot.Projects.API.Contracts.Projects;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.CreateProject;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.UpdateProjectBrief;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.GetProject;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListMemberProjects;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListProjectParticipants;
+using DeliveryPilot.Projects.Application.Features.Projects.Queries.GetProjectBrief;
+using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListProductGoalHistory;
 using DeliveryPilot.SharedKernel.Abstractions.Shared;
 using DeliveryPilot.SharedKernel.Cqrs;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +21,28 @@ namespace DeliveryPilot.Projects.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class ProjectsController(ISender sender) : ApiController(sender)
 {
+    [HttpGet("{projectId:guid}/brief")]
+    public async Task<IActionResult> GetBriefAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
+    {
+        Result<ProjectBriefView> result = await Sender.SendAsync(new GetProjectBriefQuery(organizationId, projectId), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpGet("{projectId:guid}/brief/product-goal-history")]
+    public async Task<IActionResult> ProductGoalHistoryAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
+    {
+        Result<IReadOnlyList<ProductGoalHistoryEntry>> result = await Sender.SendAsync(new ListProductGoalHistoryQuery(organizationId, projectId), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpPut("{projectId:guid}/brief")]
+    [RequestSizeLimit(196608)]
+    public async Task<IActionResult> UpdateBriefAsync(Guid organizationId, Guid projectId, UpdateProjectBriefRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectBriefView> result = await Sender.SendAsync(new UpdateProjectBriefCommand(organizationId, projectId, request.ExpectedVersion, request.ToValues()), cancellationToken);
+        return Ok(result.Value);
+    }
+
     [HttpGet]
     public async Task<IActionResult> ListAsync(Guid organizationId, [FromQuery] string? status = null, [FromQuery] int limit = 50, [FromQuery] string? cursor = null, CancellationToken cancellationToken = default)
     {

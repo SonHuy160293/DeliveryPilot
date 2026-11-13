@@ -2,11 +2,25 @@ using DeliveryPilot.Projects.Application.Features.Projects.Access;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries;
 using DeliveryPilot.Projects.Domain.Models.Projects;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace DeliveryPilot.Projects.Infrastructure.Persistence;
 
 public sealed class ProjectReadStore(ProjectsDbContext dbContext) : IProjectReadStore
 {
+    public Task<ProjectBrief?> FindBriefAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
+        => dbContext.ProjectBriefs.AsNoTracking().SingleOrDefaultAsync(x => x.OrganizationId == organizationId && x.ProjectId == projectId, cancellationToken);
+
+    public async Task<IReadOnlyList<ProductGoalHistoryEntry>> ListProductGoalHistoryAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
+    {
+        var events = await dbContext.ProjectEvents.AsNoTracking().Where(x => x.OrganizationId == organizationId && x.ProjectId == projectId && x.EventType == "brief.product-goal-changed").OrderBy(x => x.OccurredAt).ThenBy(x => x.Id).Select(x => new { x.Id, x.ActorUserId, x.OccurredAt, x.Details }).ToListAsync(cancellationToken);
+        return events.Select(entry =>
+        {
+            using JsonDocument document = JsonDocument.Parse(entry.Details);
+            JsonElement goal = document.RootElement.GetProperty("productGoal");
+            return new ProductGoalHistoryEntry(entry.Id, entry.ActorUserId, entry.OccurredAt, goal.GetProperty("previous").GetString(), goal.GetProperty("new").GetString());
+        }).ToArray();
+    }
     public async Task<ProjectParticipation?> FindParticipationAsync(Guid organizationId, Guid projectId, Guid userId, CancellationToken cancellationToken)
     {
         ProjectParticipant? participant = await dbContext.ProjectParticipants.AsNoTracking().SingleOrDefaultAsync(x => x.OrganizationId == organizationId && x.ProjectId == projectId && x.UserId == userId && x.Status == ProjectParticipant.ActiveStatus, cancellationToken);

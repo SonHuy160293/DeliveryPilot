@@ -8,4 +8,6 @@ public interface IProjectReadStore
     Task<Project?> FindProjectAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken);
     Task<ProjectPage> ListAsync(Guid organizationId, Guid userId, string kind, string status, int limit, ProjectPageKey? after, CancellationToken cancellationToken);
     Task<IReadOnlyList<ProjectParticipation>> ListParticipantsAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken);
+    Task<ProjectBrief?> FindBriefAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<ProductGoalHistoryEntry>> ListProductGoalHistoryAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken);
 }

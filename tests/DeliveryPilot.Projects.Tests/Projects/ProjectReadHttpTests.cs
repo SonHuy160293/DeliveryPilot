@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Data.Common;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,6 +32,7 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
     private readonly Guid _otherUser = Guid.NewGuid();
     private readonly AuthorityClient _identity = new();
     private readonly ReadTransactionObserver _transactions = new();
+    private readonly LockObserver _locks = new();
     private readonly ApiFactory _factory;
     private Guid _project;
     private Guid _otherProject;
@@ -40,7 +42,7 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
     private Guid _guestParticipant;
     private Guid _memberProject;
 
-    public ProjectReadHttpTests() => _factory = new ApiFactory(_identity, _transactions);
+    public ProjectReadHttpTests() => _factory = new ApiFactory(_identity, _transactions, _locks);
 
     public async Task InitializeAsync()
     {
@@ -59,6 +61,7 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
         _engagement = engagement.Id;
         db.Engagements.Add(engagement);
         db.Projects.AddRange(first, second, third, foreign);
+        db.ProjectBriefs.Add(ProjectBrief.CreateFor(first));
         ProjectParticipant member = ProjectParticipant.CreateMember(_organization, first.Id, _member, now);
         _memberParticipant = member.Id;
         ProjectParticipant otherMember = ProjectParticipant.CreateMember(_organization, third.Id, _member, now);
@@ -90,9 +93,89 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
         await db.ProjectParticipantRoles.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.ProjectParticipants.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.ProjectGuestInvitations.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
+        await db.ProjectEvents.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
+        await db.ProjectBriefs.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.Projects.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.Engagements.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await _factory.DisposeAsync();
+    }
+
+    [PostgreSqlFact]
+    public async Task BriefEditingTracksVersionHistoryAndHidesOtherItemsFromViewerGuest()
+    {
+        using HttpClient member = Client(_member);
+        string path = $"/api/v1/organizations/{_organization:D}/projects/{_project:D}/brief";
+        using HttpResponseMessage initial = await member.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, initial.StatusCode);
+        using JsonDocument empty = await DocumentAsync(initial);
+        Assert.Equal(7, empty.RootElement.GetProperty("data").GetProperty("missingItems").GetArrayLength());
+        object update = new { expectedVersion = 1, problem = " private ", productGoal = " first " };
+        using HttpResponseMessage updated = await member.PutAsJsonAsync(path, update);
+        Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+        using JsonDocument updatedBody = await DocumentAsync(updated);
+        Assert.Equal(2, updatedBody.RootElement.GetProperty("data").GetProperty("version").GetInt64());
+        using HttpResponseMessage stale = await member.PutAsJsonAsync(path, update);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        using HttpResponseMessage noop = await member.PutAsJsonAsync(path, new { expectedVersion = 2, problem = "private", productGoal = "first" });
+        Assert.Equal(HttpStatusCode.OK, noop.StatusCode);
+        using HttpResponseMessage next = await member.PutAsJsonAsync(path, new { expectedVersion = 2, problem = "private", productGoal = "second" });
+        Assert.Equal(HttpStatusCode.OK, next.StatusCode);
+        using HttpResponseMessage tooLong = await member.PutAsJsonAsync(path, new { expectedVersion = 3, problem = new string('x', 4001) });
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        await using (ProjectsDbContext db = Context())
+        {
+            Assert.Equal(1, (await db.Projects.SingleAsync(x => x.Id == _project)).Version);
+            Assert.Equal(2, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+            Assert.All(await db.ProjectEvents.Where(x => x.ProjectId == _project).ToListAsync(), entry => Assert.Equal(1, entry.ProjectVersion));
+            await db.ProjectParticipantRoles.Where(x => x.ParticipantId == _guestParticipant).ExecuteUpdateAsync(x => x.SetProperty(r => r.RoleCode, ProjectRoles.Viewer));
+        }
+
+        using HttpClient guest = Client(_guest);
+        using HttpResponseMessage guestRead = await guest.GetAsync(path);
+        using JsonDocument guestBody = await DocumentAsync(guestRead);
+        Assert.Equal("second", guestBody.RootElement.GetProperty("data").GetProperty("productGoal").GetString());
+        Assert.False(guestBody.RootElement.GetProperty("data").TryGetProperty("problem", out _));
+        using HttpResponseMessage history = await guest.GetAsync(path + "/product-goal-history");
+        Assert.Equal(HttpStatusCode.OK, history.StatusCode);
+        string historyText = await history.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("private", historyText, StringComparison.Ordinal);
+        using JsonDocument historyBody = JsonDocument.Parse(historyText);
+        Assert.Equal("first", historyBody.RootElement.GetProperty("data")[1].GetProperty("previous").GetString());
+        using HttpResponseMessage guestEdit = await guest.PutAsJsonAsync(path, new { expectedVersion = 3, productGoal = "denied" });
+        Assert.Equal(HttpStatusCode.Forbidden, guestEdit.StatusCode);
+        using HttpResponseMessage developer = await member.PutAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_memberProject:D}/brief", update);
+        Assert.Equal(HttpStatusCode.Forbidden, developer.StatusCode);
+    }
+
+    [PostgreSqlFact]
+    public async Task GuestBaCanEditBrief()
+    {
+        await using (ProjectsDbContext db = Context())
+        {
+            await db.ProjectParticipantRoles.Where(x => x.ParticipantId == _guestParticipant).ExecuteUpdateAsync(x => x.SetProperty(r => r.RoleCode, ProjectRoles.BusinessAnalyst));
+        }
+
+        using HttpClient guest = Client(_guest);
+        using HttpResponseMessage updated = await guest.PutAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_project:D}/brief", new { expectedVersion = 1, problem = "Shared", productGoal = "Goal" });
+        Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
+    }
+
+    [PostgreSqlFact]
+    public async Task RemovingParticipantWhileBriefEditWaitsForProjectLockDeniesEdit()
+    {
+        await using ProjectsDbContext db = Context();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Projects.FromSqlInterpolated($"SELECT * FROM project.\"Projects\" WHERE \"Id\" = {_project} FOR UPDATE").SingleAsync();
+        _locks.Attempted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using HttpClient member = Client(_member);
+        Task<HttpResponseMessage> pending = member.PutAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_project:D}/brief", new { expectedVersion = 1, productGoal = "Denied" });
+        await _locks.Attempted.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        await db.ProjectParticipants.Where(x => x.Id == _memberParticipant).ExecuteUpdateAsync(x => x.SetProperty(p => p.Status, ProjectParticipant.RemovedStatus).SetProperty(p => p.EndedAt, DateTimeOffset.UtcNow).SetProperty(p => p.EndedByUserId, _otherUser));
+        await transaction.CommitAsync();
+        using HttpResponseMessage response = await pending;
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(0, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+        Assert.Equal(1, (await db.ProjectBriefs.SingleAsync(x => x.ProjectId == _project)).Version);
     }
 
     [PostgreSqlFact]
@@ -281,14 +364,29 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
         return message + "." + Base64(HMACSHA256.HashData(Encoding.UTF8.GetBytes(TestConfiguration.Host()["Jwt:SecretKey"]!), Encoding.UTF8.GetBytes(message)));
     }
 
-    private sealed class ApiFactory(AuthorityClient identity, ReadTransactionObserver transactions) : WebApplicationFactory<Program>
+    private sealed class ApiFactory(AuthorityClient identity, ReadTransactionObserver transactions, LockObserver locks) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
             foreach ((string key, string? value) in TestConfiguration.Host()) { builder.UseSetting(key, value); }
             builder.UseSetting("ConnectionStrings:ApplicationDb", PostgreSqlFactAttribute.ConnectionString);
-            builder.ConfigureServices(services => { services.RemoveAll<IIdentityAuthorityClient>(); services.AddSingleton<IIdentityAuthorityClient>(identity); services.AddDbContext<ProjectsDbContext>(options => options.AddInterceptors(transactions)); });
+            builder.ConfigureServices(services => { services.RemoveAll<IIdentityAuthorityClient>(); services.AddSingleton<IIdentityAuthorityClient>(identity); services.AddDbContext<ProjectsDbContext>(options => options.AddInterceptors(transactions, locks)); });
+        }
+    }
+
+    private sealed class LockObserver : DbCommandInterceptor
+    {
+        internal TaskCompletionSource? Attempted { get; set; }
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            if (command.CommandText.Contains("FOR SHARE", StringComparison.Ordinal))
+            {
+                Attempted?.TrySetResult();
+            }
+
+            return ValueTask.FromResult(result);
         }
     }
 
