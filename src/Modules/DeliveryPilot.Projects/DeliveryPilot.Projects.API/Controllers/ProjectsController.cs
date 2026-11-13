@@ -4,6 +4,9 @@ using DeliveryPilot.Projects.Application.Features.Projects.Commands.CreateProjec
 using DeliveryPilot.Projects.Application.Features.Projects.Commands;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.ChangeProjectEngagement;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.ChangeSprintLength;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.CreateProjectStakeholder;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.UpdateProjectStakeholder;
+using DeliveryPilot.Projects.Application.Features.Projects.Commands.RetireProjectStakeholder;
 using DeliveryPilot.Projects.Application.Features.Projects.Commands.UpdateProjectBrief;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.GetProject;
@@ -11,6 +14,7 @@ using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListMemberPro
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListProjectParticipants;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.GetProjectBrief;
 using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListProductGoalHistory;
+using DeliveryPilot.Projects.Application.Features.Projects.Queries.ListProjectStakeholders;
 using DeliveryPilot.SharedKernel.Abstractions.Shared;
 using DeliveryPilot.SharedKernel.Cqrs;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +28,37 @@ namespace DeliveryPilot.Projects.API.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class ProjectsController(ISender sender) : ApiController(sender)
 {
+    [HttpGet("{projectId:guid}/stakeholders")]
+    public async Task<IActionResult> StakeholdersAsync(Guid organizationId, Guid projectId, [FromQuery] bool includeRetired = false, CancellationToken cancellationToken = default)
+    {
+        Result<IReadOnlyList<ProjectStakeholderView>> result = await Sender.SendAsync(new ListProjectStakeholdersQuery(organizationId, projectId, includeRetired), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpPost("{projectId:guid}/stakeholders")]
+    [RequestSizeLimit(32768)]
+    public async Task<IActionResult> AddStakeholderAsync(Guid organizationId, Guid projectId, ProjectStakeholderRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectStakeholderView> result = await Sender.SendAsync(new CreateProjectStakeholderCommand(organizationId, projectId, request.ToValues()), cancellationToken);
+        return StatusCode(StatusCodes.Status201Created, result.Value);
+    }
+
+    [HttpPut("{projectId:guid}/stakeholders/{stakeholderId:guid}")]
+    [RequestSizeLimit(32768)]
+    public async Task<IActionResult> UpdateStakeholderAsync(Guid organizationId, Guid projectId, Guid stakeholderId, ProjectStakeholderRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectStakeholderView> result = await Sender.SendAsync(new UpdateProjectStakeholderCommand(organizationId, projectId, stakeholderId, request.ExpectedVersion, request.ToValues()), cancellationToken);
+        return Ok(result.Value);
+    }
+
+    [HttpPost("{projectId:guid}/stakeholders/{stakeholderId:guid}/retire")]
+    [RequestSizeLimit(16384)]
+    public async Task<IActionResult> RetireStakeholderAsync(Guid organizationId, Guid projectId, Guid stakeholderId, RetireProjectStakeholderRequest request, CancellationToken cancellationToken)
+    {
+        Result<ProjectStakeholderView> result = await Sender.SendAsync(new RetireProjectStakeholderCommand(organizationId, projectId, stakeholderId, request.ExpectedVersion), cancellationToken);
+        return Ok(result.Value);
+    }
+
     [HttpPut("{projectId:guid}/sprint-length")]
     [RequestSizeLimit(16384)]
     public async Task<IActionResult> ChangeSprintLengthAsync(Guid organizationId, Guid projectId, ChangeSprintLengthRequest request, CancellationToken cancellationToken)

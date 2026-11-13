@@ -29,6 +29,20 @@ public sealed class ProjectMutationStore(ProjectsDbContext dbContext) : IProject
         return dbContext.Engagements.FromSqlInterpolated($"SELECT * FROM engagement.\"Engagements\" WHERE \"OrganizationId\" = {organizationId} AND \"Id\" = {engagementId} FOR SHARE").SingleOrDefaultAsync(cancellationToken);
     }
 
+    public Task<ProjectStakeholder?> LockStakeholderAsync(Guid organizationId, Guid projectId, Guid stakeholderId, CancellationToken cancellationToken)
+    {
+        EnsureTransaction();
+        return dbContext.ProjectStakeholders.FromSqlInterpolated($"SELECT * FROM project.\"ProjectStakeholders\" WHERE \"OrganizationId\" = {organizationId} AND \"ProjectId\" = {projectId} AND \"Id\" = {stakeholderId} FOR UPDATE").SingleOrDefaultAsync(cancellationToken);
+    }
+
+    public Task<bool> IsActiveParticipantAsync(Guid organizationId, Guid projectId, Guid participantId, CancellationToken cancellationToken)
+    {
+        EnsureTransaction();
+        return dbContext.ProjectParticipants.AsNoTracking().AnyAsync(x => x.OrganizationId == organizationId && x.ProjectId == projectId && x.Id == participantId && x.Status == ProjectParticipant.ActiveStatus, cancellationToken);
+    }
+
+    public void AddStakeholder(ProjectStakeholder stakeholder) => dbContext.ProjectStakeholders.Add(stakeholder);
+
     private void EnsureTransaction()
     {
         if (dbContext.Database.CurrentTransaction is null)

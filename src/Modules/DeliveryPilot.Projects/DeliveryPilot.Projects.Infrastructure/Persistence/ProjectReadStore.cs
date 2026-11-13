@@ -8,6 +8,9 @@ namespace DeliveryPilot.Projects.Infrastructure.Persistence;
 
 public sealed class ProjectReadStore(ProjectsDbContext dbContext) : IProjectReadStore
 {
+    public async Task<IReadOnlyList<ProjectStakeholder>> ListStakeholdersAsync(Guid organizationId, Guid projectId, bool includeRetired, CancellationToken cancellationToken)
+        => await dbContext.ProjectStakeholders.AsNoTracking().Where(x => x.OrganizationId == organizationId && x.ProjectId == projectId && (includeRetired || x.RetiredAt == null)).OrderBy(x => x.CreatedAt).ThenBy(x => x.Id).ToListAsync(cancellationToken);
+
     public Task<ProjectBrief?> FindBriefAsync(Guid organizationId, Guid projectId, CancellationToken cancellationToken)
         => dbContext.ProjectBriefs.AsNoTracking().SingleOrDefaultAsync(x => x.OrganizationId == organizationId && x.ProjectId == projectId, cancellationToken);
 

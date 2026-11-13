@@ -90,6 +90,7 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
     {
         await using ProjectsDbContext db = Context();
         Guid[] organizations = [_organization, _otherOrganization];
+        await db.ProjectStakeholders.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.ProjectParticipantRoles.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.ProjectParticipants.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
         await db.ProjectGuestInvitations.Where(x => organizations.Contains(x.OrganizationId)).ExecuteDeleteAsync();
@@ -283,6 +284,95 @@ public sealed class ProjectReadHttpTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal("Engagement.Closed", await ErrorCodeAsync(response));
         Assert.Equal(0, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+    }
+
+    [PostgreSqlFact]
+    public async Task StakeholderRegisterEnforcesLinksPermissionsVersionsAndRetirement()
+    {
+        using HttpClient admin = Client(_otherUser);
+        using HttpClient guest = Client(_guest);
+        using HttpClient member = Client(_member);
+        string path = $"/api/v1/organizations/{_organization:D}/projects/{_project:D}/stakeholders";
+        object sponsor = new { name = "Sponsor", side = "Client", organizationName = "Customer", responsibilities = "Decisions", email = "SPONSOR@example.test" };
+        using HttpResponseMessage created = await admin.PostAsJsonAsync(path, sponsor);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using JsonDocument createdBody = await DocumentAsync(created);
+        Guid id = createdBody.RootElement.GetProperty("data").GetProperty("id").GetGuid();
+        Assert.Equal("sponsor@example.test", createdBody.RootElement.GetProperty("data").GetProperty("email").GetString());
+        using HttpResponseMessage noAccess = await GetAsync(Guid.NewGuid(), _organization, _project);
+        Assert.Equal(HttpStatusCode.NotFound, noAccess.StatusCode);
+        using HttpResponseMessage invalidLink = await admin.PostAsJsonAsync(path, new { name = "Invalid", side = "Client", participantId = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.Conflict, invalidLink.StatusCode);
+        using HttpResponseMessage validLink = await admin.PostAsJsonAsync(path, new { name = "Linked", side = "Client", participantId = _guestParticipant });
+        Assert.Equal(HttpStatusCode.Created, validLink.StatusCode);
+        using JsonDocument linkedBody = await DocumentAsync(validLink);
+        Guid linkedId = linkedBody.RootElement.GetProperty("data").GetProperty("id").GetGuid();
+        using HttpResponseMessage invalidUpdate = await admin.PutAsJsonAsync(path + "/" + linkedId, new { expectedVersion = 1, name = "Linked", side = "Client", participantId = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.Conflict, invalidUpdate.StatusCode);
+        await using (ProjectsDbContext lookup = Context())
+        {
+            Guid anotherProjectParticipant = await lookup.ProjectParticipants.Where(x => x.ProjectId == _memberProject && x.UserId == _member).Select(x => x.Id).SingleAsync();
+            using HttpResponseMessage anotherProjectLink = await admin.PostAsJsonAsync(path, new { name = "Invalid", side = "Client", participantId = anotherProjectParticipant });
+            Assert.Equal(HttpStatusCode.Conflict, anotherProjectLink.StatusCode);
+        }
+        using HttpResponseMessage badEmail = await admin.PostAsJsonAsync(path, new { name = "Bad", side = "Client", email = "not-an-email" });
+        Assert.Equal(HttpStatusCode.BadRequest, badEmail.StatusCode);
+        using HttpResponseMessage noPermission = await member.PostAsJsonAsync(path, sponsor);
+        Assert.Equal(HttpStatusCode.Forbidden, noPermission.StatusCode);
+        using HttpResponseMessage developerDenied = await member.PostAsJsonAsync($"/api/v1/organizations/{_organization:D}/projects/{_memberProject:D}/stakeholders", sponsor);
+        Assert.Equal(HttpStatusCode.Forbidden, developerDenied.StatusCode);
+        using HttpResponseMessage guestList = await guest.GetAsync(path);
+        Assert.Equal(HttpStatusCode.OK, guestList.StatusCode);
+        using HttpResponseMessage guestAdded = await guest.PostAsJsonAsync(path, new { name = "Guest entry", side = "Vendor" });
+        Assert.Equal(HttpStatusCode.Created, guestAdded.StatusCode);
+        object update = new { expectedVersion = 1, name = "Sponsor", side = "Client", organizationName = "Customer", responsibilities = "Decisions", email = "SPONSOR@example.test", participantId = _memberParticipant };
+        using HttpResponseMessage changed = await admin.PutAsJsonAsync(path + "/" + id, update);
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        using HttpResponseMessage stale = await admin.PutAsJsonAsync(path + "/" + id, update);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        using HttpResponseMessage noop = await admin.PutAsJsonAsync(path + "/" + id, new { expectedVersion = 2, name = "Sponsor", side = "Client", organizationName = "Customer", responsibilities = "Decisions", email = "sponsor@example.test", participantId = _memberParticipant });
+        Assert.Equal(HttpStatusCode.OK, noop.StatusCode);
+        using HttpResponseMessage retired = await admin.PostAsJsonAsync(path + "/" + id + "/retire", new { expectedVersion = 2 });
+        Assert.Equal(HttpStatusCode.OK, retired.StatusCode);
+        using HttpResponseMessage list = await member.GetAsync(path);
+        using JsonDocument listBody = await DocumentAsync(list);
+        Assert.DoesNotContain(listBody.RootElement.GetProperty("data").EnumerateArray(), x => x.GetProperty("id").GetGuid() == id);
+        using HttpResponseMessage history = await member.GetAsync(path + "?includeRetired=true");
+        using JsonDocument historyBody = await DocumentAsync(history);
+        Assert.Contains(historyBody.RootElement.GetProperty("data").EnumerateArray(), x => x.GetProperty("id").GetGuid() == id);
+        await using ProjectsDbContext db = Context();
+        Assert.Equal(1, (await db.Projects.SingleAsync(x => x.Id == _project)).Version);
+        Assert.Equal(5, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
+        Assert.All(await db.ProjectEvents.Where(x => x.ProjectId == _project).ToListAsync(), entry => Assert.Equal(1, entry.ProjectVersion));
+        await db.ProjectParticipantRoles.Where(x => x.ParticipantId == _guestParticipant).ExecuteUpdateAsync(x => x.SetProperty(r => r.RoleCode, ProjectRoles.Viewer));
+        using HttpResponseMessage guestViewer = await guest.GetAsync(path);
+        Assert.Equal(HttpStatusCode.Forbidden, guestViewer.StatusCode);
+        await db.ProjectParticipants.Where(x => x.Id == _guestParticipant).ExecuteUpdateAsync(x => x.SetProperty(p => p.Status, ProjectParticipant.RemovedStatus).SetProperty(p => p.EndedAt, DateTimeOffset.UtcNow).SetProperty(p => p.EndedByUserId, _otherUser));
+        using HttpResponseMessage removedLink = await admin.PostAsJsonAsync(path, new { name = "Invalid", side = "Client", participantId = _guestParticipant });
+        Assert.Equal(HttpStatusCode.Conflict, removedLink.StatusCode);
+        Assert.Equal(3, await db.ProjectStakeholders.CountAsync(x => x.ProjectId == _project));
+    }
+
+    [PostgreSqlFact]
+    public async Task StakeholderEditRechecksRemovedParticipantAfterProjectLock()
+    {
+        using HttpClient guest = Client(_guest);
+        string path = $"/api/v1/organizations/{_organization:D}/projects/{_project:D}/stakeholders";
+        using HttpResponseMessage created = await guest.PostAsJsonAsync(path, new { name = "Sponsor", side = "Client" });
+        using JsonDocument body = await DocumentAsync(created);
+        Guid id = body.RootElement.GetProperty("data").GetProperty("id").GetGuid();
+        await using ProjectsDbContext db = Context();
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        await db.Projects.FromSqlInterpolated($"SELECT * FROM project.\"Projects\" WHERE \"Id\" = {_project} FOR UPDATE").SingleAsync();
+        _locks.Attempted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task<HttpResponseMessage> pending = guest.PutAsJsonAsync(path + "/" + id, new { expectedVersion = 1, name = "Changed", side = "Client" });
+        await _locks.Attempted.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        await db.ProjectParticipants.Where(x => x.Id == _guestParticipant).ExecuteUpdateAsync(x => x.SetProperty(p => p.Status, ProjectParticipant.RemovedStatus).SetProperty(p => p.EndedAt, DateTimeOffset.UtcNow).SetProperty(p => p.EndedByUserId, _otherUser));
+        await transaction.CommitAsync();
+        using HttpResponseMessage response = await pending;
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(1, (await db.ProjectStakeholders.SingleAsync(x => x.Id == id)).Version);
+        Assert.Equal(1, await db.ProjectEvents.CountAsync(x => x.ProjectId == _project));
     }
 
     [PostgreSqlFact]

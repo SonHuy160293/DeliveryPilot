@@ -26,6 +26,57 @@ public sealed class ProjectStakeholder
     public DateTimeOffset UpdatedAt { get; private set; }
     public long Version { get; private set; }
 
+    public ProjectStakeholderValues Values() => new(Name, Side, OrganizationName, Responsibilities, DecisionAreas, Email, ParticipantId);
+
+    public bool Update(ProjectStakeholderValues values, long expectedVersion, DateTimeOffset occurredAt)
+    {
+        CheckVersion(expectedVersion);
+        if (RetiredAt.HasValue)
+        {
+            throw new ConflictException("ProjectStakeholder.Retired", "A retired stakeholder cannot be edited.");
+        }
+
+        ProjectStakeholderValues normalized = values.Normalize();
+        if (normalized == Values())
+        {
+            return false;
+        }
+
+        Name = normalized.Name!;
+        Side = normalized.Side!;
+        OrganizationName = normalized.OrganizationName;
+        Responsibilities = normalized.Responsibilities;
+        DecisionAreas = normalized.DecisionAreas;
+        Email = normalized.Email;
+        ParticipantId = normalized.ParticipantId;
+        UpdatedAt = occurredAt.ToUniversalTime();
+        Version = checked(Version + 1);
+        return true;
+    }
+
+    public bool Retire(long expectedVersion, Guid actor, DateTimeOffset occurredAt)
+    {
+        CheckVersion(expectedVersion);
+        if (RetiredAt.HasValue)
+        {
+            return false;
+        }
+
+        RetiredAt = occurredAt.ToUniversalTime();
+        RetiredByUserId = ProjectFields.NonEmptyId(actor, nameof(actor));
+        UpdatedAt = RetiredAt.Value;
+        Version = checked(Version + 1);
+        return true;
+    }
+
+    private void CheckVersion(long expectedVersion)
+    {
+        if (Version != expectedVersion)
+        {
+            throw new ConflictException("ProjectStakeholder.VersionConflict", "The stakeholder has changed.");
+        }
+    }
+
     public static ProjectStakeholder Create(Guid organizationId, Guid projectId, Guid createdByUserId, DateTimeOffset createdAt, string name, string side, string? organizationName = null, string? responsibilities = null, string? decisionAreas = null, string? email = null, Guid? participantId = null)
     {
         if (side is not (VendorSide or ClientSide))
