@@ -105,12 +105,48 @@ SELECT NOT has_database_privilege('projects_api', 'DeliveryPilotProjects', 'CREA
  AND NOT has_table_privilege('projects_api', 'engagement."EngagementEvents"', 'UPDATE')
  AND NOT has_table_privilege('projects_api', 'engagement."EngagementEvents"', 'DELETE')
  AND NOT has_table_privilege('projects_api', 'engagement."EngagementEvents"', 'TRUNCATE')
+ AND has_schema_privilege('projects_api', 'project', 'USAGE')
+ AND NOT has_schema_privilege('projects_api', 'project', 'CREATE')
+ AND has_table_privilege('projects_api', 'project."Projects"', 'SELECT')
+ AND has_table_privilege('projects_api', 'project."Projects"', 'INSERT')
+ AND has_table_privilege('projects_api', 'project."ProjectBriefs"', 'UPDATE')
+ AND has_table_privilege('projects_api', 'project."ProjectEvents"', 'SELECT')
+ AND has_table_privilege('projects_api', 'project."ProjectEvents"', 'INSERT')
+ AND NOT has_table_privilege('projects_api', 'project."ProjectEvents"', 'UPDATE')
+ AND NOT has_table_privilege('projects_api', 'project."ProjectEvents"', 'DELETE')
+ AND NOT has_table_privilege('projects_api', 'project."ProjectEvents"', 'TRUNCATE')
+ AND NOT has_schema_privilege('projects_worker', 'project', 'USAGE')
+ AND NOT has_table_privilege('projects_worker', 'project."Projects"', 'SELECT')
+ AND NOT EXISTS (
+   SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'project' AND c.relkind IN ('r', 'p')
+     AND has_table_privilege('projects_api', c.oid, 'TRUNCATE')
+ )
  AND NOT has_table_privilege('projects_worker', 'engagement."Engagements"', 'SELECT')
  AND NOT has_table_privilege('projects_worker', 'reliability."OutboxOperations"', 'UPDATE');
 '@
     Assert-True ($permissions -eq 't') 'Projects runtime permissions exceed their intended scope.'
-    $ownership = Sql 'SELECT bool_and(pg_get_userbyid(relowner) = ''projects_migrator'') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN (''engagement'',''reliability'') AND c.relkind = ''r'';'
+    $ownership = Sql 'SELECT bool_and(pg_get_userbyid(relowner) = ''projects_migrator'') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname IN (''engagement'',''project'',''reliability'') AND c.relkind = ''r'';'
     Assert-True ($ownership -eq 't') 'Projects schema objects are not owned by the migrator.'
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $appendOnly = @'
+SET ROLE projects_api;
+UPDATE project."ProjectEvents" SET "EventType" = "EventType" WHERE false;
+'@ | & docker exec -i ($stack + '-projects-postgres-1') psql -X -U projects_admin -d DeliveryPilotProjects -v ON_ERROR_STOP=1 2>&1
+        $appendOnlyExit = $LASTEXITCODE
+    } finally { $ErrorActionPreference = $previousPreference }
+    Assert-True ($appendOnlyExit -ne 0 -and (($appendOnly | Out-String) -match 'permission denied')) 'Projects API can update append-only project history.'
+
+    $headers['Idempotency-Key'] = [Guid]::NewGuid().ToString()
+    $project = Http-Json ($base + '/api/v1/organizations/' + $organizationId + '/projects') 'POST' @{ name = 'Deployment project'; purpose = 'Runtime grant acceptance'; kind = 'Client'; engagementId = $created.Envelope.data.id } $headers
+    Assert-True ($project.Status -eq 201) 'Deployed project creation failed.'
+    $gatewayRoute = 'http://127.0.0.1:' + $values.DELIVERYPILOT_GATEWAY_PORT + '/projects/api/v1/organizations/' + $organizationId + '/engagements'
+    $gatewayDetail = Http-Json ($gatewayRoute + '/' + $created.Envelope.data.id) 'GET' $null $headers
+    Assert-True ($gatewayDetail.Status -eq 200 -and @($gatewayDetail.Envelope.data.projects | Where-Object { $_.id -eq $project.Envelope.data.id }).Count -eq 1) 'Gateway engagement detail failed or omitted its project.'
+    Assert-True ((Http-Json $gatewayRoute 'GET' $null $headers).Status -eq 200) 'Gateway engagement list failed.'
+    Write-Output 'PASS: project creation and Gateway engagement detail/list with a linked project.'
     & docker exec ($stack + '-projects-worker-1') sh -c 'test ! -d /run/secrets/config && test -f /run/secrets/database-password && test -f /run/secrets/broker-password' *> $log
     Assert-True ($LASTEXITCODE -eq 0) 'Projects worker received API secrets or lacks its own credentials.'
     & docker exec ($stack + '-projects-api-1') sh -c 'test -f /run/secrets/config/Jwt__SecretKey && test -f /run/secrets/config/Integrations__Identity__ApiKey && test -f /run/secrets/config/IntegrationApi__ApiKeys__0' *> $log

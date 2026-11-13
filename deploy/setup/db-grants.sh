@@ -39,6 +39,14 @@ BEGIN
       REVOKE UPDATE, DELETE ON engagement."EngagementEvents" FROM projects_api;
     END IF;
   END IF;
+  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'project') THEN
+    GRANT USAGE ON SCHEMA project TO projects_api;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA project TO projects_api;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA project TO projects_api;
+    IF to_regclass('project."ProjectEvents"') IS NOT NULL THEN
+      REVOKE UPDATE, DELETE ON project."ProjectEvents" FROM projects_api;
+    END IF;
+  END IF;
 END $$;
 SQL
 else exit 2
